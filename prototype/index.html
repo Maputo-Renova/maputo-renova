@@ -1287,7 +1287,7 @@ function scrAdminCondoDetail(){
       <thead><tr><th>Flat</th><th>Proprietário</th><th class="r">Quota</th><th>Método</th><th>Estado</th><th class="r"></th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`
-    :`<div class="empty"><span class="e-ico">${ico('flats')}</span><b>Ainda sem flats</b><p>As flats deste condomínio serão registadas pelo colaborador, com convite de registo para cada proprietário.</p></div>`}
+    :`<div class="empty"><span class="e-ico">${ico('flats')}</span><b>Ainda sem flats</b><p>${c.previstas?`0 de ${c.previstas} moradias cadastradas. `:''}As flats serão registadas pelo colaborador, com convite de registo para cada proprietário.</p></div>`}
   </div>
   <div class="grid g-12 mt">
     <div class="card">
@@ -1597,9 +1597,11 @@ function bindScreen(el){
   el.querySelectorAll('[data-novo-condo]').forEach(b=>b.addEventListener('click',()=>{
     abrirDrawer(drawerNovoCondo()); bindGlobais($('#drawer'));
     $('#btn-save-condo').addEventListener('click',()=>{
-      const nome = $('#nc-nome').value.trim(), zona = $('#nc-zona').value.trim();
+      const v = id => $('#'+id).value.trim();
+      const nome = v('nc-nome');
       const slot = $('#nc-dup');
-      if(!nome){ toast('Escreva o nome do condomínio'); $('#nc-nome').focus(); return; }
+      const obrig = [['nc-nome','Escreva o nome do condomínio'],['nc-bairro','Indique o bairro'],['nc-rua','Indique a rua ou avenida'],['nc-moradias','Indique quantas moradias tem o condomínio'],['nc-gestor','Indique o nome do gestor'],['nc-tel','Indique o contacto do gestor']];
+      for(const [id,msg] of obrig){ if(!v(id)){ toast(msg); $('#'+id).focus(); return; } }
       const dup = CONDOS.find(c=>c.nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')===nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
       if(dup){
         slot.innerHTML = `<div class="alert-dup" role="alert">${ico('alert')}
@@ -1607,12 +1609,17 @@ function bindScreen(el){
             <p style="font-size:13.5px;margin-top:3px">Já existe um condomínio com este nome no sistema.</p>
             <div class="conflito"><div class="cell-main">${dup.nome}</div><div class="cell-sub">${dup.zona} · ${dup.flats} flats · Gestor: ${dup.gestor}</div></div>
           </div></div>`;
+        slot.scrollIntoView({behavior:'smooth',block:'start'});
         return;
       }
-      CONDOS.push({nome, zona:zona||'Maputo', flats:0, cobrado:0, esperado:0, atraso:0, saldo:0,
-        gestor:$('#nc-gestor').value.trim()||'Por atribuir'});
+      CONDOS.push({
+        nome, zona:v('nc-bairro'), flats:0, cobrado:0, esperado:0, atraso:0, saldo:0,
+        previstas:+v('nc-moradias')||0,
+        gestor:v('nc-gestor'),
+        endereco:`${v('nc-rua')}${v('nc-num')?`, ${v('nc-num')}`:''} · ${v('nc-bairro')}, ${v('nc-cidade')||'Maputo'} (${v('nc-prov')})`,
+      });
       fecharTudo();
-      toast(`Condomínio "${nome}" criado · código ${sigla(nome)}`);
+      toast(`Condomínio "${nome}" criado · código ${sigla(nome)} · gestor ${v('nc-gestor').split(' ')[0]} convidado por email`);
       render();
     });
   }));
@@ -1635,23 +1642,41 @@ function abrirPagamento(m){
   const up = $('#btn-upload');
   if(up) up.addEventListener('click',()=>{ fecharTudo(); toast('Comprovativo enviado · aguarda confirmação do gestor'); });
 }
+const PROVINCIAS = ['Maputo Cidade','Maputo Província','Gaza','Inhambane','Sofala','Manica','Tete','Zambézia','Nampula','Cabo Delgado','Niassa'];
 function drawerNovoCondo(){
+  const sec = t => `<p style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin:18px 0 10px">${t}</p>`;
   return `
   <div class="drawer-head"><h3>Novo condomínio</h3><span style="margin-left:auto"></span>
     <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
   <div class="drawer-body">
     <div id="nc-dup"></div>
-    <div class="field"><label for="nc-nome">Nome</label><input id="nc-nome" placeholder="Ex.: Residencial Costa Viva"><span class="hint">O código do condomínio (ex.: JDA) é gerado automaticamente a partir do nome.</span></div>
+    <div class="field"><label for="nc-nome">Nome do condomínio</label><input id="nc-nome" placeholder="Ex.: Residencial Costa Viva"><span class="hint">O código (ex.: JDA) é gerado automaticamente a partir do nome.</span></div>
+    ${sec('Localização')}
     <div class="f-row">
-      <div class="field"><label for="nc-zona">Zona</label><input id="nc-zona" placeholder="Ex.: Polana Caniço"></div>
-      <div class="field"><label for="nc-cidade">Cidade</label><input id="nc-cidade" value="Maputo" readonly></div>
+      <div class="field"><label for="nc-prov">Província</label><select id="nc-prov">${PROVINCIAS.map(p=>`<option>${p}</option>`).join('')}</select></div>
+      <div class="field"><label for="nc-cidade">Cidade</label><input id="nc-cidade" value="Maputo"></div>
     </div>
-    <div class="field"><label for="nc-end">Endereço</label><input id="nc-end" placeholder="Avenida e número"></div>
     <div class="f-row">
-      <div class="field"><label for="nc-quota">Quota padrão (MT)</label><input id="nc-quota" class="num" inputmode="numeric" value="1500"></div>
-      <div class="field"><label for="nc-venc">Dia de vencimento</label><input id="nc-venc" class="num" inputmode="numeric" value="5"></div>
+      <div class="field"><label for="nc-bairro">Bairro</label><input id="nc-bairro" placeholder="Ex.: Polana Caniço"></div>
+      <div class="field"><label for="nc-cp">Código postal</label><input id="nc-cp" class="num" inputmode="numeric" placeholder="1100"></div>
     </div>
-    <div class="field"><label for="nc-gestor">Gestor do condomínio</label><input id="nc-gestor" placeholder="Nome do gestor"></div>
+    <div class="f-row">
+      <div class="field"><label for="nc-rua">Rua / Avenida</label><input id="nc-rua" placeholder="Ex.: Av. Julius Nyerere"></div>
+      <div class="field"><label for="nc-num">Número</label><input id="nc-num" class="num" placeholder="1247"></div>
+    </div>
+    ${sec('Estrutura')}
+    <div class="f-row3">
+      <div class="field"><label for="nc-moradias">Moradias</label><input id="nc-moradias" class="num" inputmode="numeric" placeholder="24"></div>
+      <div class="field"><label for="nc-quota">Quota (MT)</label><input id="nc-quota" class="num" inputmode="numeric" value="1500"></div>
+      <div class="field"><label for="nc-venc">Vencimento</label><input id="nc-venc" class="num" inputmode="numeric" value="5"></div>
+    </div>
+    ${sec('Gestor do condomínio')}
+    <div class="field"><label for="nc-gestor">Nome completo</label><input id="nc-gestor" placeholder="Nome do gestor"></div>
+    <div class="field"><label for="nc-email">Email</label><input id="nc-email" type="email" placeholder="gestor@exemplo.co.mz"></div>
+    <div class="f-row">
+      <div class="field"><label for="nc-tel">Contacto</label><input id="nc-tel" class="num" inputmode="tel" placeholder="84 000 0000"></div>
+      <div class="field"><label for="nc-tel2">Contacto alternativo</label><input id="nc-tel2" class="num" inputmode="tel" placeholder="Opcional"></div>
+    </div>
   </div>
   <div class="drawer-foot">
     <button class="btn btn-ghost sm" data-close>Cancelar</button>
