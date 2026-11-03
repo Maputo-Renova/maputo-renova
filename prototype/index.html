@@ -736,7 +736,7 @@ function scrGestorPainel(){
     <div><h1>Bom dia, Arlindo</h1><p class="sub">Jardim das Acácias · 24 flats · Sommerschield</p></div>
     <div class="page-head-actions">
       ${monthPicker()}
-      <button class="btn btn-primary" id="btn-lembretes">${ico('send','icon sm')}Enviar lembretes</button>
+      <span class="pill activo" title="SMS e email enviados automaticamente: 5 dias antes do vencimento, no vencimento e aos 3 e 7 dias de atraso">Lembretes automáticos</span>
     </div>
   </div>
   <div class="grid g-kpi">
@@ -869,8 +869,8 @@ function drawerFlat(f, condoNome, estadoActual){
     <ul class="row-list">${hist}</ul>
   </div>
   <div class="drawer-foot">
+    <span class="cell-sub" style="margin-right:auto;align-self:center">${['pendente','atraso'].includes(e)?'Lembretes automáticos por SMS e email · último: 08 Out':'Cobrança em dia'}</span>
     <button class="btn btn-ghost sm" data-close>Fechar</button>
-    <button class="btn btn-primary sm" data-lembrete="${f.id}">${ico('send','icon sm')}Enviar lembrete</button>
   </div>`;
 }
 function scrGestorTesouraria(){
@@ -916,6 +916,21 @@ function scrGestorAvisos(){
       <div class="field"><label for="av-c">Mensagem</label><textarea id="av-c" rows="4" placeholder="Escreva o aviso. O SMS usa os primeiros 150 caracteres."></textarea></div>
       <button class="btn btn-primary" id="btn-aviso" style="width:100%;justify-content:center">${ico('send','icon sm')}Enviar a 24 flats</button>
       <p class="hint" style="font-size:12px;color:var(--ink-3);margin-top:10px">Custo estimado: 24 SMS × 1,10 MT = <b class="num">26,40 MT</b></p>
+    </div>
+    <div class="card" style="align-self:start;grid-row:2">
+      <div class="card-head"><span class="card-ico">${ico('clock')}</span><h2>Régua de cobrança automática</h2></div>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:8px">O sistema envia SMS e email sem intervenção do gestor: 5 dias antes do vencimento, no vencimento, e aos 3 e 7 dias de atraso.</p>
+      <ul class="row-list">
+        <li><span class="row-ico g">${ico('send')}</span>
+          <div class="row-body"><div class="t">Lembrete D+3 · Outubro</div><div class="s">08 Out · 8 flats em falta</div></div>
+          <div class="row-end"><div class="cell-sub num">8 SMS · 8,80 MT</div></div></li>
+        <li><span class="row-ico g">${ico('send')}</span>
+          <div class="row-body"><div class="t">Dia do vencimento · Outubro</div><div class="s">05 Out · 13 flats em falta</div></div>
+          <div class="row-end"><div class="cell-sub num">13 SMS · 14,30 MT</div></div></li>
+        <li><span class="row-ico g">${ico('send')}</span>
+          <div class="row-body"><div class="t">Emissão da fatura · Outubro</div><div class="s">30 Set · 24 flats</div></div>
+          <div class="row-end"><div class="cell-sub num">24 SMS · 26,40 MT</div></div></li>
+      </ul>
     </div>
     <div class="card">
       <div class="card-head"><h2>Enviados</h2></div>
@@ -1272,7 +1287,7 @@ function scrAdminCondoDetail(){
       <h1>${c.nome}</h1><p class="sub">${c.zona} · Gestor: ${c.gestor} · ${c.flats} flats · Outubro 2026</p>
     </div>
     <div class="page-head-actions">
-      <button class="btn btn-ghost" data-lembretes-condo="${c.nome}">${ico('send','icon sm')}Enviar lembretes</button>
+      <span class="pill activo" title="SMS e email enviados automaticamente: 5 dias antes do vencimento, no vencimento e aos 3 e 7 dias de atraso">Lembretes automáticos</span>
       <button class="btn btn-primary" data-repasse="${S.condoSel||0}">${ico('bank','icon sm')}Registar repasse</button>
     </div>
   </div>
@@ -1502,8 +1517,6 @@ function bindScreen(el){
   el.querySelectorAll('[data-chip-fat]').forEach(b=>b.addEventListener('click',()=>{S.filtroFat=b.dataset.chipFat;render();}));
   const vt = el.querySelector('#ver-transf'); if(vt) vt.addEventListener('click',()=>setScreen('pagamentosG'));
   const vc = el.querySelector('#ver-condos'); if(vc) vc.addEventListener('click',()=>setScreen('condos'));
-  const lb = el.querySelector('#btn-lembretes');
-  if(lb) lb.addEventListener('click',()=>toast('Lembretes enviados por SMS e email às flats em falta'));
   const av = el.querySelector('#btn-aviso');
   if(av) av.addEventListener('click',()=>{
     const t = $('#av-t').value.trim();
@@ -1539,10 +1552,6 @@ function bindScreen(el){
     const i = +b.dataset.dflat;
     abrirDrawer(drawerFlat(S._detFlats[i], S._detNome, S._detEstados[i]));
     bindGlobais($('#drawer'));
-  }));
-  el.querySelectorAll('[data-lembretes-condo]').forEach(b=>b.addEventListener('click',e=>{
-    e.stopPropagation();
-    toast(`Lembretes enviados às flats em falta de ${b.dataset.lembretesCondo}`);
   }));
   el.querySelectorAll('[data-repasse]').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();
@@ -1726,7 +1735,6 @@ function bindGlobais(root){
     try{navigator.clipboard.writeText(b.dataset.copy);}catch(e){}
     toast('Referência copiada');
   }));
-  root.querySelectorAll('[data-lembrete]').forEach(b=>b.addEventListener('click',()=>{ fecharTudo(); toast('Lembrete enviado por SMS e email'); }));
   root.querySelectorAll('[data-save-despesa]').forEach(b=>b.addEventListener('click',()=>{ fecharTudo(); toast('Despesa registada na tesouraria'); }));
   root.querySelectorAll('[data-save-repasse]').forEach(b=>b.addEventListener('click',()=>{ fecharTudo(); toast('Repasse registado · o gestor foi notificado'); }));
 }
