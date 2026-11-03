@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-03T00:00:00Z",
+  "title": "Design System: Maputo Renova",
+  "extensions": {
+    "colorMeta": {
+      "verde-600": { "role": "primary", "displayName": "Verde Renova", "canonical": "#0E9F5B", "tonalRamp": ["#0A5C36", "#0C7A46", "#0E9F5B", "#4CBC87", "#8ED6B3", "#D7F0E2", "#E4F5EC", "#F1FAF5"] },
+      "tinta": { "role": "neutral", "displayName": "Tinta", "canonical": "#171E1A", "tonalRamp": ["#171E1A", "#2F3833", "#4F5953", "#5E6862", "#9AA39D", "#D4D6CE", "#E7E8E2", "#EFF0EA"] },
+      "canvas-quente": { "role": "neutral", "displayName": "Canvas Quente", "canonical": "#F4F4F1", "tonalRamp": ["#3B3B36", "#5A5A53", "#7C7C73", "#9E9E94", "#C0C0B6", "#D9D9D2", "#EAEAE5", "#F4F4F1"] },
+      "ambar-700": { "role": "state-pendente", "displayName": "Âmbar Pendente", "canonical": "#935410", "tonalRamp": ["#4A2A08", "#6E3F0C", "#935410", "#B97426", "#D99A4E", "#EEC78F", "#FBEFD9", "#FDF7EC"] },
+      "vermelho-700": { "role": "state-atraso", "displayName": "Vermelho Atraso", "canonical": "#B3362B", "tonalRamp": ["#591B15", "#862920", "#B3362B", "#CC5A50", "#E08A82", "#F0BCB7", "#FAE7E4", "#FCF3F1"] },
+      "azul-700": { "role": "state-confirmar", "displayName": "Azul A Confirmar", "canonical": "#2155A3", "tonalRamp": ["#102A52", "#193F7A", "#2155A3", "#4A77BC", "#7E9FD2", "#B4C8E7", "#E6EEFA", "#F2F6FC"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Valor da quota no pay-hero (38px/800); números apenas." },
+      "headline": { "displayName": "Headline", "purpose": "h1 de cada ecrã; 26px desktop, 22px mobile." },
+      "title": { "displayName": "Title", "purpose": "Cabeçalhos de cartão, drawer, modal." },
+      "body": { "displayName": "Body", "purpose": "Texto corrente 15px; células 14px; metadados 12.5-13.5px." },
+      "label": { "displayName": "Label", "purpose": "Micro-rótulos em MAIÚSCULAS: cabeçalhos de tabela, secções da navegação." }
+    },
+    "shadows": [
+      { "name": "shadow", "value": "0 1px 2px rgba(23,30,26,.05), 0 10px 28px rgba(23,30,26,.07)", "purpose": "Cartões em repouso; hover dos botões de método." },
+      { "name": "shadow-lift", "value": "0 2px 4px rgba(23,30,26,.06), 0 16px 40px rgba(23,30,26,.12)", "purpose": "Drawer, modal, toast, sidebar mobile aberta." },
+      { "name": "shadow-btn-primary", "value": "0 1px 2px rgba(23,30,26,.1), 0 6px 16px rgba(23,30,26,.14)", "purpose": "Único controlo com sombra em repouso: o botão primário." },
+      { "name": "shadow-pay-hero", "value": "0 2px 4px rgba(23,30,26,.08), 0 18px 40px rgba(23,30,26,.18)", "purpose": "A sombra mais funda, sob o único cartão em gradiente." }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(.16,1,.3,1)", "purpose": "Easing universal de todas as transições." },
+      { "name": "screen-in", "value": "fade + translateY(8px)->0, .32s", "purpose": "Única transição de ecrã autorada; sem animação de entrada das barras do gráfico." },
+      { "name": "state-micro", "value": ".12s-.16s", "purpose": "Hover/estado em botões, chips, linhas de tabela, barras." },
+      { "name": "surface", "value": ".22s-.3s", "purpose": "Drawer (slide), modal (fade + translateY 10px), toast (sobe 16px), overlay (fade)." }
+    ],
+    "breakpoints": [
+      { "name": "colapso-grelhas", "value": "1060px" },
+      { "name": "mobile", "value": "860px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão Primário",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "A acção principal do ecrã; uma por página. Verde Renova, pílula, sombra própria.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m21 3-9.5 9.5M21 3l-6.5 18-3-8.5L3 9.5Z\"/></svg>Enviar lembretes</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; gap:8px; font-family:'Manrope',system-ui,sans-serif; background:#0E9F5B; color:#fff; border:1px solid transparent; border-radius:999px; font-weight:700; font-size:13.5px; padding:10px 18px; cursor:pointer; box-shadow:0 1px 2px rgba(23,30,26,.1),0 6px 16px rgba(23,30,26,.14); transition:all .16s cubic-bezier(.16,1,.3,1); } .ds-btn-primary:hover { background:#0C7A46; transform:translateY(-1px); } .ds-btn-primary:focus-visible { outline:2px solid #0E9F5B; outline-offset:2px; }"
+    },
+    {
+      "name": "Botão Ghost",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Acção secundária: branco com borda, verde no hover.",
+      "html": "<button class=\"ds-btn-ghost\">Exportar</button>",
+      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; gap:8px; font-family:'Manrope',system-ui,sans-serif; background:#FFFFFF; color:#171E1A; border:1px solid #E7E8E2; border-radius:999px; font-weight:700; font-size:13.5px; padding:10px 18px; cursor:pointer; transition:all .16s cubic-bezier(.16,1,.3,1); } .ds-btn-ghost:hover { border-color:#0E9F5B; color:#0C7A46; } .ds-btn-ghost:focus-visible { outline:2px solid #0E9F5B; outline-offset:2px; }"
+    },
+    {
+      "name": "Pills de Estado",
+      "kind": "chip",
+      "refersTo": "pill-pago",
+      "description": "O vocabulário central: verde pago, âmbar pendente, vermelho atraso, azul a confirmar. Ponto 6px em currentColor.",
+      "html": "<span class=\"ds-pill ds-pago\">Pago</span> <span class=\"ds-pill ds-pendente\">Pendente</span> <span class=\"ds-pill ds-atraso\">Em atraso</span> <span class=\"ds-pill ds-confirmar\">A confirmar</span>",
+      "css": ".ds-pill { display:inline-flex; align-items:center; gap:6px; font-family:'Manrope',system-ui,sans-serif; border-radius:999px; font-size:12px; font-weight:700; padding:4px 11px; white-space:nowrap; margin-right:6px; } .ds-pill::before { content:\"\"; width:6px; height:6px; border-radius:50%; background:currentColor; } .ds-pago { background:#E4F5EC; color:#0A5C36; } .ds-pendente { background:#FBEFD9; color:#935410; } .ds-atraso { background:#FAE7E4; color:#B3362B; } .ds-confirmar { background:#E6EEFA; color:#2155A3; }"
+    },
+    {
+      "name": "Cartão KPI",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Cartão branco 16px com rótulo + ícone-caixa, valor tabular 29px/800 e comparação com seta.",
+      "html": "<div class=\"ds-kpi\"><div class=\"ds-kpi-lbl\"><span class=\"ds-kpi-ico\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M19 8V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2H8\"/><circle cx=\"16.5\" cy=\"13.5\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/></svg></span>Cobrado em Out</div><div class=\"ds-kpi-val\">28 800 MT</div><div class=\"ds-kpi-cmp\"><span class=\"ds-up\">↗ 77% do esperado</span><span>18 de 24 flats pagaram</span></div></div>",
+      "css": ".ds-kpi { font-family:'Manrope',system-ui,sans-serif; background:#FFFFFF; border-radius:16px; box-shadow:0 1px 2px rgba(23,30,26,.05),0 10px 28px rgba(23,30,26,.07); padding:22px; max-width:300px; } .ds-kpi-lbl { display:flex; align-items:center; gap:10px; color:#4F5953; font-size:13.5px; font-weight:700; } .ds-kpi-ico { width:36px; height:36px; border-radius:10px; background:#E4F5EC; color:#0C7A46; display:grid; place-items:center; } .ds-kpi-val { font-size:29px; font-weight:800; letter-spacing:-.02em; margin:10px 0 6px; color:#171E1A; font-variant-numeric:tabular-nums; } .ds-kpi-cmp { display:flex; flex-wrap:wrap; gap:4px 8px; font-size:12.5px; font-weight:700; color:#5E6862; } .ds-up { color:#0C7A46; }"
+    },
+    {
+      "name": "Input de Formulário",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo com label 13px/700, borda 10px, foco verde com anel de 3px.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-lbl\">Proprietário</span><input class=\"ds-input\" type=\"text\" placeholder=\"Nome completo\"><span class=\"ds-field-hint\">Como consta no título de propriedade</span></label>",
+      "css": ".ds-field { display:flex; flex-direction:column; gap:6px; font-family:'Manrope',system-ui,sans-serif; max-width:300px; } .ds-field-lbl { font-size:13px; font-weight:700; color:#4F5953; } .ds-input { border:1px solid #E7E8E2; border-radius:10px; padding:11px 13px; font-size:14px; font-family:inherit; background:#FFFFFF; color:#171E1A; transition:border-color .14s cubic-bezier(.16,1,.3,1), box-shadow .14s cubic-bezier(.16,1,.3,1); } .ds-input::placeholder { color:#5E6862; } .ds-input:hover { border-color:#CFD2C8; } .ds-input:focus { outline:none; border-color:#0E9F5B; box-shadow:0 0 0 3px #E4F5EC; } .ds-field-hint { font-size:12px; color:#5E6862; }"
+    },
+    {
+      "name": "Item de Navegação",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Sidebar branca: item 14px/600, activo em pastilha verde-100 com texto verde-800 e badge verde.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-item ds-on\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#0C7A46\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3.5\" y=\"3.5\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"13.5\" y=\"3.5\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"3.5\" y=\"13.5\" width=\"7\" height=\"7\" rx=\"2\"/><rect x=\"13.5\" y=\"13.5\" width=\"7\" height=\"7\" rx=\"2\"/></svg>Painel</button><button class=\"ds-nav-item\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 9.5 12 4l9 5.5M5 10v7M9.5 10v7M14.5 10v7M19 10v7M3 20h18\"/></svg>Transferências<span class=\"ds-nav-badge\">2</span></button></nav>",
+      "css": ".ds-nav { display:flex; flex-direction:column; gap:6px; width:228px; background:#FFFFFF; padding:8px; border-radius:16px; font-family:'Manrope',system-ui,sans-serif; } .ds-nav-item { display:flex; align-items:center; gap:11px; width:100%; padding:10px 12px; border-radius:11px; border:none; background:none; color:#4F5953; font-weight:600; font-size:14px; font-family:inherit; cursor:pointer; transition:background .15s cubic-bezier(.16,1,.3,1), color .15s cubic-bezier(.16,1,.3,1); text-align:left; } .ds-nav-item:hover { background:#EFF0EA; color:#171E1A; } .ds-nav-item.ds-on { background:#E4F5EC; color:#0A5C36; } .ds-nav-badge { margin-left:auto; background:#0E9F5B; color:#fff; font-size:12px; font-weight:700; border-radius:999px; padding:1px 7px; }"
+    },
+    {
+      "name": "Chip de Filtro",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filtro em pílula; seleccionado vira tinta sólida (não verde).",
+      "html": "<button class=\"ds-chip ds-chip-on\">Todas</button> <button class=\"ds-chip\">Pagas</button> <button class=\"ds-chip\">Em atraso</button>",
+      "css": ".ds-chip { font-family:'Manrope',system-ui,sans-serif; padding:7px 14px; border-radius:999px; border:1px solid #E7E8E2; background:#FFFFFF; font-size:12.5px; font-weight:700; color:#4F5953; cursor:pointer; margin-right:4px; transition:all .14s cubic-bezier(.16,1,.3,1); } .ds-chip:hover { border-color:#0E9F5B; color:#0C7A46; } .ds-chip-on, .ds-chip-on:hover { background:#171E1A; border-color:#171E1A; color:#fff; }"
+    },
+    {
+      "name": "Pay-hero",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Assinatura do portal do proprietário: o único cartão em gradiente verde, com o valor da quota a 38px/800.",
+      "html": "<div class=\"ds-pay-hero\"><div class=\"ds-ph-lbl\">Quota de Outubro</div><div class=\"ds-ph-val\">1 500 <small>MT</small></div><div class=\"ds-ph-sub\">Flat 302 · Bloco A · vence a 31 de Outubro</div></div>",
+      "css": ".ds-pay-hero { font-family:'Manrope',system-ui,sans-serif; background:linear-gradient(135deg,#0C7A46,#0E9F5B); color:#fff; border-radius:16px; padding:26px; box-shadow:0 2px 4px rgba(23,30,26,.08),0 18px 40px rgba(23,30,26,.18); max-width:340px; } .ds-ph-lbl { font-size:13.5px; font-weight:700; opacity:.85; } .ds-ph-val { font-size:38px; font-weight:800; letter-spacing:-.02em; margin:6px 0 2px; font-variant-numeric:tabular-nums; } .ds-ph-val small { font-size:18px; font-weight:700; opacity:.8; } .ds-ph-sub { font-size:13px; opacity:.85; font-weight:600; }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "button-dark",
+      "description": "Confirmação em pílula tinta com check verde; fundo-centro, auto-esconde.",
+      "html": "<div class=\"ds-toast\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#0E9F5B\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12.5 4.5 4.5L19 7.5\"/></svg><span>Transferência confirmada — Flat 302</span></div>",
+      "css": ".ds-toast { display:inline-flex; align-items:center; gap:9px; font-family:'Manrope',system-ui,sans-serif; background:#171E1A; color:#fff; border-radius:999px; padding:11px 20px; font-size:13.5px; font-weight:700; box-shadow:0 2px 4px rgba(23,30,26,.06),0 16px 40px rgba(23,30,26,.12); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "O Extracto Bancário Vivo",
+    "overview": "Maputo Renova fala a gramática visual que os seus utilizadores já conhecem das apps bancárias: um dashboard SaaS financeiro canónico, executado com precisão de referência. Tela quente levemente esverdeada, cartões brancos de cantos generosos com sombras suaves deslocadas, e um único verde de marca que faz todo o trabalho de acção e identidade. Não há ornamento nem ritual experimental; a diferenciação vive na clareza absoluta dos estados de pagamento — quatro pills de cor dizem em meio segundo quem pagou, quem deve, quem está em atraso e o que espera confirmação. A interface é 100% em português (Moçambique, ortografia pré-AO), e os números mandam: Manrope com numerais tabulares, valores em MZN formatados \"1 500 MT\" com espaço como separador de milhares.",
+    "keyCharacteristics": [
+      "Um único verde de marca (#0E9F5B) com rampa própria; nenhuma segunda cor de acção.",
+      "Estados de pagamento como vocabulário central: verde pago, âmbar pendente, vermelho atraso, azul a confirmar — sempre fundo claro + texto escuro do mesmo matiz + ponto de 6px.",
+      "Cartões brancos flutuando sobre canvas quente; profundidade por sombra dupla suave, nunca por borda pesada.",
+      "Ícones SVG inline de stroke 1.75, cantos e pontas arredondados; nenhuma icon font.",
+      "Uma única transição de ecrã autorada (fade + subida de 8px); o resto do movimento é micro-feedback de estado."
+    ],
+    "rules": [
+      { "name": "The Um Só Verde Rule", "body": "O verde é a única cor de marca e de acção. Âmbar, vermelho e azul nunca aparecem como decoração ou acção primária; só existem como semântica de estado, sempre no par fundo-claro + texto-escuro do mesmo matiz.", "section": "colors" },
+      { "name": "The Par de Estado Rule", "body": "Um estado nunca é só cor de texto nem só fundo: é sempre pill (fundo 100 + texto 700/800 + ponto currentColor de 6px) ou ícone-em-caixa com os mesmos pares. As únicas excepções de cor plena são os logótipos dos métodos de pagamento (M-Pesa #C41318, eMola #F28A00), que são identidade de terceiros, não estado.", "section": "colors" },
+      { "name": "The Numerais Tabulares Rule", "body": "Todo o valor monetário, telefone, referência ou número alinhável leva font-variant-numeric: tabular-nums. Moeda formata-se \"1 500 MT\" — espaço como separador de milhares, \"MT\" depois do valor.", "section": "typography" },
+      { "name": "The Peso Faz a Hierarquia Rule", "body": "A hierarquia constrói-se com peso (400→700→800) e cor (tinta→tinta-2→tinta-3) antes de tamanho. Não existem itálicos, serifas, nem segunda família.", "section": "typography" },
+      { "name": "The Sombra Dupla Rule", "body": "Toda a sombra é um par: um contacto curto (1–2px) + um halo largo e difuso (16–40px), ambos tinta a ≤.18 de opacidade. Nunca sombras duras, nunca offset lateral, nunca preto puro.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar verde-600 (#0E9F5B) como única cor de acção; hover sempre verde-700 e, nos botões primário/dark, translateY(-1px).",
+      "Do marcar todo o estado de pagamento com a pill canónica (fundo 100 + texto 700/800 + ponto 6px) e todo o número com .num tabular, moeda \"1 500 MT\".",
+      "Do desenhar ícones como SVG inline 24×24, stroke 1.75 (stroke-linecap/linejoin: round), fill none — 20px por defeito, 16px em sm.",
+      "Do manter cartões brancos raio 16px com --shadow e padding 22px sobre o canvas #F4F4F1; caixas aninhadas voltam ao canvas com borda linha.",
+      "Do colapsar tabelas em listas empilhadas (descrição à esquerda, valores/pills à direita) abaixo de 860px.",
+      "Do escrever toda a interface em português de Moçambique (pré-AO: \"activo\", \"acção\", \"Outubro corrente\") e manter dados de demonstração rotulados."
+    ],
+    "donts": [
+      "Don't introduzir uma segunda cor de marca, gradientes fora do pay-hero, ou âmbar/vermelho/azul como decoração — são exclusivamente semântica de estado.",
+      "Don't usar sombras duras, offsets laterais ou bordas em cartões; profundidade é sempre o par sombra-curta + halo difuso em tinta.",
+      "Don't animar a entrada das barras do gráfico nem adicionar transições de ecrã além do screen-in único; nada de ornamento em movimento.",
+      "Don't usar icon fonts, emojis, segunda família tipográfica, itálicos ou cantos vivos; Manrope por peso faz toda a hierarquia.",
+      "Don't usar vermelho sólido em botões — o perigo é sempre ghost com texto vermelho que só ganha fundo vermelho-100 no hover."
+    ]
+  }
+}
