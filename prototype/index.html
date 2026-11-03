@@ -510,11 +510,19 @@ const CONDOS = [
   {nome:'Residencial Katembe Sul', zona:'Katembe', flats:20, cobrado:24.0, esperado:30.0, atraso:5, saldo:41800, gestor:'Dulce Mahumane'},
 ];
 const COLABS = [
-  {nome:'Stélio Nhantumbo', tel:'84 512 0098', cadastros:38, desde:'Mar 2026', estado:'activo'},
-  {nome:'Yolanda Macie', tel:'82 330 4471', cadastros:52, desde:'Mar 2026', estado:'activo'},
-  {nome:'Benedito Chirindza', tel:'85 221 7733', cadastros:19, desde:'Jun 2026', estado:'activo'},
-  {nome:'Gina Mavale', tel:'84 908 1126', cadastros:7, desde:'Set 2026', estado:'suspenso'},
+  {nome:'Nádia Waty', tel:'84 300 1001', funcao:'Administrador', area:'Consola total', desde:'Jan 2026', estado:'activo', eu:true},
+  {nome:'Stélio Nhantumbo', tel:'84 512 0098', funcao:'Agente', area:'38 cadastros', desde:'Mar 2026', estado:'activo'},
+  {nome:'Yolanda Macie', tel:'82 330 4471', funcao:'Agente', area:'52 cadastros', desde:'Mar 2026', estado:'activo'},
+  {nome:'Benedito Chirindza', tel:'85 221 7733', funcao:'Agente', area:'19 cadastros', desde:'Jun 2026', estado:'activo'},
+  {nome:'Gina Mavale', tel:'84 908 1126', funcao:'Agente', area:'7 cadastros', desde:'Set 2026', estado:'suspenso'},
+  {nome:'Arlindo Macuácua', tel:'84 115 2230', funcao:'Gestor', area:'Jardim das Acácias', desde:'Fev 2026', estado:'activo'},
+  {nome:'Lídia Monjane', tel:'82 667 3410', funcao:'Gestor', area:'Edifício Marginal 42', desde:'Mar 2026', estado:'activo'},
+  {nome:'Hermínio Matola', tel:'85 902 1178', funcao:'Gestor', area:'Condomínio Polana Mar', desde:'Mai 2026', estado:'activo'},
+  {nome:'Salomão Vilanculos', tel:'84 779 0455', funcao:'Gestor', area:'Torres do Alto Maé', desde:'Jun 2026', estado:'activo'},
+  {nome:'Dulce Mahumane', tel:'86 220 8841', funcao:'Gestor', area:'Residencial Katembe Sul', desde:'Out 2026', estado:'activo'},
 ];
+const FN_PILL = {Administrador:['confirmar','Administrador'], Agente:['neutro','Agente'], Gestor:['pago','Gestor']};
+const pillFn = f => { const [c,l]=FN_PILL[f]; return `<span class="pill ${c}">${l}</span>`; };
 const MOVS = [
   {t:'credito', d:'Quota Out · Flat 101 · M-Pesa', v:1500, data:'30 Out'},
   {t:'taxa', d:'Taxa da plataforma (5%)', v:-75, data:'30 Out'},
@@ -635,7 +643,7 @@ const ROLES = {
   admin:{label:'Consola', user:'Nádia Waty', sub:'Super administradora', nav:[
     ['visao','Visão geral','grid'],['condos','Condomínios','building'],['colabs','Colaboradores','users'],['repasses','Repasses','bank'],['config','Configuração','settings'],
   ]},
-  colaborador:{label:'Colaborador', user:'Stélio Nhantumbo', sub:'Cadastro de condomínios', nav:[
+  colaborador:{label:'Agente', user:'Stélio Nhantumbo', sub:'Cadastro de condomínios', nav:[
     ['cadastro','Cadastro','plus'],['convites','Convites','key'],
   ]},
 };
@@ -1358,25 +1366,31 @@ function scrAdminCondoDetail(){
   </div>`;
 }
 function scrAdminColabs(){
+  const filtro = S.filtroColab || 'todos';
+  const lista = S.colabs.map((c,i)=>({c,i})).filter(({c}) => filtro==='todos' || c.funcao===filtro);
+  const chips = [['todos','Todos'],['Administrador','Administradores'],['Agente','Agentes'],['Gestor','Gestores']];
   return `
   <div class="page-head">
-    <div><h1>Colaboradores</h1><p class="sub">Gestão exclusiva do super administrador · todas as acções ficam em auditoria</p></div>
+    <div><h1>Colaboradores</h1><p class="sub">Equipa da plataforma — gestão exclusiva do super administrador, com auditoria</p></div>
     <div class="page-head-actions"><button class="btn btn-primary" id="btn-novo-colab">${ico('plus','icon sm')}Novo colaborador</button></div>
   </div>
-  <div class="card"><div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th>Colaborador</th><th class="r">Cadastros</th><th>Desde</th><th>Estado</th><th class="r"></th></tr></thead>
-    <tbody>${S.colabs.map((c,i)=>`
+  <div class="card">
+    <div class="card-head"><div class="chips">${chips.map(([k,l])=>`<button class="chip ${filtro===k?'on':''}" data-chip-colab="${k}">${l}</button>`).join('')}</div></div>
+    <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Colaborador</th><th>Função</th><th>Área</th><th>Desde</th><th>Estado</th><th class="r"></th></tr></thead>
+    <tbody>${lista.map(({c,i})=>`
       <tr>
-        <td><div class="cell-main">${c.nome}</div><div class="cell-sub num">+258 ${c.tel}</div></td>
-        <td class="r num b">${c.cadastros}</td>
+        <td><div class="cell-main">${c.nome}${c.eu?' <span class="cell-sub">(você)</span>':''}</div><div class="cell-sub num">+258 ${c.tel}</div></td>
+        <td>${pillFn(c.funcao)}</td>
+        <td>${c.area}</td>
         <td>${c.desde}</td>
         <td><span class="pill ${c.estado}">${c.estado==='activo'?'Activo':'Suspenso'}</span></td>
-        <td class="r">${c.estado==='activo'
+        <td class="r">${c.eu?'<span class="cell-sub">—</span>':c.estado==='activo'
           ?`<button class="btn btn-danger sm" data-susp="${i}">Suspender</button>`
           :`<button class="btn btn-ghost sm" data-react="${i}">Reactivar</button>`}</td>
       </tr>`).join('')}</tbody>
   </table></div></div>
-  <div class="note mt">${ico('shield','icon sm')}<span>Um colaborador suspenso perde o acesso de imediato; o histórico de cadastros fica preservado.</span></div>`;
+  <div class="note mt">${ico('shield','icon sm')}<span><b>Agente</b> faz os cadastros de condomínios e flats (sem finanças); <b>Administrador</b> tem acesso total à consola; <b>Gestor</b> gere apenas o seu condomínio. Um colaborador suspenso perde o acesso de imediato; o histórico fica preservado.</span></div>`;
 }
 function scrAdminRepasses(){
   return `
@@ -1585,6 +1599,26 @@ function bindScreen(el){
     abrirModal(modalPagar()); bindGlobais($('#modal'));
     $('#modal').querySelectorAll('[data-m]').forEach(x=>x.addEventListener('click',()=>abrirPagamento(x.dataset.m)));
   }));
+  const nc2 = el.querySelector('#btn-novo-colab');
+  if(nc2) nc2.addEventListener('click',()=>{
+    abrirDrawer(drawerNovoColab()); bindGlobais($('#drawer'));
+    $('#cl-funcao').addEventListener('change',()=>{
+      $('#cl-condo-wrap').style.display = $('#cl-funcao').value==='Gestor' ? '' : 'none';
+    });
+    $('#btn-save-colab').addEventListener('click',()=>{
+      const nome = $('#cl-nome').value.trim(), tel = $('#cl-tel').value.trim(), fn = $('#cl-funcao').value;
+      if(!nome){ toast('Escreva o nome do colaborador'); $('#cl-nome').focus(); return; }
+      if(!$('#cl-email').value.trim()){ toast('Indique o email para o convite'); $('#cl-email').focus(); return; }
+      if(!tel){ toast('Indique o contacto'); $('#cl-tel').focus(); return; }
+      S.colabs.push({nome, tel, funcao:fn,
+        area: fn==='Gestor' ? $('#cl-condo').value : fn==='Administrador' ? 'Consola total' : '0 cadastros',
+        desde:'Hoje', estado:'activo'});
+      fecharTudo();
+      toast(`${fn} ${nome.split(' ')[0]} criado · convite enviado por email`);
+      render();
+    });
+  });
+  el.querySelectorAll('[data-chip-colab]').forEach(b=>b.addEventListener('click',()=>{S.filtroColab=b.dataset.chipColab;render();}));
   el.querySelectorAll('[data-susp]').forEach(b=>b.addEventListener('click',()=>{
     const c = S.colabs[+b.dataset.susp]; c.estado='suspenso';
     toast(`${c.nome} suspenso · registado na auditoria`); render();
@@ -1780,6 +1814,28 @@ function drawerNovoCondo(){
   <div class="drawer-foot">
     <button class="btn btn-ghost sm" data-close>Cancelar</button>
     <button class="btn btn-primary sm" id="btn-save-condo">${ico('check','icon sm')}Criar condomínio</button>
+  </div>`;
+}
+function drawerNovoColab(){
+  return `
+  <div class="drawer-head"><h3>Novo colaborador</h3><span style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
+  <div class="drawer-body">
+    <div class="field"><label for="cl-funcao">Função</label>
+      <select id="cl-funcao">
+        <option value="Agente">Agente — faz os cadastros de condomínios e flats</option>
+        <option value="Administrador">Administrador — acesso total à consola</option>
+        <option value="Gestor">Gestor — gere um condomínio</option>
+      </select></div>
+    <div class="field" id="cl-condo-wrap" style="display:none"><label for="cl-condo">Condomínio a gerir</label>
+      <select id="cl-condo">${CONDOS.map(c=>`<option>${c.nome}</option>`).join('')}</select></div>
+    <div class="field"><label for="cl-nome">Nome completo</label><input id="cl-nome" placeholder="Nome do colaborador"></div>
+    <div class="field"><label for="cl-email">Email</label><input id="cl-email" type="email" placeholder="email@exemplo.co.mz"><span class="hint">O convite de acesso é enviado para este email.</span></div>
+    <div class="field"><label for="cl-tel">Contacto</label><input id="cl-tel" class="num" inputmode="tel" placeholder="84 000 0000"></div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost sm" data-close>Cancelar</button>
+    <button class="btn btn-primary sm" id="btn-save-colab">${ico('check','icon sm')}Criar e convidar</button>
   </div>`;
 }
 function drawerNovaConta(){
