@@ -555,11 +555,9 @@ const FN_PILL = {Administrador:['confirmar','Administrador'], Agente:['neutro','
 const pillFn = f => { const [c,l]=FN_PILL[f]; return `<span class="pill ${c}">${l}</span>`; };
 const MOVS = [
   {t:'credito', d:'Quota Out · Flat 101 · M-Pesa', v:1500, data:'30 Out'},
-  {t:'taxa', d:'Taxa da plataforma (5%)', v:-75, data:'30 Out'},
   {t:'credito', d:'Quota Out · Flat 204 · M-Pesa', v:1800, data:'29 Out'},
-  {t:'taxa', d:'Taxa da plataforma (5%)', v:-90, data:'29 Out'},
   {t:'credito', d:'Quota Out · Flat 106 · Transferência', v:1500, data:'28 Out'},
-  {t:'taxa', d:'Taxa da plataforma (5%)', v:-75, data:'28 Out'},
+  {t:'credito', d:'Quota Out · Flat 202 · M-Pesa', v:1500, data:'27 Out'},
   {t:'repasse', d:'Repasse de Setembro · BIM ···4471', v:-29830, data:'06 Out'},
 ];
 const DESPESAS = [
@@ -648,7 +646,7 @@ const S = {
   transf:[...TRANSF],
   pagos:{},                   // overrides: flatId -> 'pago'
   colabs: COLABS.map(c=>({...c})),
-  taxas:{mpesa:1.2, emola:1.5, plataforma:5.0},
+  taxas:{mpesa:1.2, emola:1.5, manutencao:15},
   convitesCopiados:{},
   tickets: TICKETS_INIT.map(t=>({...t})),
   proxTicket: 5,
@@ -1022,7 +1020,7 @@ function scrGestorAvisos(){
    PROPRIETÁRIO
    ============================================================ */
 function scrPropInicio(){
-  const taxa = Math.round(1500*S.taxas.mpesa)/100;
+  const man = Math.round(1500*S.taxas.manutencao)/100;
   const atr = FATURAS_PROP.find(f=>f.estado==='atraso');
   return `
   <div class="page-head">
@@ -1041,8 +1039,8 @@ function scrPropInicio(){
         <div class="q-sub">Vence a 5 de Novembro · Referência <b class="num">MR-000832</b></div>
         <div style="margin-top:18px">
           <div class="pay-split"><span>Quota do condomínio</span><b class="num">1 500 MT</b></div>
-          <div class="pay-split"><span>Taxa M-Pesa (${String(S.taxas.mpesa).replace('.',',')}%)</span><b class="num">${fmtD(taxa)} MT</b></div>
-          <div class="pay-split"><span>Total a pagar por M-Pesa</span><b class="num">${fmtD(1500+taxa)} MT</b></div>
+          <div class="pay-split"><span>Taxa de manutenção (15%)</span><b class="num">${fmtD(man)} MT</b></div>
+          <div class="pay-split"><span>Total a pagar</span><b class="num">${fmtD(1500+man)} MT</b></div>
         </div>
       </div>
       <div class="note mt">${ico('shield','icon sm')}<span>O seu pagamento é confirmado automaticamente e o recibo chega por SMS e email.</span></div>
@@ -1089,11 +1087,11 @@ function modalPagar(){
 }
 function modalMpesa(rede){
   const nome = rede==='mpesa'?'M-Pesa':'eMola';
-  const taxa = Math.round(ctxPay().valor*(rede==='mpesa'?S.taxas.mpesa:S.taxas.emola))/100;
+  const taxa = Math.round(ctxPay().valor*S.taxas.manutencao)/100;
   return `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
     <span class="m-ico ${rede}" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:8.5px;line-height:1.1;text-align:center">${rede==='mpesa'?'M-PESA':'e-MOLA'}</span>
-    <div><h3 style="font-size:17px;font-weight:800">Pagar ${ctxPay().mes} com ${nome}</h3><div class="cell-sub num">Total: ${fmtD(ctxPay().valor+taxa)} MT (quota + taxa)</div></div>
+    <div><h3 style="font-size:17px;font-weight:800">Pagar ${ctxPay().mes} com ${nome}</h3><div class="cell-sub num">Total: ${fmtD(ctxPay().valor+taxa)} MT (quota + manutenção 15%)</div></div>
     <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
   </div>
   <div class="field"><label for="msisdn">Número ${nome}</label><input id="msisdn" class="num" inputmode="tel" value="84 210 1240"></div>
@@ -1123,7 +1121,7 @@ function modalBanco(){
     <h3 style="font-size:17px;font-weight:800">Transferência bancária</h3>
     <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
   </div>
-  <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:12px">Transfira <b class="num">${MT(ctxPay().valor)}</b> (${ctxPay().mes}) para a conta do condomínio e use a referência no descritivo:</p>
+  <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:12px">Transfira <b class="num">${MT(Math.round(ctxPay().valor*(1+S.taxas.manutencao/100)))}</b> (${ctxPay().mes} · quota + manutenção 15%) e use a referência no descritivo:</p>
   <div class="ref-box num">${ctxPay().ref} <button class="copy-btn" data-copy="${ctxPay().ref}">${ico('copy','icon sm')}Copiar</button></div>
   <div class="f-row" style="margin-top:14px">
     <div class="field"><label>Banco</label><input value="BIM" readonly></div>
@@ -1279,7 +1277,7 @@ function scrPropAvisos(){
    ============================================================ */
 function scrAdminVisao(){
   const proc = CONDOS.reduce((s,c)=>s+c.cobrado,0)*1000;
-  const receita = proc*S.taxas.plataforma/100;
+  const receita = proc*S.taxas.manutencao/100;
   return `
   <div class="page-head">
     <div><h1>Visão geral</h1><p class="sub">Todas as organizações · Outubro 2026</p></div>
@@ -1287,8 +1285,8 @@ function scrAdminVisao(){
   </div>
   <div class="grid g-kpi">
     ${kpi('Cobranças processadas','wallet',MT(proc),`<span class="up">${ico('arrUp','icon sm')} +6,1%</span><span>vs. Setembro</span>`)}
-    ${kpi('Receita da plataforma','arrUp',MT(receita),`${String(S.taxas.plataforma).replace('.',',')}% sobre cobranças confirmadas`)}
-    ${kpi('Taxas de operadores','receipt',MT(3185),'M-Pesa 1,2% · absorvida pelos apartamentos')}
+    ${kpi('Taxa de manutenção (15%)','arrUp',MT(receita),'Cobrada aos apartamentos sobre a quota')}
+    ${kpi('Taxas de operadores','receipt',MT(3185),'M-Pesa 1,2% · deduzidas dos 15% de manutenção')}
   </div>
   ${S.gestoresPendentes.length?`
   <div class="card mt" style="border:1px solid var(--amber-700);background:#FFFDF8">
@@ -1338,14 +1336,14 @@ function scrAdminCondos(){
     <div class="page-head-actions"><button class="btn btn-primary" data-novo-condo>${ico('plus','icon sm')}Novo condomínio</button></div>
   </div>
   <div class="card"><div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th>Condomínio</th><th>Gestor</th><th class="r">Flats</th><th class="r">Esperado/mês</th><th class="r">% plataforma</th><th>Estado</th><th class="r"></th></tr></thead>
+    <thead><tr><th>Condomínio</th><th>Gestor</th><th class="r">Flats</th><th class="r">Esperado/mês</th><th class="r">% manutenção</th><th>Estado</th><th class="r"></th></tr></thead>
     <tbody>${CONDOS.map((c,i)=>`
       <tr data-condo="${i}" title="Abrir ${c.nome}">
         <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona}</div></td>
         <td data-th="Gestor">${c.gestor}</td>
         <td class="r num" data-th="Flats">${c.flats}</td>
         <td class="r num b" data-th="Esperado/mês">${MT(c.esperado*1000)}</td>
-        <td class="r num" data-th="% plataforma">${i===3?'4,0%':'5,0%'}</td>
+        <td class="r num" data-th="% manutenção">${i===3?'12,0%':'15,0%'}</td>
         <td><span class="pill activo">Activo</span></td>
         <td class="r"><span class="link">Abrir</span></td>
       </tr>`).join('')}</tbody>
@@ -1474,7 +1472,7 @@ function scrAdminConfig(){
   <div class="grid g-12">
     <div class="card" style="align-self:start">
       <div class="card-head"><span class="card-ico">${ico('phone')}</span><h2>Métodos digitais</h2></div>
-      <p style="font-size:13px;color:var(--ink-2);margin-bottom:6px">Confirmação automática por webhook. Taxas absorvidas pelo apartamento (padrão, configurável por condomínio); cada pagamento grava a taxa do momento da transacção.</p>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:6px">Confirmação automática por webhook. As taxas dos operadores são <b>deduzidas da taxa de manutenção de 15%</b> — nunca cobradas à parte ao morador. Cada pagamento grava a taxa do momento da transacção.</p>
       <div class="cfg-row">
         <span class="m-ico mpesa" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:9px">M-PESA</span>
         <div class="row-body"><div class="t">M-Pesa</div><div class="s">Vodacom · conta business 171717 · activo</div></div>
@@ -1516,10 +1514,10 @@ function scrAdminConfig(){
     </div>`).join('')}
   </div>
   <div class="card mt" style="max-width:620px">
-    <div class="card-head"><span class="card-ico">${ico('wallet')}</span><h2>Receita da plataforma</h2></div>
-    <div class="field"><label for="tx-plat">Percentagem padrão sobre cobranças confirmadas</label>
-      <input id="tx-plat" class="num" value="${String(S.taxas.plataforma).replace('.',',')} %" style="max-width:120px">
-      <span class="hint">Deduzida no razão de cada condomínio no momento da confirmação. Overrides por condomínio na ficha de cada um.</span>
+    <div class="card-head"><span class="card-ico">${ico('wallet')}</span><h2>Taxa de manutenção</h2></div>
+    <div class="field"><label for="tx-plat">Percentagem cobrada ao apartamento sobre a quota</label>
+      <input id="tx-plat" class="num" value="${S.taxas.manutencao} %" style="max-width:120px">
+      <span class="hint">O morador vê apenas esta taxa. Todas as outras — operadores (M-Pesa, eMola), SMS — são deduzidas destes 15%; o remanescente é a receita da plataforma. Overrides por condomínio na ficha de cada um.</span>
     </div>
     <div class="note">${ico('shield','icon sm')}<span>Alterações de taxas e de contas ficam registadas na auditoria e só se aplicam a cobranças futuras.</span></div>
   </div>`;
@@ -1956,7 +1954,7 @@ function abrirPagamento(m){
   const push = $('#btn-push');
   if(push) push.addEventListener('click',()=>{
     abrirModal(modalPush(m));
-    const taxa = Math.round(ctxPay().valor*(m==='mpesa'?S.taxas.mpesa:S.taxas.emola))/100;
+    const taxa = Math.round(ctxPay().valor*S.taxas.manutencao)/100;
     setTimeout(()=>{ abrirModal(modalRecibo(ctxPay().valor+taxa)); bindGlobais($('#modal')); }, 2200);
   });
   const up = $('#btn-upload');

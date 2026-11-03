@@ -11,8 +11,8 @@ Sistema de gestão de condomínios para Maputo, Moçambique. Multi-condomínio (
 ## Modelo financeiro
 
 - **Pagamentos directos** (sem agregador): M-Pesa e eMola entram na conta business da empresa operadora; a plataforma é um sistema de **cobrança e repasse**.
-- **Taxa do operador** (M-Pesa/eMola): absorvida pelo **apartamento** (o proprietário paga quota + taxa), configurável por condomínio.
-- **Receita da plataforma:** **% sobre cobranças processadas**, configurada pelo super admin (padrão global + override por condomínio), deduzida no razão de cada cobrança confirmada.
+- **Taxa de manutenção de 15%** (configurável pelo super admin; override por condomínio): é a **única taxa que o morador vê** — paga quota + 15% em qualquer método. **Todas as outras taxas saem destes 15%**: taxas dos operadores (M-Pesa/eMola), custos de SMS, etc.; o remanescente é a receita da plataforma.
+- **O condomínio recebe a quota por inteiro** no seu razão; a manutenção pertence à plataforma.
 - **Repasses:** manuais no MVP (transferência bancária ao condomínio, com comprovativo); cada condomínio tem um livro-razão (créditos de cobranças − taxa da plataforma − repasses = saldo a repassar).
 - Cada pagamento grava **valor bruto, taxa do operador e valor líquido no momento da transacção** (taxas mudam; nunca recalcular retroactivamente).
 
