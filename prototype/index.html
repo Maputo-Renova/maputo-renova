@@ -354,6 +354,18 @@ body.auth .screen{max-width:480px;padding-top:6vh}
   .tbl td.r,.tbl td:has(.pill){grid-column:2;text-align:right;justify-self:end}
   .tbl td:not(.r):not(:has(.pill)){grid-column:1}
   .tbl-wrap{margin:0;padding:0;overflow:visible}
+  /* cabeçalho de cada valor nas tabelas empilhadas */
+  .tbl td[data-th]::before{
+    content:attr(data-th);display:block;font-size:12px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px;
+  }
+  /* listas: acções passam para baixo em vez de esmagar o texto */
+  .row-list>li{flex-wrap:wrap}
+  .row-list>li .row-body{flex:1 1 180px}
+  .row-list>li .row-end{margin-left:auto}
+  /* linhas de configuração: ícone + conteúdo em grelha, acções por baixo */
+  .cfg-row{display:grid;grid-template-columns:38px 1fr;align-items:start;gap:6px 12px}
+  .cfg-row>*:nth-child(n+3){grid-column:2;justify-self:start}
   /* gráfico condensado: últimos 6 meses */
   .chart-bars{grid-template-columns:repeat(6,1fr);gap:10px;height:150px}
   .bar-col:nth-child(-n+6){display:none}
@@ -845,8 +857,8 @@ function tabelaFlats(lista){
       <tr>
         <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar · <span class="num">${f.regref}</span></div></td>
         <td><div class="cell-main">${f.nome}</div><div class="cell-sub num">${f.tel}</div></td>
-        <td class="r num b">${MT(f.quota)}</td>
-        <td>${metodoDe(f) || '<span class="cell-sub">—</span>'}</td>
+        <td class="r num b" data-th="Quota">${MT(f.quota)}</td>
+        <td data-th="Método">${metodoDe(f) || '<span class="cell-sub">—</span>'}</td>
         <td>${pill(estadoDe(f))}</td>
         <td class="r"><button class="link" data-flat="${f.id}">Ver</button></td>
       </tr>`).join('')}</tbody>
@@ -1145,9 +1157,9 @@ function scrPropFaturas(){
       <tbody>${lista.map(f=>`
         <tr>
           <td><div class="cell-main">${f.mes}</div><div class="cell-sub num">${f.ref}</div></td>
-          <td class="num">${f.venc}</td>
-          <td class="r num b">${MT(f.valor)}</td>
-          <td>${f.estado==='pago'
+          <td class="num" data-th="Vencimento">${f.venc}</td>
+          <td class="r num b" data-th="Valor">${MT(f.valor)}</td>
+          <td data-th="Pagamento">${f.estado==='pago'
             ?`<div class="num">${f.dataPag} · ${f.metodo}</div><div class="cell-sub num">Recibo ${f.recibo}</div>`
             :'<span class="cell-sub">—</span>'}</td>
           <td>${pill(f.estado)}</td>
@@ -1302,10 +1314,10 @@ function scrAdminVisao(){
           const inad = c.flats ? Math.round(c.atraso/c.flats*100) : 0;
           return `<tr data-condo="${i}" title="Abrir ${c.nome}">
             <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona} · ${c.gestor}</div></td>
-            <td class="r num">${c.flats}</td>
-            <td><div style="display:flex;align-items:center;gap:10px"><span class="prog ${pct<75?'bad':pct<88?'warn':''}" style="flex:1"><i style="width:${pct}%"></i></span><span class="num b" style="font-size:13px">${pct}%</span></div></td>
-            <td class="r num">${inad}%</td>
-            <td class="r num b">${MT(c.saldo)}</td>
+            <td class="r num" data-th="Flats">${c.flats}</td>
+            <td data-th="Cobrança do mês"><div style="display:flex;align-items:center;gap:10px"><span class="prog ${pct<75?'bad':pct<88?'warn':''}" style="flex:1;max-width:220px"><i style="width:${pct}%"></i></span><span class="num b" style="font-size:13px">${pct}%</span></div></td>
+            <td class="r num" data-th="Inadimplência">${inad}%</td>
+            <td class="r num b" data-th="A repassar">${MT(c.saldo)}</td>
           </tr>`;}).join('')}</tbody>
       </table></div>
     </div>
@@ -1330,10 +1342,10 @@ function scrAdminCondos(){
     <tbody>${CONDOS.map((c,i)=>`
       <tr data-condo="${i}" title="Abrir ${c.nome}">
         <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona}</div></td>
-        <td>${c.gestor}</td>
-        <td class="r num">${c.flats}</td>
-        <td class="r num b">${MT(c.esperado*1000)}</td>
-        <td class="r num">${i===3?'4,0%':'5,0%'}</td>
+        <td data-th="Gestor">${c.gestor}</td>
+        <td class="r num" data-th="Flats">${c.flats}</td>
+        <td class="r num b" data-th="Esperado/mês">${MT(c.esperado*1000)}</td>
+        <td class="r num" data-th="% plataforma">${i===3?'4,0%':'5,0%'}</td>
         <td><span class="pill activo">Activo</span></td>
         <td class="r"><span class="link">Abrir</span></td>
       </tr>`).join('')}</tbody>
@@ -1352,8 +1364,8 @@ function scrAdminCondoDetail(){
     <tr>
       <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar · <span class="num">${f.regref}</span></div></td>
       <td><div class="cell-main">${f.nome}</div><div class="cell-sub num">${f.tel}</div></td>
-      <td class="r num b">${MT(f.quota)}</td>
-      <td>${estados[i]==='pago' ? (i%3===0?'Transferência':'M-Pesa') : estados[i]==='confirmar' ? 'Transferência' : '<span class="cell-sub">—</span>'}</td>
+      <td class="r num b" data-th="Quota">${MT(f.quota)}</td>
+      <td data-th="Método">${estados[i]==='pago' ? (i%3===0?'Transferência':'M-Pesa') : estados[i]==='confirmar' ? 'Transferência' : '<span class="cell-sub">—</span>'}</td>
       <td>${pill(estados[i])}</td>
       <td class="r"><button class="link" data-dflat="${i}">Ver</button></td>
     </tr>`).join('');
@@ -1425,8 +1437,8 @@ function scrAdminColabs(){
       <tr>
         <td><div class="cell-main">${c.nome}${c.eu?' <span class="cell-sub">(você)</span>':''}</div><div class="cell-sub num">+258 ${c.tel}</div></td>
         <td>${pillFn(c.funcao)}</td>
-        <td>${c.area}</td>
-        <td>${c.desde}</td>
+        <td data-th="Área">${c.area}</td>
+        <td data-th="Desde">${c.desde}</td>
         <td><span class="pill ${c.estado}">${c.estado==='activo'?'Activo':'Suspenso'}</span></td>
         <td class="r">${c.eu?'<span class="cell-sub">—</span>':`
           <button class="btn btn-ghost sm" data-acesso="${i}">Acesso</button>
@@ -1447,8 +1459,8 @@ function scrAdminRepasses(){
     <tbody>${CONDOS.map((c,i)=>`
       <tr>
         <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona}</div></td>
-        <td class="r num b">${MT(c.saldo)}</td>
-        <td>${['06 Out','04 Out','06 Out','03 Out','01 Out'][i] ? `${['06 Out','04 Out','06 Out','03 Out','01 Out'][i]} · <span class="cell-sub">Setembro</span>` : '<span class="cell-sub">—</span>'}</td>
+        <td class="r num b" data-th="A repassar">${MT(c.saldo)}</td>
+        <td data-th="Último repasse">${['06 Out','04 Out','06 Out','03 Out','01 Out'][i] ? `${['06 Out','04 Out','06 Out','03 Out','01 Out'][i]} · <span class="cell-sub">Setembro</span>` : '<span class="cell-sub">—</span>'}</td>
         <td class="r"><button class="btn btn-primary sm" data-repasse="${i}">${ico('bank','icon sm')}Registar repasse</button></td>
       </tr>`).join('')}</tbody>
   </table></div></div>`;
@@ -1547,9 +1559,9 @@ function scrColabCadastro(){
         <tbody>${CONDOS.map((c,i)=>`
           <tr>
             <td class="cell-main">${c.nome}</td>
-            <td>${c.zona}</td>
-            <td class="r num">${c.flats}</td>
-            <td class="r num">${[3,6,1,9,4][i] ?? 0}</td>
+            <td data-th="Zona">${c.zona}</td>
+            <td class="r num" data-th="Flats">${c.flats}</td>
+            <td class="r num" data-th="Convites por usar">${[3,6,1,9,4][i] ?? 0}</td>
           </tr>`).join('')}</tbody>
       </table></div>
     </div>
@@ -1591,7 +1603,7 @@ function scrLogin(){
   </div>
   <div class="card">
     ${entrar?`
-    <h1 style="font-size:19px;font-weight:800;margin-bottom:16px">Entrar</h1>
+    <h1 style="font-size:17px;font-weight:800;margin-bottom:16px">Entrar</h1>
     <div class="field"><label for="lg-email">Email</label><input id="lg-email" type="email" placeholder="o.seu@email.co.mz"></div>
     <div class="field"><label for="lg-pw">Password</label><input id="lg-pw" type="password" placeholder="••••••••"></div>
     <button class="btn btn-primary" id="btn-entrar" style="width:100%;justify-content:center">Entrar</button>
@@ -1600,7 +1612,7 @@ function scrLogin(){
       <button class="link" id="lnk-conv">Tenho um código de convite</button>
     </div>`
     :`
-    <h1 style="font-size:19px;font-weight:800;margin-bottom:6px">Criar conta com convite</h1>
+    <h1 style="font-size:17px;font-weight:800;margin-bottom:6px">Criar conta com convite</h1>
     <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:14px">Use o código único da sua flat (entregue pelo condomínio). A conta fica ligada à flat em nome do proprietário.</p>
     <div class="field"><label for="cv-cod">Código de convite</label><input id="cv-cod" class="num" placeholder="JDA-22W466" style="text-transform:uppercase"></div>
     <div class="field"><label for="cv-pw">Criar password</label><input id="cv-pw" type="password" placeholder="Mínimo 8 caracteres"></div>
