@@ -302,6 +302,7 @@ img,svg{display:block}
 .method{width:100%;display:flex;align-items:center;gap:13px;padding:15px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);transition:all .15s var(--ease);text-align:left;margin-bottom:10px}
 .method:hover{border-color:var(--green-600);box-shadow:var(--shadow)}
 .method .m-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:8.5px;line-height:1.1;text-align:center;letter-spacing:.02em;color:#fff;flex:none}
+.m-ico .icon{width:23px;height:23px;stroke-width:1.5}
 .m-ico.mpesa{background:#C41318}
 .m-ico.emola{background:#F28A00}
 .m-ico.banco{background:var(--ink)}
@@ -485,6 +486,7 @@ const ICONS = {
   key:'<circle cx="8" cy="15.5" r="4"/><path d="m11 12.5 8.5-8.5M16 7l2.5 2.5M13.5 9.5 16 12"/>',
   ledger:'<path d="M5 3.5h14v17H5Z"/><path d="M5 7.5h14M9 3.5v17"/>',
   logout:'<path d="M9.5 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3.5M15 8l4 4-4 4M19 12H9.5"/>',
+  bank2:'<path d="M12 3 3.5 8.2v1.3h17V8.2Z"/><path d="M5.6 12.5v4.5M9.9 12.5v4.5M14.1 12.5v4.5M18.4 12.5v4.5M4.4 19.5h15.2M3 21.5h18"/><circle cx="12" cy="6.6" r=".4" fill="currentColor" stroke="none"/>',
   camera:'<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.1l1.2-1.8h6.4L16.4 6h1.1A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5Z"/><circle cx="12" cy="12.5" r="3.2"/>',
 };
 const ico = (n,cls='icon') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
@@ -1066,7 +1068,7 @@ function scrPropInicio(){
         ${ico('chevR','icon sm')}
       </button>
       <button class="method" data-pagar="banco">
-        <span class="m-ico banco">${ico('bank','icon sm')}</span>
+        <span class="m-ico banco">${ico('bank2','icon')}</span>
         <span><b>Transferência bancária</b><div class="s">Transfere com a referência e envia o comprovativo</div></span>
         ${ico('chevR','icon sm')}
       </button>
@@ -1083,7 +1085,7 @@ function modalPagar(){
   </div>
   <button class="method" data-m="mpesa"><span class="m-ico mpesa">M-PESA</span><span><b>M-Pesa</b><div class="s">Confirma com o PIN no telemóvel</div></span>${ico('chevR','icon sm')}</button>
   <button class="method" data-m="emola"><span class="m-ico emola">e-MOLA</span><span><b>eMola</b><div class="s">Confirma com o PIN da conta eMola</div></span>${ico('chevR','icon sm')}</button>
-  <button class="method" data-m="banco" style="margin-bottom:0"><span class="m-ico banco">${ico('bank','icon sm')}</span><span><b>Transferência bancária</b><div class="s">Com a referência e comprovativo</div></span>${ico('chevR','icon sm')}</button>`;
+  <button class="method" data-m="banco" style="margin-bottom:0"><span class="m-ico banco">${ico('bank2','icon')}</span><span><b>Transferência bancária</b><div class="s">Com a referência e comprovativo</div></span>${ico('chevR','icon sm')}</button>`;
 }
 function modalMpesa(rede){
   const nome = rede==='mpesa'?'M-Pesa':'eMola';
@@ -1117,7 +1119,7 @@ function modalRecibo(total){
 function modalBanco(){
   return `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-    <span class="m-ico banco" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff">${ico('bank','icon sm')}</span>
+    <span class="m-ico banco" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff">${ico('bank2','icon')}</span>
     <h3 style="font-size:17px;font-weight:800">Transferência bancária</h3>
     <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
   </div>
@@ -1464,7 +1466,7 @@ function scrAdminRepasses(){
   </table></div></div>`;
 }
 function scrAdminConfig(){
-  const BANCO_ICO = `<span class="m-ico banco" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff">${ico('bank','icon sm')}</span>`;
+  const BANCO_ICO = `<span class="m-ico banco" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff">${ico('bank2','icon')}</span>`;
   return `
   <div class="page-head">
     <div><h1>Configuração</h1><p class="sub">Métodos de pagamento, contas bancárias, métodos manuais e receita da plataforma</p></div>
