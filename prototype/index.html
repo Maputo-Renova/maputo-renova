@@ -492,7 +492,7 @@ const FLATS = NOMES.map((nome,i)=>{
   nome,
   tel:`84 ${String(210+i*7).padStart(3,'0')} ${String(1240+i*53).slice(-4)}`,
   quota: i%5===0 ? 1800 : 1500,
-  ref:`MR-000${821+i}`,
+  ref:`MR-000${421+i}`,
   regref:`JDA-${bloco}${numero}`,
   convite: i<21 ? 'usado' : 'por usar',
   codigo:`JDA-${(i+1).toString().padStart(2,'0')}${String.fromCharCode(65+(i%9))}${String(312+i*7).slice(-3)}`,
@@ -616,7 +616,7 @@ const S = {
 
 const ROLES = {
   gestor:{label:'Gestor', user:'Arlindo Macuácua', sub:'Jardim das Acácias', nav:[
-    ['painel','Painel','grid'],['flats','Flats','flats'],['transf','Transferências','bank'],['tesouraria','Tesouraria','wallet'],['suporteG','Suporte','mail'],['avisos','Avisos','bell'],
+    ['painel','Painel','grid'],['pagamentosG','Pagamentos','bank'],['tesouraria','Tesouraria','wallet'],['suporteG','Suporte','mail'],['avisos','Avisos','bell'],
   ]},
   proprietario:{label:'Proprietário', user:'Celeste Mabjaia', sub:'Flat 302 · JDA-A302', nav:[
     ['inicio','A minha quota','home'],['minhaflat','A minha flat','flats'],['faturas','Faturas','receipt'],['suporte','Suporte','mail'],['avisosP','Avisos','bell'],
@@ -678,7 +678,7 @@ function renderNav(){
   const cur = S.screen==='condoDetail' ? 'condos' : S.screen;
   const novosTk = S.tickets.filter(t=>t.estado==='novo').length;
   $('#nav').innerHTML = `<div class="nav-label">Menu</div>` + r.nav.map(([id,label,icon])=>{
-    let badge = (id==='transf' && S.transf.length) ? `<span class="nav-badge">${S.transf.length}</span>` : '';
+    let badge = (id==='pagamentosG' && S.transf.length) ? `<span class="nav-badge">${S.transf.length}</span>` : '';
     if(id==='suporteG' && novosTk) badge = `<span class="nav-badge">${novosTk}</span>`;
     return `<button class="nav-item" data-screen="${id}" ${cur===id?'aria-current="page"':''}>${ico(icon)}${label}${badge}</button>`;
   }).join('');
@@ -768,7 +768,7 @@ function scrGestorPainel(){
     </div>
   </div>
   <div class="card mt">
-    <div class="card-head"><h2>Flats · ${MESES[S.mes]}</h2><span class="spacer"></span><button class="link" id="ver-flats">Ver todas as flats</button></div>
+    <div class="card-head"><h2>Flats · ${MESES[S.mes]}</h2><span class="spacer"></span><button class="link" id="ver-flats">Ver todos os pagamentos</button></div>
     ${tabelaFlats(FLATS.slice(0,8))}
   </div>`;
 }
@@ -776,31 +776,57 @@ function cobradoActualMil(){
   const pagos = FLATS.filter(f=>{ const e = S.pagos[f.id]?'pago':estadoFlat(f.id-1,9); return e==='pago'; });
   return pagos.reduce((s,f)=>s+f.quota,0)/1000;
 }
+function metodoDe(f){
+  const e = estadoDe(f);
+  if(e==='pago') return S.pagos[f.id] ? 'Transferência' : (f.id%3===0 ? 'Transferência' : 'M-Pesa');
+  if(e==='confirmar') return 'Transferência';
+  return null;
+}
 function tabelaFlats(lista){
   return `<div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th>Flat</th><th>Proprietário</th><th class="r">Quota</th><th>Estado</th><th class="r"></th></tr></thead>
+    <thead><tr><th>Flat</th><th>Proprietário</th><th class="r">Quota</th><th>Método</th><th>Estado</th><th class="r"></th></tr></thead>
     <tbody>${lista.map(f=>`
       <tr>
         <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar · <span class="num">${f.regref}</span></div></td>
         <td><div class="cell-main">${f.nome}</div><div class="cell-sub num">${f.tel}</div></td>
         <td class="r num b">${MT(f.quota)}</td>
+        <td>${metodoDe(f) || '<span class="cell-sub">—</span>'}</td>
         <td>${pill(estadoDe(f))}</td>
         <td class="r"><button class="link" data-flat="${f.id}">Ver</button></td>
       </tr>`).join('')}</tbody>
   </table></div>`;
 }
-function scrGestorFlats(){
+function scrGestorPagamentos(){
   const q = S.procura.toLowerCase();
-  let lista = FLATS.filter(f=>!q || f.nome.toLowerCase().includes(q) || f.numero.includes(q) || f.ref.toLowerCase().includes(q));
+  let lista = FLATS.filter(f=>!q || f.nome.toLowerCase().includes(q) || f.numero.includes(q) || f.ref.toLowerCase().includes(q) || f.regref.toLowerCase().includes(q));
   if(S.filtro!=='todos'){
     lista = lista.filter(f=>{ const e=estadoDe(f); return S.filtro==='pago'?e==='pago':S.filtro==='pendente'?['pendente','confirmar'].includes(e):['atraso','atraso_h'].includes(e); });
   }
   const chips = [['todos','Todas'],['pago','Pagas'],['pendente','Pendentes'],['atraso','Em atraso']];
+  const corrente = S.mes===9;
   return `
   <div class="page-head">
-    <div><h1>Flats</h1><p class="sub">24 flats registadas · estados de ${MESES[S.mes]}</p></div>
+    <div><h1>Pagamentos</h1><p class="sub">24 flats · estados de ${MESES[S.mes]}</p></div>
     <div class="page-head-actions">${monthPicker()}</div>
   </div>
+  ${corrente && S.transf.length ? `
+  <div class="card" style="margin-bottom:18px">
+    <div class="card-head"><span class="card-ico">${ico('bank')}</span><h2>Transferências a confirmar</h2><span class="spacer"></span><span class="pill confirmar">${S.transf.length} pendentes</span></div>
+    <ul class="row-list">${S.transf.map(t=>`
+      <li>
+        <span class="row-ico b">${ico('file')}</span>
+        <div class="row-body">
+          <div class="t">Flat ${t.flat.numero} · ${t.flat.nome}</div>
+          <div class="s">Referência <b class="num">${t.flat.ref}</b> · ${t.data} · <button class="link" data-comp="${t.ficheiro}">${t.ficheiro}</button></div>
+        </div>
+        <div class="row-end" style="display:flex;align-items:center;gap:10px">
+          <span class="cell-main num">${MT(t.valor)}</span>
+          <button class="btn btn-danger sm" data-rej="${t.id}">Rejeitar</button>
+          <button class="btn btn-primary sm" data-conf="${t.id}">${ico('check','icon sm')}Confirmar</button>
+        </div>
+      </li>`).join('')}</ul>
+    <div class="note" style="margin-top:10px">${ico('shield','icon sm')}<span>Ao confirmar, a fatura é marcada como paga, o proprietário recebe o recibo por SMS e email, e o valor entra no razão do condomínio. M-Pesa e eMola confirmam automaticamente.</span></div>
+  </div>`:''}
   <div class="card">
     <div class="card-head" style="flex-wrap:wrap;gap:12px">
       <div class="chips">${chips.map(([k,l])=>`<button class="chip ${S.filtro===k?'on':''}" data-chip="${k}">${l}</button>`).join('')}</div>
@@ -846,27 +872,6 @@ function drawerFlat(f, condoNome, estadoActual){
     <button class="btn btn-ghost sm" data-close>Fechar</button>
     <button class="btn btn-primary sm" data-lembrete="${f.id}">${ico('send','icon sm')}Enviar lembrete</button>
   </div>`;
-}
-function scrGestorTransf(){
-  return `
-  <div class="page-head">
-    <div><h1>Transferências bancárias</h1><p class="sub">Comprovativos submetidos pelos proprietários, à espera da sua confirmação</p></div>
-  </div>
-  ${S.transf.length ? `<div class="grid">${S.transf.map(t=>`
-    <div class="card" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-      <span class="row-ico b" style="width:46px;height:46px">${ico('file')}</span>
-      <div class="row-body">
-        <div class="t" style="font-size:15px">Flat ${t.flat.numero} · ${t.flat.nome}</div>
-        <div class="s">Referência <b class="num">${t.flat.ref}</b> · submetido a ${t.data} · <button class="link" data-comp="${t.ficheiro}">${t.ficheiro}</button></div>
-      </div>
-      <div class="row-end" style="display:flex;align-items:center;gap:10px">
-        <div class="cell-main num" style="font-size:17px">${MT(t.valor)}</div>
-        <button class="btn btn-danger sm" data-rej="${t.id}">Rejeitar</button>
-        <button class="btn btn-primary sm" data-conf="${t.id}">${ico('check','icon sm')}Confirmar</button>
-      </div>
-    </div>`).join('')}</div>`
-  : `<div class="card"><div class="empty"><span class="e-ico">${ico('check')}</span><b>Fila limpa</b><p>Nenhuma transferência por confirmar neste momento.</p></div></div>`}
-  <div class="note mt">${ico('shield','icon sm')}<span>Ao confirmar, a fatura é marcada como paga, o proprietário recebe o recibo por SMS e email, e o valor entra no razão do condomínio.</span></div>`;
 }
 function scrGestorTesouraria(){
   const saldo = 118400;
@@ -1256,6 +1261,7 @@ function scrAdminCondoDetail(){
       <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar · <span class="num">${f.regref}</span></div></td>
       <td><div class="cell-main">${f.nome}</div><div class="cell-sub num">${f.tel}</div></td>
       <td class="r num b">${MT(f.quota)}</td>
+      <td>${estados[i]==='pago' ? (i%3===0?'Transferência':'M-Pesa') : estados[i]==='confirmar' ? 'Transferência' : '<span class="cell-sub">—</span>'}</td>
       <td>${pill(estados[i])}</td>
       <td class="r"><button class="link" data-dflat="${i}">Ver</button></td>
     </tr>`).join('');
@@ -1278,7 +1284,7 @@ function scrAdminCondoDetail(){
   <div class="card mt">
     <div class="card-head"><h2>Flats · Outubro</h2><span class="spacer"></span><span class="cell-sub">Visão da consola — os mesmos dados do gestor</span></div>
     ${flats.length?`<div class="tbl-wrap"><table class="tbl">
-      <thead><tr><th>Flat</th><th>Proprietário</th><th class="r">Quota</th><th>Estado</th><th class="r"></th></tr></thead>
+      <thead><tr><th>Flat</th><th>Proprietário</th><th class="r">Quota</th><th>Método</th><th>Estado</th><th class="r"></th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`
     :`<div class="empty"><span class="e-ico">${ico('flats')}</span><b>Ainda sem flats</b><p>As flats deste condomínio serão registadas pelo colaborador, com convite de registo para cada proprietário.</p></div>`}
@@ -1452,7 +1458,7 @@ function scrColabConvites(){
    render + eventos
    ============================================================ */
 const SCREENS = {
-  gestor:{painel:scrGestorPainel, flats:scrGestorFlats, transf:scrGestorTransf, tesouraria:scrGestorTesouraria, suporteG:scrGestorSuporte, avisos:scrGestorAvisos},
+  gestor:{painel:scrGestorPainel, pagamentosG:scrGestorPagamentos, tesouraria:scrGestorTesouraria, suporteG:scrGestorSuporte, avisos:scrGestorAvisos},
   proprietario:{inicio:scrPropInicio, minhaflat:scrPropFlat, faturas:scrPropFaturas, suporte:scrPropSuporte, avisosP:scrPropAvisos},
   admin:{visao:scrAdminVisao, condos:scrAdminCondos, condoDetail:scrAdminCondoDetail, colabs:scrAdminColabs, repasses:scrAdminRepasses, config:scrAdminConfig},
   colaborador:{cadastro:scrColabCadastro, convites:scrColabConvites},
@@ -1491,10 +1497,10 @@ function bindScreen(el){
   el.querySelectorAll('[data-chip]').forEach(b=>b.addEventListener('click',()=>{S.filtro=b.dataset.chip;render();}));
   const q = el.querySelector('#flats-q');
   if(q){ q.addEventListener('input',()=>{S.procura=q.value; render(); const nq=$('#flats-q'); nq.focus(); nq.setSelectionRange(nq.value.length,nq.value.length);}); }
-  const vf = el.querySelector('#ver-flats'); if(vf) vf.addEventListener('click',()=>setScreen('flats'));
+  const vf = el.querySelector('#ver-flats'); if(vf) vf.addEventListener('click',()=>setScreen('pagamentosG'));
   const vh = el.querySelector('#ver-hist'); if(vh) vh.addEventListener('click',()=>{S.filtroFat='pagas'; setScreen('faturas');});
   el.querySelectorAll('[data-chip-fat]').forEach(b=>b.addEventListener('click',()=>{S.filtroFat=b.dataset.chipFat;render();}));
-  const vt = el.querySelector('#ver-transf'); if(vt) vt.addEventListener('click',()=>setScreen('transf'));
+  const vt = el.querySelector('#ver-transf'); if(vt) vt.addEventListener('click',()=>setScreen('pagamentosG'));
   const vc = el.querySelector('#ver-condos'); if(vc) vc.addEventListener('click',()=>setScreen('condos'));
   const lb = el.querySelector('#btn-lembretes');
   if(lb) lb.addEventListener('click',()=>toast('Lembretes enviados por SMS e email às flats em falta'));
