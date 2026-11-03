@@ -1,0 +1,1340 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maputo Renova</title>
+<meta name="description" content="Protótipo — gestão de condomínios em Maputo. Dados de demonstração.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ tokens ============ */
+:root{
+  --bg:#F4F4F1;
+  --card:#FFFFFF;
+  --ink:#171E1A;
+  --ink-2:#4F5953;
+  --ink-3:#5E6862;
+  --line:#E7E8E2;
+  --line-soft:#EFF0EA;
+  --green-800:#0A5C36;
+  --green-700:#0C7A46;
+  --green-600:#0E9F5B;
+  --green-150:#D7F0E2;
+  --green-100:#E4F5EC;
+  --green-50:#F1FAF5;
+  --amber-700:#935410;
+  --amber-100:#FBEFD9;
+  --red-700:#B3362B;
+  --red-100:#FAE7E4;
+  --blue-700:#2155A3;
+  --blue-100:#E6EEFA;
+  --r-card:16px;
+  --r-ctl:10px;
+  --shadow:0 1px 2px rgba(23,30,26,.05),0 10px 28px rgba(23,30,26,.07);
+  --shadow-lift:0 2px 4px rgba(23,30,26,.06),0 16px 40px rgba(23,30,26,.12);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--ink);
+  font-size:15px;line-height:1.5;
+  caret-color:var(--green-600);
+}
+::selection{background:var(--green-150);color:var(--green-800)}
+:focus-visible{outline:2px solid var(--green-600);outline-offset:2px;border-radius:6px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#D4D6CE;border-radius:8px;border:2px solid var(--bg)}
+::-webkit-scrollbar-track{background:transparent}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+img,svg{display:block}
+.num{font-variant-numeric:tabular-nums}
+.icon{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.icon.sm{width:16px;height:16px}
+
+/* ============ shell ============ */
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sidebar{
+  background:var(--card);border-right:1px solid var(--line);
+  padding:22px 16px 16px;display:flex;flex-direction:column;gap:6px;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.brand{display:flex;align-items:center;gap:11px;padding:2px 8px 18px}
+.brand-mark{width:38px;height:38px;border-radius:11px;background:var(--green-600);display:grid;place-items:center;flex:none}
+.brand-mark svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.brand-name{font-weight:800;font-size:16.5px;letter-spacing:-.01em;line-height:1.15}
+.brand-sub{font-size:12px;color:var(--ink-3);font-weight:600}
+.nav-label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:14px 10px 6px}
+.nav-item{
+  display:flex;align-items:center;gap:11px;width:100%;
+  padding:10px 12px;border-radius:11px;color:var(--ink-2);font-weight:600;font-size:14px;
+  transition:background .15s var(--ease),color .15s var(--ease);
+}
+.nav-item:hover{background:var(--line-soft);color:var(--ink)}
+.nav-item[aria-current="page"]{background:var(--green-100);color:var(--green-800)}
+.nav-item[aria-current="page"] .icon{stroke:var(--green-700)}
+.nav-badge{margin-left:auto;background:var(--green-600);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:1px 7px}
+.sidebar-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft)}
+.role-box{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px}
+.role-box p{font-size:12px;font-weight:700;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.role-btn{
+  padding:7px 6px;border-radius:9px;border:1px solid var(--line);background:var(--card);
+  font-size:12px;font-weight:700;color:var(--ink-2);text-align:center;
+  transition:all .15s var(--ease);
+}
+.role-btn:hover{border-color:var(--green-600);color:var(--green-700)}
+.role-btn.on{background:var(--green-600);border-color:var(--green-600);color:#fff}
+.demo-tag{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:12px;color:var(--ink-3);font-weight:600}
+.demo-dot{width:6px;height:6px;border-radius:50%;background:var(--amber-700)}
+
+/* ============ main ============ */
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 32px;background:rgba(244,244,241,.85);backdrop-filter:blur(8px);
+  position:sticky;top:0;z-index:30;border-bottom:1px solid transparent;
+}
+.topbar.scrolled{border-bottom-color:var(--line)}
+.menu-btn{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);place-items:center}
+.search{
+  flex:1;max-width:360px;display:flex;align-items:center;gap:9px;
+  background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 16px;color:var(--ink-3);
+}
+.search input{border:none;outline:none;background:none;width:100%;font-size:14px;color:var(--ink)}
+.search input::placeholder{color:var(--ink-3)}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:9px}
+.icon-btn{
+  width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--line);
+  display:grid;place-items:center;color:var(--ink-2);position:relative;
+  transition:all .15s var(--ease);
+}
+.icon-btn:hover{border-color:var(--green-600);color:var(--green-700)}
+.icon-btn .dot{position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--red-700);border:2px solid var(--card)}
+.avatar{display:flex;align-items:center;gap:10px;padding:5px 6px 5px 5px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.avatar-pic{width:32px;height:32px;border-radius:50%;background:var(--green-150);color:var(--green-800);display:grid;place-items:center;font-size:12.5px;font-weight:800}
+.avatar-name{font-size:13px;font-weight:700;padding-right:6px}
+
+.screen{padding:12px 32px 48px;max-width:1240px;width:100%;margin:0 auto;animation:screen-in .32s var(--ease)}
+@keyframes screen-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.page-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:14px 0 22px}
+.page-head h1{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.page-head .sub{color:var(--ink-2);font-size:14px;margin-top:3px}
+.page-head-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* ============ controls ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;border-radius:999px;font-weight:700;font-size:13.5px;
+  padding:10px 18px;transition:all .16s var(--ease);border:1px solid transparent;
+}
+.btn-primary{background:var(--green-600);color:#fff;box-shadow:0 1px 2px rgba(23,30,26,.1),0 6px 16px rgba(23,30,26,.14)}
+.btn-primary:hover{background:var(--green-700);transform:translateY(-1px)}
+.btn-ghost{background:var(--card);border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--green-600);color:var(--green-700)}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-dark:hover{background:#000;transform:translateY(-1px)}
+.btn-danger{background:var(--card);border-color:var(--line);color:var(--red-700)}
+.btn-danger:hover{border-color:var(--red-700);background:var(--red-100)}
+.btn.sm{padding:7px 13px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.month-pick{display:inline-flex;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px}
+.month-pick b{font-size:13.5px;font-weight:800;padding:0 10px;min-width:122px;text-align:center}
+.month-pick button{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2)}
+.month-pick button:hover{background:var(--line-soft);color:var(--ink)}
+
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;font-size:12px;font-weight:700;padding:4px 11px;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.pago{background:var(--green-100);color:var(--green-800)}
+.pill.pendente{background:var(--amber-100);color:var(--amber-700)}
+.pill.atraso{background:var(--red-100);color:var(--red-700)}
+.pill.confirmar{background:var(--blue-100);color:var(--blue-700)}
+.pill.neutro{background:var(--line-soft);color:var(--ink-2)}
+.pill.suspenso{background:var(--red-100);color:var(--red-700)}
+.pill.activo{background:var(--green-100);color:var(--green-800)}
+
+/* ============ cards ============ */
+.card{background:var(--card);border-radius:var(--r-card);box-shadow:var(--shadow);padding:22px}
+.card-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.card-head h2{font-size:16px;font-weight:800;letter-spacing:-.01em}
+.card-head .spacer{margin-left:auto}
+.card-ico{width:36px;height:36px;border-radius:10px;background:var(--green-100);color:var(--green-700);display:grid;place-items:center;flex:none}
+.grid{display:grid;gap:18px}
+.g-kpi{grid-template-columns:repeat(3,1fr)}
+.g-23{grid-template-columns:2fr 1fr}
+.g-12{grid-template-columns:1fr 1fr}
+.g-13{grid-template-columns:1fr 2fr}
+.mt{margin-top:18px}
+
+.kpi .lbl{display:flex;align-items:center;gap:10px;color:var(--ink-2);font-size:13.5px;font-weight:700}
+.kpi .val{font-size:29px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
+.kpi .val small{font-size:15px;font-weight:700;color:var(--ink-3);letter-spacing:0}
+.kpi .cmp{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink-3)}
+.kpi .cmp .up{color:var(--green-700)}
+.kpi .cmp .down{color:var(--red-700)}
+
+/* chart */
+.chart{display:flex;flex-direction:column;gap:10px}
+.chart-bars{display:grid;grid-template-columns:repeat(12,1fr);gap:9px;align-items:end;height:190px;padding-top:12px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+.bar{
+  width:100%;max-width:34px;border-radius:8px 8px 4px 4px;background:var(--green-150);
+  position:relative;transition:background .15s var(--ease);
+  transform-origin:bottom;animation:bar-in .6s var(--ease) backwards;
+}
+.bar:hover,.bar.sel{background:var(--green-600)}
+.bar.sel::after{
+  content:attr(data-v);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;font-size:12px;font-weight:700;padding:4px 9px;border-radius:7px;white-space:nowrap;
+}
+@keyframes bar-in{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.bar-lbl{font-size:12px;font-weight:700;color:var(--ink-3)}
+.chart-legend{display:flex;gap:16px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.chart-legend i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{
+  text-align:left;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
+  padding:10px 14px;border-bottom:1px solid var(--line);
+}
+.tbl td{padding:13px 14px;border-bottom:1px solid var(--line-soft);font-size:14px;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr{transition:background .12s var(--ease)}
+.tbl tbody tr:hover{background:var(--green-50)}
+.tbl .r{text-align:right}
+.tbl .b{font-weight:700}
+.tbl-wrap{overflow-x:auto;margin:0 -22px;padding:0 22px}
+.cell-main{font-weight:700}
+.cell-sub{font-size:12.5px;color:var(--ink-3);margin-top:1px}
+.link{color:var(--green-700);font-weight:700;text-decoration:none;font-size:13.5px}
+.link:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* filtros */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);transition:all .14s var(--ease)}
+.chip:hover{border-color:var(--green-600);color:var(--green-700)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* listas */
+.row-list>li{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--line-soft);list-style:none}
+.row-list>li:last-child{border-bottom:none}
+.row-ico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none}
+.row-ico.g{background:var(--green-100);color:var(--green-700)}
+.row-ico.a{background:var(--amber-100);color:var(--amber-700)}
+.row-ico.r{background:var(--red-100);color:var(--red-700)}
+.row-ico.b{background:var(--blue-100);color:var(--blue-700)}
+.row-body{min-width:0;flex:1}
+.row-body .t{font-weight:700;font-size:14px}
+.row-body .s{font-size:12.5px;color:var(--ink-3);margin-top:1px}
+.row-end{text-align:right;flex:none}
+
+/* empty state */
+.empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:34px 20px;text-align:center}
+.empty .e-ico{width:52px;height:52px;border-radius:16px;background:var(--green-100);color:var(--green-700);display:grid;place-items:center}
+.empty b{font-size:15px}
+.empty p{font-size:13.5px;color:var(--ink-3);max-width:300px}
+
+/* forms */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:13px;font-weight:700;color:var(--ink-2)}
+.field input,.field select,.field textarea{
+  border:1px solid var(--line);border-radius:var(--r-ctl);padding:11px 13px;font-size:14px;background:var(--card);
+  transition:border-color .14s var(--ease),box-shadow .14s var(--ease);width:100%;
+}
+.field input:hover,.field select:hover{border-color:#CFD2C8}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--green-600);box-shadow:0 0 0 3px var(--green-100)}
+.field .hint{font-size:12px;color:var(--ink-3)}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* alertas */
+.alert-dup{border:1px solid var(--red-700);background:var(--red-100);border-radius:14px;padding:16px;display:flex;gap:12px;margin-bottom:16px}
+.alert-dup .icon{color:var(--red-700);margin-top:2px}
+.alert-dup b{color:var(--red-700)}
+.alert-dup .conflito{margin-top:10px;background:var(--card);border-radius:10px;padding:12px 14px;font-size:13.5px}
+.note{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:13px 15px;font-size:13px;color:var(--ink-2);display:flex;gap:10px}
+.note .icon{color:var(--green-700);margin-top:1px}
+
+/* drawer + modal */
+.overlay{position:fixed;inset:0;background:rgba(23,30,26,.38);z-index:50;opacity:0;pointer-events:none;transition:opacity .22s var(--ease)}
+.overlay.open{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--card);z-index:60;
+  box-shadow:var(--shadow-lift);transform:translateX(104%);transition:transform .3s var(--ease);
+  display:flex;flex-direction:column;
+}
+.drawer.open{transform:none}
+.drawer-head{display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid var(--line)}
+.drawer-head h3{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.drawer-body{padding:22px 24px;overflow-y:auto;flex:1}
+.drawer-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end}
+.modal{
+  position:fixed;z-index:60;inset:0;display:grid;place-items:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .22s var(--ease);
+}
+.modal.open{opacity:1;pointer-events:auto}
+.modal-card{background:var(--card);border-radius:20px;box-shadow:var(--shadow-lift);width:min(430px,100%);padding:26px;transform:translateY(10px);transition:transform .3s var(--ease)}
+.modal.open .modal-card{transform:none}
+
+/* toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translate(-50%,16px);z-index:80;
+  background:var(--ink);color:#fff;border-radius:999px;padding:11px 20px;font-size:13.5px;font-weight:700;
+  display:flex;align-items:center;gap:9px;opacity:0;pointer-events:none;transition:all .28s var(--ease);
+  box-shadow:var(--shadow-lift);
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast .icon{color:var(--green-600)}
+
+/* pagamento */
+.pay-hero{background:linear-gradient(135deg,var(--green-700),var(--green-600));color:#fff;border-radius:var(--r-card);padding:26px;box-shadow:0 2px 4px rgba(23,30,26,.08),0 18px 40px rgba(23,30,26,.18)}
+.pay-hero .q-lbl{font-size:13.5px;font-weight:700;opacity:.85}
+.pay-hero .q-val{font-size:38px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px}
+.pay-hero .q-val small{font-size:18px;font-weight:700;opacity:.8}
+.pay-hero .q-sub{font-size:13px;opacity:.85;font-weight:600}
+.pay-split{display:flex;justify-content:space-between;font-size:13.5px;font-weight:600;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.22)}
+.pay-split:last-of-type{border-bottom:none}
+.pay-split b{font-weight:800}
+.method{width:100%;display:flex;align-items:center;gap:13px;padding:15px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);transition:all .15s var(--ease);text-align:left;margin-bottom:10px}
+.method:hover{border-color:var(--green-600);box-shadow:var(--shadow)}
+.method .m-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:8.5px;line-height:1.1;text-align:center;letter-spacing:.02em;color:#fff;flex:none}
+.method .m-ico.mpesa{background:#C41318}
+.method .m-ico.emola{background:#F28A00}
+.method .m-ico.banco{background:var(--ink)}
+.method b{font-size:14.5px}
+.method .s{font-size:12.5px;color:var(--ink-3)}
+.method .icon{margin-left:auto;color:var(--ink-3)}
+.spinner{width:42px;height:42px;border-radius:50%;border:3px solid var(--green-100);border-top-color:var(--green-600);animation:spin .8s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ref-box{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px dashed #C9CCC2;border-radius:12px;padding:13px 15px;font-weight:800;font-size:15px;letter-spacing:.03em}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;color:var(--green-700);font-weight:700;font-size:12.5px}
+.copy-btn:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* progress */
+.prog{height:7px;background:var(--line-soft);border-radius:999px;overflow:hidden;min-width:90px}
+.prog i{display:block;height:100%;border-radius:999px;background:var(--green-600)}
+.prog.warn i{background:var(--amber-700)}
+.prog.bad i{background:var(--red-700)}
+
+/* config */
+.cfg-row{display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--line-soft)}
+.cfg-row:last-child{border-bottom:none}
+.cfg-row .inp{width:86px}
+.cfg-row .inp input{border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%;font-size:14px;font-weight:700;text-align:right}
+
+/* responsive */
+@media (max-width:1060px){
+  .g-kpi{grid-template-columns:1fr 1fr}
+  .g-23,.g-12,.g-13{grid-template-columns:1fr}
+}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .sidebar{
+    position:fixed;z-index:70;width:min(300px,86vw);height:100vh;left:0;top:0;
+    transform:translateX(-104%);transition:transform .3s var(--ease);box-shadow:var(--shadow-lift);
+  }
+  .sidebar.open{transform:none}
+  .menu-btn{display:grid}
+  .topbar{padding:12px 18px}
+  .search{display:none}
+  .screen{padding:8px 18px 40px}
+  .page-head h1{font-size:22px}
+  .g-kpi{grid-template-columns:1fr}
+  .f-row,.f-row3{grid-template-columns:1fr}
+  .kpi .val{font-size:25px}
+  .chart-bars{gap:5px;height:150px}
+  .avatar-name{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 20V9l4-3v14M10 20V6l4-3v17M16 20v-9l4-3v12M2 20h20"/></svg>
+      </span>
+      <span>
+        <span class="brand-name">Maputo Renova</span><br>
+        <span class="brand-sub" id="brand-sub">Gestão de condomínios</span>
+      </span>
+    </div>
+    <nav id="nav" aria-label="Menu"></nav>
+    <div class="sidebar-foot">
+      <div class="role-box">
+        <p>Demonstração · papel</p>
+        <div class="role-grid" id="role-grid"></div>
+        <span class="demo-tag"><span class="demo-dot"></span>Dados de demonstração</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar" id="topbar">
+      <button class="menu-btn" id="menu-btn" aria-label="Abrir menu">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <label class="search">
+        <svg class="icon sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input type="search" placeholder="Procurar flat, proprietário, referência…" id="global-search" aria-label="Procurar">
+      </label>
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="Notificações">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>
+          <span class="dot" aria-hidden="true"></span>
+        </button>
+        <span class="avatar"><span class="avatar-pic" id="avatar-pic">AM</span><span class="avatar-name" id="avatar-name">Arlindo Macuácua</span></span>
+      </div>
+    </header>
+    <main class="screen" id="screen" tabindex="-1"></main>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-label="Painel de detalhe"></aside>
+<div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ============================================================
+   Maputo Renova — protótipo clicável. Todos os dados são
+   sintéticos (demonstração); moeda MZN ("MT").
+   ============================================================ */
+
+const ICONS = {
+  grid:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',
+  building:'<path d="M4 20V9l4-3v14M10 20V6l4-3v17M16 20v-9l4-3v12M2 20h20"/>',
+  flats:'<rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8 8h2M14 8h2M8 12h2M14 12h2M10 20v-3.5h4V20"/>',
+  bank:'<path d="M3 9.5 12 4l9 5.5M5 10v7M9.5 10v7M14.5 10v7M19 10v7M3 20h18"/>',
+  wallet:'<path d="M19 8V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2H8"/><circle cx="16.5" cy="13.5" r="1.1" fill="currentColor" stroke="none"/>',
+  receipt:'<path d="M6 3.5h12V21l-2.4-1.6L13.2 21l-2.4-1.6L8.4 21 6 19.4Z"/><path d="M9.5 8h5M9.5 11.5h5"/>',
+  bell:'<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 19a2 2 0 0 0 4 0"/>',
+  users:'<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M15.5 5.3a3.2 3.2 0 0 1 0 5.9M17.5 14.8c1.7.6 2.8 2.1 3.2 4.2"/>',
+  settings:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.14-1.4l2-1.56-2-3.46-2.38.96a7 7 0 0 0-2.42-1.4L13.7 2.6h-3.4l-.36 2.54a7 7 0 0 0-2.42 1.4l-2.38-.96-2 3.46 2 1.56A7 7 0 0 0 5 12c0 .48.05.94.14 1.4l-2 1.56 2 3.46 2.38-.96a7 7 0 0 0 2.42 1.4l.36 2.54h3.4l.36-2.54a7 7 0 0 0 2.42-1.4l2.38.96 2-3.46-2-1.56c.09-.46.14-.92.14-1.4Z"/>',
+  check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  x:'<path d="m6 6 12 12M18 6 6 18"/>',
+  chevL:'<path d="m14.5 6-6 6 6 6"/>',
+  chevR:'<path d="m9.5 6 6 6-6 6"/>',
+  chevD:'<path d="m6 9.5 6 6 6-6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  send:'<path d="m21 3-9.5 9.5M21 3l-6.5 18-3-8.5L3 9.5Z"/>',
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  file:'<path d="M13.5 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5Z"/><path d="M13.5 3v5.5H19"/>',
+  alert:'<path d="M12 3.5 2.5 20h19Z"/><path d="M12 10v4.5M12 17.2v.3"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  eye:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/>',
+  shield:'<path d="M12 3 5 5.8v5.4c0 4.6 3 7.8 7 9.3 4-1.5 7-4.7 7-9.3V5.8Z"/><path d="m9 11.8 2.2 2.2L15 10"/>',
+  arrUp:'<path d="M7 17 17 7M9 7h8v8"/>',
+  arrDown:'<path d="M7 7l10 10M17 9v8H9"/>',
+  phone:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  home:'<path d="m3.5 11 8.5-7 8.5 7M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>',
+  hist:'<path d="M4 12a8 8 0 1 1 2.3 5.6M4 12l-1.8-2M4 12l2.3-1.3"/><path d="M12 8v4l2.8 1.8"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
+  key:'<circle cx="8" cy="15.5" r="4"/><path d="m11 12.5 8.5-8.5M16 7l2.5 2.5M13.5 9.5 16 12"/>',
+  ledger:'<path d="M5 3.5h14v17H5Z"/><path d="M5 7.5h14M9 3.5v17"/>',
+};
+const ico = (n,cls='icon') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
+
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MESES_S = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const fmt = v => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const fmtD = v => { const s=(Math.round(v*100)/100).toString().split('.'); return fmt(+s[0])+(s[1]?','+s[1]:''); };
+const MT = v => `${fmt(Math.round(v))} MT`;
+const iniciais = n => n.split(' ').filter(Boolean).map(p=>p[0]).slice(0,2).join('').toUpperCase();
+
+/* ---------------- dados sintéticos ---------------- */
+const NOMES = ['Celeste Mabjaia','Hélder Cossa','Anselmo Tembe','Dina Chissano','Paulo Macamo','Felismina Nhantumbo','Ivo Matsinhe','Lucrécia Sitoe','Jorge Mondlane','Teresa Langa','Nelson Cumbane','Amélia Bila','Castro Nhaca','Olga Muianga','Edson Zandamela','Berta Massingue','Rui Chongo','Marta Simango','Dário Mutemba','Isaura Manjate','Tomás Guambe','Vera Nhampossa','Élio Malate','Sónia Ubisse'];
+const BLOCOS = ['A','B'];
+// estados por mês (índices 0..11 de 2026): determinístico por flat
+function estadoFlat(i, mes){
+  if(mes > 9) return 'futuro';
+  if(mes < 9){ return (i*7 + mes*3) % 10 < 8.5 ? 'pago' : 'atraso_h'; }
+  // Outubro (mês corrente): mistura
+  const r = (i*13+5) % 24;
+  if(r < 16) return 'pago';
+  if(r < 18) return 'confirmar';
+  if(r < 21) return 'pendente';
+  return 'atraso';
+}
+const FLATS = NOMES.map((nome,i)=>({
+  id:i+1,
+  bloco:BLOCOS[i%2],
+  andar:Math.floor(i/6)+1,
+  numero:`${Math.floor(i/6)+1}0${(i%6)+1}`,
+  nome,
+  tel:`84 ${String(210+i*7).padStart(3,'0')} ${String(1240+i*53).slice(-4)}`,
+  quota: i%5===0 ? 1800 : 1500,
+  ref:`MR-000${821+i}`,
+  convite: i<21 ? 'usado' : 'por usar',
+  codigo:`JDA-${(i+1).toString().padStart(2,'0')}${String.fromCharCode(65+(i%9))}${String(312+i*7).slice(-3)}`,
+}));
+const COBRANCAS_12M = [28.5,30,31.5,30,33,31.5,34.5,33,34.5,36,0,0]; // ×1000 MT
+const TRANSF = [
+  {id:1, flat:FLATS[11], valor:1500, data:'28 Out', ficheiro:'comprovativo_bci_302.pdf'},
+  {id:2, flat:FLATS[12], valor:1800, data:'29 Out', ficheiro:'talao_millennium.jpg'},
+];
+const CONDOS = [
+  {nome:'Jardim das Acácias', zona:'Sommerschield', flats:24, cobrado:36.0, esperado:37.2, atraso:4, saldo:118400, gestor:'Arlindo Macuácua'},
+  {nome:'Edifício Marginal 42', zona:'Costa do Sol', flats:36, cobrado:49.5, esperado:57.6, atraso:7, saldo:96200, gestor:'Lídia Monjane'},
+  {nome:'Condomínio Polana Mar', zona:'Polana Cimento', flats:18, cobrado:40.5, esperado:43.2, atraso:2, saldo:54300, gestor:'Hermínio Matola'},
+  {nome:'Torres do Alto Maé', zona:'Alto Maé', flats:48, cobrado:62.4, esperado:76.8, atraso:11, saldo:131750, gestor:'Salomão Vilanculos'},
+  {nome:'Residencial Katembe Sul', zona:'Katembe', flats:20, cobrado:24.0, esperado:30.0, atraso:5, saldo:41800, gestor:'Dulce Mahumane'},
+];
+const COLABS = [
+  {nome:'Stélio Nhantumbo', tel:'84 512 0098', cadastros:38, desde:'Mar 2026', estado:'activo'},
+  {nome:'Yolanda Macie', tel:'82 330 4471', cadastros:52, desde:'Mar 2026', estado:'activo'},
+  {nome:'Benedito Chirindza', tel:'85 221 7733', cadastros:19, desde:'Jun 2026', estado:'activo'},
+  {nome:'Gina Mavale', tel:'84 908 1126', cadastros:7, desde:'Set 2026', estado:'suspenso'},
+];
+const MOVS = [
+  {t:'credito', d:'Quota Out · Flat 101 · M-Pesa', v:1500, data:'30 Out'},
+  {t:'taxa', d:'Taxa da plataforma (5%)', v:-75, data:'30 Out'},
+  {t:'credito', d:'Quota Out · Flat 204 · M-Pesa', v:1800, data:'29 Out'},
+  {t:'taxa', d:'Taxa da plataforma (5%)', v:-90, data:'29 Out'},
+  {t:'credito', d:'Quota Out · Flat 106 · Transferência', v:1500, data:'28 Out'},
+  {t:'taxa', d:'Taxa da plataforma (5%)', v:-75, data:'28 Out'},
+  {t:'repasse', d:'Repasse de Setembro · BIM ···4471', v:-29830, data:'06 Out'},
+];
+const DESPESAS = [
+  {d:'Salário do guarda (Out)', c:'Segurança', v:7500, data:'28 Out'},
+  {d:'Limpeza das áreas comuns', c:'Limpeza', v:4200, data:'21 Out'},
+  {d:'Reparação da bomba de água', c:'Manutenção', v:3850, data:'14 Out'},
+  {d:'Energia das zonas comuns', c:'Energia', v:1920, data:'08 Out'},
+];
+const AVISOS = [
+  {t:'Corte de água — Quarta-feira', c:'A AdeM informou um corte das 08h às 16h no dia 5 de Novembro. O tanque do prédio estará disponível.', data:'30 Out', env:24},
+  {t:'Assembleia de condóminos', c:'Convocatória para 15 de Novembro às 10h, salão do R/C. Ponto único: orçamento 2027.', data:'22 Out', env:24},
+  {t:'Obras no elevador', c:'Manutenção programada do elevador no sábado de manhã. Use as escadas entre as 7h e as 12h.', data:'11 Out', env:24},
+];
+const AUDIT = [
+  {a:'Colaboradora suspensa', d:'Gina Mavale · por Admin', data:'há 2 dias'},
+  {a:'Taxa M-Pesa actualizada', d:'1,0% → 1,2% · por Admin', data:'há 5 dias'},
+  {a:'Repasse registado', d:'Jardim das Acácias · 29 830 MT', data:'06 Out'},
+  {a:'Condomínio criado', d:'Residencial Katembe Sul · por Yolanda M.', data:'02 Out'},
+];
+const FATURAS_PROP = MESES_S.slice(0,10).map((m,i)=>({
+  mes:`${MESES[i]} 2026`, valor:1500, estado: i===9 ? 'pendente' : 'pago',
+  metodo: i===9 ? '—' : (i%3===0 ? 'Transferência' : 'M-Pesa'),
+  recibo:`REC-2026-${String(i+1).padStart(2,'0')}44`,
+})).reverse();
+
+/* ---------------- estado ---------------- */
+const S = {
+  role:'gestor',
+  screen:'painel',
+  mes:9,                      // Outubro
+  filtro:'todos',
+  procura:'',
+  transf:[...TRANSF],
+  pagos:{},                   // overrides: flatId -> 'pago'
+  colabs: COLABS.map(c=>({...c})),
+  taxas:{mpesa:1.2, emola:1.5, plataforma:5.0},
+  convitesCopiados:{},
+};
+
+const ROLES = {
+  gestor:{label:'Gestor', user:'Arlindo Macuácua', sub:'Jardim das Acácias', nav:[
+    ['painel','Painel','grid'],['flats','Flats','flats'],['transf','Transferências','bank'],['tesouraria','Tesouraria','wallet'],['avisos','Avisos','bell'],
+  ]},
+  proprietario:{label:'Proprietário', user:'Celeste Mabjaia', sub:'Flat 302 · Bloco A', nav:[
+    ['inicio','A minha quota','home'],['historico','Histórico','hist'],['avisosP','Avisos','bell'],
+  ]},
+  admin:{label:'Consola', user:'Nádia Waty', sub:'Super administradora', nav:[
+    ['visao','Visão geral','grid'],['condos','Condomínios','building'],['colabs','Colaboradores','users'],['repasses','Repasses','bank'],['config','Configuração','settings'],
+  ]},
+  colaborador:{label:'Colaborador', user:'Stélio Nhantumbo', sub:'Cadastro de condomínios', nav:[
+    ['cadastro','Cadastro','plus'],['convites','Convites','key'],
+  ]},
+};
+
+/* ---------------- helpers de UI ---------------- */
+const $ = s => document.querySelector(s);
+function toast(msg){
+  const t = $('#toast');
+  t.innerHTML = `${ico('check','icon sm')}<span>${msg}</span>`;
+  t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function abrirDrawer(html){
+  $('#drawer').innerHTML = html;
+  $('#drawer').classList.add('open'); $('#overlay').classList.add('open');
+}
+function abrirModal(html){
+  $('#modal').innerHTML = `<div class="modal-card">${html}</div>`;
+  $('#modal').classList.add('open'); $('#overlay').classList.add('open');
+}
+function fecharTudo(){
+  $('#drawer').classList.remove('open'); $('#modal').classList.remove('open');
+  $('#overlay').classList.remove('open'); $('#sidebar').classList.remove('open');
+}
+$('#overlay').addEventListener('click', fecharTudo);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') fecharTudo(); });
+$('#menu-btn').addEventListener('click', ()=>{ $('#sidebar').classList.add('open'); $('#overlay').classList.add('open'); });
+
+function estadoDe(f){
+  if(S.pagos[f.id]) return 'pago';
+  return estadoFlat(f.id-1, S.mes);
+}
+const PILL = {
+  pago:['pago','Pago'], pendente:['pendente','Pendente'], atraso:['atraso','Em atraso'],
+  atraso_h:['atraso','Não pagou'], confirmar:['confirmar','A confirmar'], futuro:['neutro','—'],
+};
+const pill = e => { const [c,l]=PILL[e]; return `<span class="pill ${c}">${l}</span>`; };
+
+/* ---------------- navegação ---------------- */
+function setRole(r){
+  S.role = r; S.screen = ROLES[r].nav[0][0]; S.filtro='todos'; S.procura='';
+  render();
+}
+function setScreen(s){ S.screen = s; render(); fecharTudo(); }
+
+function renderNav(){
+  const r = ROLES[S.role];
+  $('#brand-sub').textContent = r.sub;
+  $('#avatar-name').textContent = r.user;
+  $('#avatar-pic').textContent = iniciais(r.user);
+  $('#nav').innerHTML = `<div class="nav-label">Menu</div>` + r.nav.map(([id,label,icon])=>{
+    const badge = (id==='transf' && S.transf.length) ? `<span class="nav-badge">${S.transf.length}</span>` : '';
+    return `<button class="nav-item" data-screen="${id}" ${S.screen===id?'aria-current="page"':''}>${ico(icon)}${label}${badge}</button>`;
+  }).join('');
+  $('#nav').querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>setScreen(b.dataset.screen)));
+  $('#role-grid').innerHTML = Object.entries(ROLES).map(([k,v])=>
+    `<button class="role-btn ${S.role===k?'on':''}" data-role="${k}">${v.label}</button>`).join('');
+  $('#role-grid').querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>setRole(b.dataset.role)));
+}
+
+/* ---------------- componentes ---------------- */
+function monthPicker(){
+  return `<div class="month-pick" role="group" aria-label="Mês">
+    <button id="mes-prev" aria-label="Mês anterior" ${S.mes<=0?'disabled':''}>${ico('chevL','icon sm')}</button>
+    <b class="num">${MESES[S.mes]} 2026</b>
+    <button id="mes-next" aria-label="Mês seguinte" ${S.mes>=9?'disabled':''}>${ico('chevR','icon sm')}</button>
+  </div>`;
+}
+function bindMonth(){
+  const p=$('#mes-prev'), n=$('#mes-next');
+  if(p) p.addEventListener('click',()=>{ if(S.mes>0){S.mes--;render();} });
+  if(n) n.addEventListener('click',()=>{ if(S.mes<9){S.mes++;render();} });
+}
+function kpi(lbl, icon, val, cmp){
+  return `<div class="card kpi">
+    <div class="lbl"><span class="card-ico">${ico(icon)}</span>${lbl}</div>
+    <div class="val num">${val}</div>
+    ${cmp?`<div class="cmp">${cmp}</div>`:''}
+  </div>`;
+}
+
+/* ============================================================
+   GESTOR
+   ============================================================ */
+function calcGestor(){
+  const estados = FLATS.map(f=>({f, e:estadoDe(f)}));
+  const pagos = estados.filter(x=>x.e==='pago');
+  const emFalta = estados.filter(x=>['pendente','atraso','confirmar'].includes(x.e));
+  const atraso = estados.filter(x=>x.e==='atraso');
+  const hist = estados.filter(x=>x.e==='atraso_h');
+  const cobrado = S.mes===9 ? pagos.reduce((s,x)=>s+x.f.quota,0) : COBRANCAS_12M[S.mes]*1000;
+  const porCobrar = S.mes===9 ? emFalta.reduce((s,x)=>s+x.f.quota,0) : hist.reduce((s,x)=>s+x.f.quota,0);
+  return {estados,pagos,emFalta,atraso,hist,cobrado,porCobrar};
+}
+function scrGestorPainel(){
+  const {pagos,atraso,hist,cobrado,porCobrar} = calcGestor();
+  const nAtraso = S.mes===9 ? atraso.length : hist.length;
+  const corrente = S.mes===9;
+  const bars = COBRANCAS_12M.map((v,i)=>{
+    const val = i===9 ? cobradoActualMil() : v;
+    const h = Math.max(4, val/40*100);
+    return `<div class="bar-col"><div class="bar ${i===S.mes?'sel':''}" data-v="${fmt(val*1000)} MT" style="height:${h}%;animation-delay:${i*30}ms" data-mes="${i}" role="img" aria-label="${MESES[i]}: ${fmt(val*1000)} MT"></div><span class="bar-lbl">${MESES_S[i]}</span></div>`;
+  }).join('');
+  return `
+  <div class="page-head">
+    <div><h1>Bom dia, Arlindo</h1><p class="sub">Jardim das Acácias · 24 flats · Sommerschield</p></div>
+    <div class="page-head-actions">
+      ${monthPicker()}
+      <button class="btn btn-primary" id="btn-lembretes">${ico('send','icon sm')}Enviar lembretes</button>
+    </div>
+  </div>
+  <div class="grid g-kpi">
+    ${kpi(`Cobrado em ${MESES_S[S.mes]}`,'wallet',MT(cobrado)+' <small></small>',
+      corrente?`<span class="up">${ico('arrUp','icon sm')} ${Math.round(cobrado/37500*100)}% do esperado</span>&nbsp;· ${pagos.length} de 24 flats`:`Mês fechado`)}
+    ${kpi('Por cobrar','clock',MT(porCobrar),
+      corrente?`${FLATS.length - pagos.length} flats ainda sem pagamento`:`${hist.length} flats não pagaram`)}
+    ${kpi('Em atraso','alert',String(nAtraso)+' <small>flats</small>',
+      corrente?`<span class="down">${ico('arrDown','icon sm')} ${MT(atraso.reduce((s,x)=>s+x.f.quota,0))}</span>&nbsp; por recuperar`:`no fecho do mês`)}
+  </div>
+  <div class="grid g-23 mt">
+    <div class="card">
+      <div class="card-head"><h2>Cobranças em 2026</h2><span class="spacer"></span>
+        <div class="chart-legend"><span><i style="background:var(--green-600)"></i>Mês seleccionado</span><span><i style="background:var(--green-150)"></i>Cobrado</span></div>
+      </div>
+      <div class="chart"><div class="chart-bars">${bars}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-ico">${ico('bank')}</span><h2>A confirmar</h2><span class="spacer"></span>
+        ${S.transf.length?`<button class="link" id="ver-transf">Ver todas</button>`:''}
+      </div>
+      ${S.transf.length ? `<ul class="row-list">${S.transf.map(t=>`
+        <li>
+          <span class="row-ico b">${ico('file')}</span>
+          <div class="row-body"><div class="t">Flat ${t.flat.numero} · ${t.flat.nome.split(' ')[0]} ${t.flat.nome.split(' ').slice(-1)}</div><div class="s">Transferência · ${t.data}</div></div>
+          <div class="row-end"><div class="cell-main num">${MT(t.valor)}</div><button class="link" data-conf="${t.id}">Confirmar</button></div>
+        </li>`).join('')}</ul>`
+      : `<div class="empty"><span class="e-ico">${ico('check')}</span><b>Fila limpa</b><p>Nenhuma transferência por confirmar. Bom trabalho.</p></div>`}
+    </div>
+  </div>
+  <div class="card mt">
+    <div class="card-head"><h2>Flats · ${MESES[S.mes]}</h2><span class="spacer"></span><button class="link" id="ver-flats">Ver todas as flats</button></div>
+    ${tabelaFlats(FLATS.slice(0,8))}
+  </div>`;
+}
+function cobradoActualMil(){
+  const pagos = FLATS.filter(f=>{ const e = S.pagos[f.id]?'pago':estadoFlat(f.id-1,9); return e==='pago'; });
+  return pagos.reduce((s,f)=>s+f.quota,0)/1000;
+}
+function tabelaFlats(lista){
+  return `<div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Flat</th><th>Proprietário</th><th class="r">Quota</th><th>Estado</th><th class="r"></th></tr></thead>
+    <tbody>${lista.map(f=>`
+      <tr>
+        <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar</div></td>
+        <td><div class="cell-main">${f.nome}</div><div class="cell-sub num">${f.tel}</div></td>
+        <td class="r num b">${MT(f.quota)}</td>
+        <td>${pill(estadoDe(f))}</td>
+        <td class="r"><button class="link" data-flat="${f.id}">Ver</button></td>
+      </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+function scrGestorFlats(){
+  const q = S.procura.toLowerCase();
+  let lista = FLATS.filter(f=>!q || f.nome.toLowerCase().includes(q) || f.numero.includes(q) || f.ref.toLowerCase().includes(q));
+  if(S.filtro!=='todos'){
+    lista = lista.filter(f=>{ const e=estadoDe(f); return S.filtro==='pago'?e==='pago':S.filtro==='pendente'?['pendente','confirmar'].includes(e):['atraso','atraso_h'].includes(e); });
+  }
+  const chips = [['todos','Todas'],['pago','Pagas'],['pendente','Pendentes'],['atraso','Em atraso']];
+  return `
+  <div class="page-head">
+    <div><h1>Flats</h1><p class="sub">24 flats registadas · estados de ${MESES[S.mes]}</p></div>
+    <div class="page-head-actions">${monthPicker()}</div>
+  </div>
+  <div class="card">
+    <div class="card-head" style="flex-wrap:wrap;gap:12px">
+      <div class="chips">${chips.map(([k,l])=>`<button class="chip ${S.filtro===k?'on':''}" data-chip="${k}">${l}</button>`).join('')}</div>
+      <span class="spacer"></span>
+      <label class="search" style="max-width:260px;flex:1">
+        <svg class="icon sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input type="search" id="flats-q" placeholder="Procurar…" value="${S.procura}" aria-label="Procurar flats">
+      </label>
+    </div>
+    ${lista.length ? tabelaFlats(lista) : `<div class="empty"><span class="e-ico">${ico('flats')}</span><b>Nada encontrado</b><p>Nenhuma flat corresponde ao filtro ou à procura.</p></div>`}
+  </div>`;
+}
+function drawerFlat(f){
+  const e = estadoDe(f);
+  const hist = MESES_S.slice(4,10).map((m,ix)=>{
+    const i = ix+4;
+    const ee = i===9 ? e : (S.pagos[f.id] && i===9 ? 'pago' : estadoFlat(f.id-1,i));
+    return `<li><span class="row-ico ${ee==='pago'?'g':ee==='pendente'||ee==='confirmar'?'a':'r'}">${ico(ee==='pago'?'check':'clock')}</span>
+      <div class="row-body"><div class="t">${MESES[i]} 2026</div><div class="s">Referência ${f.ref}</div></div>
+      <div class="row-end">${pill(ee)}</div></li>`;
+  }).reverse().join('');
+  return `
+  <div class="drawer-head">
+    <div><h3>Flat ${f.numero} · Bloco ${f.bloco}</h3><div class="cell-sub">${f.andar}º andar · Jardim das Acácias</div></div>
+    <span class="spacer" style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button>
+  </div>
+  <div class="drawer-body">
+    <div class="note" style="margin-bottom:18px">${ico('shield','icon sm')}<span>Registo em nome do <b>proprietário</b>. Mudança de titular só por acção administrativa, com auditoria.</span></div>
+    <div class="field"><label>Proprietário</label><input value="${f.nome}" readonly></div>
+    <div class="f-row">
+      <div class="field"><label>Telefone</label><input class="num" value="+258 ${f.tel}" readonly></div>
+      <div class="field"><label>Quota mensal</label><input class="num" value="${MT(f.quota)}" readonly></div>
+    </div>
+    <h3 style="font-size:14px;margin:16px 0 4px">Últimos 6 meses</h3>
+    <ul class="row-list">${hist}</ul>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost sm" data-close>Fechar</button>
+    <button class="btn btn-primary sm" data-lembrete="${f.id}">${ico('send','icon sm')}Enviar lembrete</button>
+  </div>`;
+}
+function scrGestorTransf(){
+  return `
+  <div class="page-head">
+    <div><h1>Transferências bancárias</h1><p class="sub">Comprovativos submetidos pelos proprietários, à espera da sua confirmação</p></div>
+  </div>
+  ${S.transf.length ? `<div class="grid">${S.transf.map(t=>`
+    <div class="card" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+      <span class="row-ico b" style="width:46px;height:46px">${ico('file')}</span>
+      <div class="row-body">
+        <div class="t" style="font-size:15px">Flat ${t.flat.numero} · ${t.flat.nome}</div>
+        <div class="s">Referência <b class="num">${t.flat.ref}</b> · submetido a ${t.data} · <button class="link" data-comp="${t.ficheiro}">${t.ficheiro}</button></div>
+      </div>
+      <div class="row-end" style="display:flex;align-items:center;gap:10px">
+        <div class="cell-main num" style="font-size:17px">${MT(t.valor)}</div>
+        <button class="btn btn-danger sm" data-rej="${t.id}">Rejeitar</button>
+        <button class="btn btn-primary sm" data-conf="${t.id}">${ico('check','icon sm')}Confirmar</button>
+      </div>
+    </div>`).join('')}</div>`
+  : `<div class="card"><div class="empty"><span class="e-ico">${ico('check')}</span><b>Fila limpa</b><p>Nenhuma transferência por confirmar neste momento.</p></div></div>`}
+  <div class="note mt">${ico('shield','icon sm')}<span>Ao confirmar, a fatura é marcada como paga, o proprietário recebe o recibo por SMS e email, e o valor entra no razão do condomínio.</span></div>`;
+}
+function scrGestorTesouraria(){
+  const saldo = 118400;
+  return `
+  <div class="page-head">
+    <div><h1>Tesouraria</h1><p class="sub">Razão do condomínio · valores líquidos de taxas</p></div>
+    <div class="page-head-actions"><button class="btn btn-ghost" id="btn-despesa">${ico('plus','icon sm')}Nova despesa</button></div>
+  </div>
+  <div class="grid g-kpi">
+    ${kpi('Saldo a repassar','wallet',MT(saldo),'Repasse da plataforma previsto para 5 Nov')}
+    ${kpi('Entradas em Outubro','arrUp',MT(36000),'34 cobranças confirmadas')}
+    ${kpi('Despesas em Outubro','arrDown',MT(17470),'4 despesas registadas')}
+  </div>
+  <div class="grid g-12 mt">
+    <div class="card">
+      <div class="card-head"><span class="card-ico">${ico('ledger')}</span><h2>Movimentos recentes</h2></div>
+      <ul class="row-list">${MOVS.map(m=>`
+        <li><span class="row-ico ${m.t==='credito'?'g':m.t==='taxa'?'a':'b'}">${ico(m.t==='credito'?'arrUp':m.t==='taxa'?'receipt':'bank')}</span>
+          <div class="row-body"><div class="t">${m.d}</div><div class="s">${m.data}</div></div>
+          <div class="row-end cell-main num" style="color:${m.v>0?'var(--green-700)':'var(--ink)'}">${m.v>0?'+':'−'} ${fmt(Math.abs(m.v))} MT</div>
+        </li>`).join('')}</ul>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-ico">${ico('receipt')}</span><h2>Despesas de Outubro</h2></div>
+      <ul class="row-list">${DESPESAS.map(d=>`
+        <li><span class="row-ico a">${ico('receipt')}</span>
+          <div class="row-body"><div class="t">${d.d}</div><div class="s">${d.c} · ${d.data}</div></div>
+          <div class="row-end cell-main num">${MT(d.v)}</div>
+        </li>`).join('')}</ul>
+    </div>
+  </div>`;
+}
+function scrGestorAvisos(){
+  return `
+  <div class="page-head">
+    <div><h1>Avisos</h1><p class="sub">Comunicações enviadas por SMS e email a todos os proprietários</p></div>
+  </div>
+  <div class="grid g-13">
+    <div class="card" style="align-self:start">
+      <div class="card-head"><span class="card-ico">${ico('send')}</span><h2>Novo aviso</h2></div>
+      <div class="field"><label for="av-t">Título</label><input id="av-t" placeholder="Ex.: Corte de energia na sexta"></div>
+      <div class="field"><label for="av-c">Mensagem</label><textarea id="av-c" rows="4" placeholder="Escreva o aviso. O SMS usa os primeiros 150 caracteres."></textarea></div>
+      <button class="btn btn-primary" id="btn-aviso" style="width:100%;justify-content:center">${ico('send','icon sm')}Enviar a 24 flats</button>
+      <p class="hint" style="font-size:12px;color:var(--ink-3);margin-top:10px">Custo estimado: 24 SMS × 1,10 MT = <b class="num">26,40 MT</b></p>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Enviados</h2></div>
+      <ul class="row-list">${AVISOS.map(a=>`
+        <li><span class="row-ico g">${ico('bell')}</span>
+          <div class="row-body"><div class="t">${a.t}</div><div class="s">${a.c}</div></div>
+          <div class="row-end"><div class="cell-sub">${a.data}</div><div class="cell-sub num">${a.env} envios</div></div>
+        </li>`).join('')}</ul>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   PROPRIETÁRIO
+   ============================================================ */
+function scrPropInicio(){
+  const taxa = Math.round(1500*S.taxas.mpesa)/100;
+  return `
+  <div class="page-head">
+    <div><h1>Olá, Celeste</h1><p class="sub">Flat 302 · Bloco A · Jardim das Acácias</p></div>
+  </div>
+  <div class="grid g-12">
+    <div>
+      <div class="pay-hero">
+        <div class="q-lbl">Quota de Outubro 2026</div>
+        <div class="q-val num">1 500 <small>MT</small></div>
+        <div class="q-sub">Vence a 5 de Novembro · Referência <b class="num">MR-000832</b></div>
+        <div style="margin-top:18px">
+          <div class="pay-split"><span>Quota do condomínio</span><b class="num">1 500 MT</b></div>
+          <div class="pay-split"><span>Taxa M-Pesa (${String(S.taxas.mpesa).replace('.',',')}%)</span><b class="num">${fmtD(taxa)} MT</b></div>
+          <div class="pay-split"><span>Total a pagar por M-Pesa</span><b class="num">${fmtD(1500+taxa)} MT</b></div>
+        </div>
+      </div>
+      <div class="note mt">${ico('shield','icon sm')}<span>O seu pagamento é confirmado automaticamente e o recibo chega por SMS e email.</span></div>
+      <div class="card mt">
+        <div class="card-head"><h2>Últimos pagamentos</h2><span class="spacer"></span><button class="link" id="ver-hist">Ver histórico</button></div>
+        <ul class="row-list">
+          <li><span class="row-ico g">${ico('check')}</span>
+            <div class="row-body"><div class="t">Setembro 2026</div><div class="s">M-Pesa · Recibo REC-2026-0944</div></div>
+            <div class="row-end cell-main num">1 500 MT</div></li>
+          <li><span class="row-ico g">${ico('check')}</span>
+            <div class="row-body"><div class="t">Agosto 2026</div><div class="s">Transferência · Recibo REC-2026-0844</div></div>
+            <div class="row-end cell-main num">1 500 MT</div></li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="align-self:start">
+      <div class="card-head"><h2>Pagar agora</h2></div>
+      <button class="method" data-pagar="mpesa">
+        <span class="m-ico mpesa">M-PESA</span>
+        <span><b>M-Pesa</b><div class="s">Recebe o pedido no telemóvel e confirma com o PIN</div></span>
+        ${ico('chevR','icon sm')}
+      </button>
+      <button class="method" data-pagar="emola">
+        <span class="m-ico emola">e-MOLA</span>
+        <span><b>eMola</b><div class="s">Confirma com o PIN da sua conta eMola</div></span>
+        ${ico('chevR','icon sm')}
+      </button>
+      <button class="method" data-pagar="banco">
+        <span class="m-ico banco">${ico('bank','icon sm')}</span>
+        <span><b>Transferência bancária</b><div class="s">Transfere com a referência e envia o comprovativo</div></span>
+        ${ico('chevR','icon sm')}
+      </button>
+    </div>
+  </div>`;
+}
+function modalMpesa(rede){
+  const nome = rede==='mpesa'?'M-Pesa':'eMola';
+  const taxa = Math.round(1500*(rede==='mpesa'?S.taxas.mpesa:S.taxas.emola))/100;
+  return `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+    <span class="m-ico ${rede}" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:8.5px;line-height:1.1;text-align:center">${rede==='mpesa'?'M-PESA':'e-MOLA'}</span>
+    <div><h3 style="font-size:17px;font-weight:800">Pagar com ${nome}</h3><div class="cell-sub num">Total: ${fmtD(1500+taxa)} MT (quota + taxa)</div></div>
+    <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
+  </div>
+  <div class="field"><label for="msisdn">Número ${nome}</label><input id="msisdn" class="num" inputmode="tel" value="84 210 1240"></div>
+  <button class="btn btn-primary" id="btn-push" style="width:100%;justify-content:center">${ico('phone','icon sm')}Enviar pedido de pagamento</button>`;
+}
+function modalPush(rede){
+  return `
+  <div style="text-align:center;padding:8px 4px">
+    <div class="spinner" aria-hidden="true"></div>
+    <h3 style="font-size:17px;font-weight:800;margin:18px 0 6px">Confirme no seu telemóvel</h3>
+    <p style="color:var(--ink-2);font-size:14px">Enviámos o pedido ${rede==='mpesa'?'M-Pesa':'eMola'} para <b class="num">84 210 1240</b>.<br>Introduza o seu PIN para concluir.</p>
+  </div>`;
+}
+function modalRecibo(){
+  return `
+  <div style="text-align:center;padding:4px">
+    <span class="e-ico" style="width:56px;height:56px;border-radius:18px;background:var(--green-100);color:var(--green-700);display:grid;place-items:center;margin:0 auto">${ico('check')}</span>
+    <h3 style="font-size:18px;font-weight:800;margin:16px 0 4px">Quota paga. Obrigado!</h3>
+    <p style="color:var(--ink-2);font-size:14px">Outubro 2026 · <b class="num">1 518 MT</b> · Recibo <b class="num">REC-2026-1044</b><br>Enviámos o recibo por SMS e email.</p>
+    <button class="btn btn-primary" data-close style="margin-top:18px;width:100%;justify-content:center">Fechar</button>
+  </div>`;
+}
+function modalBanco(){
+  return `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <span class="m-ico banco" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff">${ico('bank','icon sm')}</span>
+    <h3 style="font-size:17px;font-weight:800">Transferência bancária</h3>
+    <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
+  </div>
+  <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:12px">Transfira <b class="num">1 500 MT</b> para a conta do condomínio e use a referência no descritivo:</p>
+  <div class="ref-box num">MR-000832 <button class="copy-btn" data-copy="MR-000832">${ico('copy','icon sm')}Copiar</button></div>
+  <div class="f-row" style="margin-top:14px">
+    <div class="field"><label>Banco</label><input value="BIM" readonly></div>
+    <div class="field"><label>Conta</label><input class="num" value="143 228 4471" readonly></div>
+  </div>
+  <div class="field"><label>Comprovativo</label>
+    <button class="btn btn-ghost" id="btn-upload" style="width:100%;justify-content:center;border-style:dashed">${ico('file','icon sm')}Carregar comprovativo (PDF ou foto)</button>
+    <span class="hint">O gestor confirma o pagamento depois de validar o comprovativo.</span>
+  </div>`;
+}
+function scrPropHistorico(){
+  return `
+  <div class="page-head"><div><h1>Histórico</h1><p class="sub">As suas quotas de 2026 · Flat 302</p></div></div>
+  <div class="card"><div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Mês</th><th class="r">Valor</th><th>Método</th><th>Estado</th><th class="r">Recibo</th></tr></thead>
+    <tbody>${FATURAS_PROP.map(f=>`
+      <tr>
+        <td class="cell-main">${f.mes}</td>
+        <td class="r num b">${MT(f.valor)}</td>
+        <td>${f.metodo}</td>
+        <td>${pill(f.estado)}</td>
+        <td class="r">${f.estado==='pago'?`<button class="link" data-recibo="${f.recibo}">${f.recibo}</button>`:'<span class="cell-sub">—</span>'}</td>
+      </tr>`).join('')}</tbody>
+  </table></div></div>`;
+}
+function scrPropAvisos(){
+  return `
+  <div class="page-head"><div><h1>Avisos do condomínio</h1><p class="sub">Jardim das Acácias</p></div></div>
+  <div class="grid">${AVISOS.map(a=>`
+    <div class="card" style="display:flex;gap:14px">
+      <span class="row-ico g">${ico('bell')}</span>
+      <div class="row-body"><div class="t" style="font-size:15px">${a.t}</div><p style="font-size:14px;color:var(--ink-2);margin-top:4px">${a.c}</p><div class="cell-sub" style="margin-top:8px">${a.data} · Administração</div></div>
+    </div>`).join('')}</div>`;
+}
+
+/* ============================================================
+   SUPER ADMIN
+   ============================================================ */
+function scrAdminVisao(){
+  const proc = CONDOS.reduce((s,c)=>s+c.cobrado,0)*1000;
+  const receita = proc*S.taxas.plataforma/100;
+  return `
+  <div class="page-head">
+    <div><h1>Visão geral</h1><p class="sub">Todas as organizações · Outubro 2026</p></div>
+    <div class="page-head-actions"><button class="btn btn-dark">${ico('file','icon sm')}Exportar relatório</button></div>
+  </div>
+  <div class="grid g-kpi">
+    ${kpi('Cobranças processadas','wallet',MT(proc),`<span class="up">${ico('arrUp','icon sm')} +6,1%</span>&nbsp; vs. Setembro`)}
+    ${kpi('Receita da plataforma','arrUp',MT(receita),`${String(S.taxas.plataforma).replace('.',',')}% sobre cobranças confirmadas`)}
+    ${kpi('Taxas de operadores','receipt',MT(3185),'M-Pesa 1,2% · absorvida pelos apartamentos')}
+  </div>
+  <div class="grid g-23 mt">
+    <div class="card">
+      <div class="card-head"><h2>Condomínios</h2><span class="spacer"></span><button class="link" id="ver-condos">Ver todos</button></div>
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>Condomínio</th><th class="r">Flats</th><th>Cobrança do mês</th><th class="r">Inadimplência</th><th class="r">A repassar</th></tr></thead>
+        <tbody>${CONDOS.map(c=>{
+          const pct = Math.round(c.cobrado/c.esperado*100);
+          const inad = Math.round(c.atraso/c.flats*100);
+          return `<tr>
+            <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona} · ${c.gestor}</div></td>
+            <td class="r num">${c.flats}</td>
+            <td><div style="display:flex;align-items:center;gap:10px"><span class="prog ${pct<75?'bad':pct<88?'warn':''}" style="flex:1"><i style="width:${pct}%"></i></span><span class="num b" style="font-size:13px">${pct}%</span></div></td>
+            <td class="r num">${inad}%</td>
+            <td class="r num b">${MT(c.saldo)}</td>
+          </tr>`;}).join('')}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-ico">${ico('shield')}</span><h2>Auditoria recente</h2></div>
+      <ul class="row-list">${AUDIT.map(a=>`
+        <li><span class="row-ico b">${ico('clock')}</span>
+          <div class="row-body"><div class="t">${a.a}</div><div class="s">${a.d}</div></div>
+          <div class="row-end cell-sub">${a.data}</div>
+        </li>`).join('')}</ul>
+    </div>
+  </div>`;
+}
+function scrAdminCondos(){
+  return `
+  <div class="page-head">
+    <div><h1>Condomínios</h1><p class="sub">${CONDOS.length} organizações activas · ${CONDOS.reduce((s,c)=>s+c.flats,0)} flats</p></div>
+    <div class="page-head-actions"><button class="btn btn-primary">${ico('plus','icon sm')}Novo condomínio</button></div>
+  </div>
+  <div class="card"><div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Condomínio</th><th>Gestor</th><th class="r">Flats</th><th class="r">Esperado/mês</th><th class="r">% plataforma</th><th>Estado</th></tr></thead>
+    <tbody>${CONDOS.map((c,i)=>`
+      <tr>
+        <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona}</div></td>
+        <td>${c.gestor}</td>
+        <td class="r num">${c.flats}</td>
+        <td class="r num b">${MT(c.esperado*1000)}</td>
+        <td class="r num">${i===3?'4,0%':'5,0%'}</td>
+        <td><span class="pill activo">Activo</span></td>
+      </tr>`).join('')}</tbody>
+  </table></div></div>`;
+}
+function scrAdminColabs(){
+  return `
+  <div class="page-head">
+    <div><h1>Colaboradores</h1><p class="sub">Gestão exclusiva do super administrador · todas as acções ficam em auditoria</p></div>
+    <div class="page-head-actions"><button class="btn btn-primary" id="btn-novo-colab">${ico('plus','icon sm')}Novo colaborador</button></div>
+  </div>
+  <div class="card"><div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Colaborador</th><th class="r">Cadastros</th><th>Desde</th><th>Estado</th><th class="r"></th></tr></thead>
+    <tbody>${S.colabs.map((c,i)=>`
+      <tr>
+        <td><div class="cell-main">${c.nome}</div><div class="cell-sub num">+258 ${c.tel}</div></td>
+        <td class="r num b">${c.cadastros}</td>
+        <td>${c.desde}</td>
+        <td><span class="pill ${c.estado}">${c.estado==='activo'?'Activo':'Suspenso'}</span></td>
+        <td class="r">${c.estado==='activo'
+          ?`<button class="btn btn-danger sm" data-susp="${i}">Suspender</button>`
+          :`<button class="btn btn-ghost sm" data-react="${i}">Reactivar</button>`}</td>
+      </tr>`).join('')}</tbody>
+  </table></div></div>
+  <div class="note mt">${ico('shield','icon sm')}<span>Um colaborador suspenso perde o acesso de imediato; o histórico de cadastros fica preservado.</span></div>`;
+}
+function scrAdminRepasses(){
+  return `
+  <div class="page-head">
+    <div><h1>Repasses</h1><p class="sub">Saldos por repassar aos condomínios · transferência bancária com comprovativo</p></div>
+  </div>
+  <div class="card"><div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>Condomínio</th><th class="r">Saldo a repassar</th><th>Último repasse</th><th class="r"></th></tr></thead>
+    <tbody>${CONDOS.map((c,i)=>`
+      <tr>
+        <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona}</div></td>
+        <td class="r num b">${MT(c.saldo)}</td>
+        <td>${['06 Out','04 Out','06 Out','03 Out','01 Out'][i]} · <span class="cell-sub">Setembro</span></td>
+        <td class="r"><button class="btn btn-primary sm" data-repasse="${i}">${ico('bank','icon sm')}Registar repasse</button></td>
+      </tr>`).join('')}</tbody>
+  </table></div></div>`;
+}
+function scrAdminConfig(){
+  return `
+  <div class="page-head"><div><h1>Configuração</h1><p class="sub">Taxas de métodos de pagamento e receita da plataforma</p></div></div>
+  <div class="grid g-12">
+    <div class="card">
+      <div class="card-head"><span class="card-ico">${ico('receipt')}</span><h2>Taxas dos operadores</h2></div>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:6px">Absorvidas pelo apartamento (padrão, configurável por condomínio). Cada pagamento grava a taxa do momento da transacção.</p>
+      <div class="cfg-row">
+        <span class="m-ico mpesa" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:9px">M-PESA</span>
+        <div class="row-body"><div class="t">M-Pesa</div><div class="s">Vodacom · activo</div></div>
+        <div class="inp"><input class="num" id="tx-mpesa" value="${String(S.taxas.mpesa).replace('.',',')} %" aria-label="Taxa M-Pesa"></div>
+      </div>
+      <div class="cfg-row">
+        <span class="m-ico emola" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:9px">e-MOLA</span>
+        <div class="row-body"><div class="t">eMola</div><div class="s">Movitel · aguarda contrato</div></div>
+        <span class="pill neutro">Inactivo</span>
+      </div>
+      <div class="cfg-row">
+        <span class="m-ico banco" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff">${ico('bank','icon sm')}</span>
+        <div class="row-body"><div class="t">Transferência bancária</div><div class="s">Confirmação manual pelo gestor</div></div>
+        <div class="inp"><input class="num" value="0 %" aria-label="Taxa transferência" readonly></div>
+      </div>
+      <button class="btn btn-primary sm mt" id="btn-taxas">${ico('check','icon sm')}Guardar taxas</button>
+    </div>
+    <div class="card" style="align-self:start">
+      <div class="card-head"><span class="card-ico">${ico('wallet')}</span><h2>Receita da plataforma</h2></div>
+      <div class="field"><label for="tx-plat">Percentagem padrão sobre cobranças confirmadas</label>
+        <input id="tx-plat" class="num" value="${String(S.taxas.plataforma).replace('.',',')} %" style="max-width:120px">
+        <span class="hint">Deduzida no razão de cada condomínio no momento da confirmação. Overrides por condomínio na ficha de cada um.</span>
+      </div>
+      <div class="note">${ico('shield','icon sm')}<span>Alterações de taxas ficam registadas na auditoria e só se aplicam a cobranças futuras.</span></div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   COLABORADOR
+   ============================================================ */
+function scrColabCadastro(){
+  return `
+  <div class="page-head">
+    <div><h1>Cadastro</h1><p class="sub">Condomínios e flats · sem acesso a dados financeiros</p></div>
+  </div>
+  <div class="grid g-13">
+    <div class="card" style="align-self:start">
+      <div class="card-head"><span class="card-ico">${ico('plus')}</span><h2>Nova flat</h2></div>
+      <div id="dup-slot"></div>
+      <div class="field"><label for="nf-cond">Condomínio</label>
+        <select id="nf-cond">${CONDOS.map(c=>`<option>${c.nome}</option>`).join('')}</select></div>
+      <div class="f-row3">
+        <div class="field"><label for="nf-bloco">Bloco</label><input id="nf-bloco" value="A"></div>
+        <div class="field"><label for="nf-andar">Andar</label><input id="nf-andar" class="num" value="3"></div>
+        <div class="field"><label for="nf-num">Número</label><input id="nf-num" class="num" value="301"></div>
+      </div>
+      <div class="field"><label for="nf-nome">Nome do proprietário</label><input id="nf-nome" value="Anselmo Tembe"><span class="hint">A flat fica registada em nome do proprietário, não do inquilino.</span></div>
+      <div class="f-row">
+        <div class="field"><label for="nf-tel">Telefone</label><input id="nf-tel" class="num" placeholder="84 000 0000"></div>
+        <div class="field"><label for="nf-quota">Quota mensal (MT)</label><input id="nf-quota" class="num" value="1500"></div>
+      </div>
+      <button class="btn btn-primary" id="btn-nova-flat" style="width:100%;justify-content:center">${ico('plus','icon sm')}Registar flat</button>
+      <p class="hint" style="font-size:12px;color:var(--ink-3);margin-top:10px">O sistema cruza proprietário, flat e endereço: registos duplicados são negados automaticamente.</p>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Condomínios cadastrados</h2><span class="spacer"></span><button class="btn btn-ghost sm">${ico('plus','icon sm')}Novo condomínio</button></div>
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>Condomínio</th><th>Zona</th><th class="r">Flats</th><th class="r">Convites por usar</th></tr></thead>
+        <tbody>${CONDOS.map((c,i)=>`
+          <tr>
+            <td class="cell-main">${c.nome}</td>
+            <td>${c.zona}</td>
+            <td class="r num">${c.flats}</td>
+            <td class="r num">${[3,6,1,9,4][i]}</td>
+          </tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+  </div>`;
+}
+function scrColabConvites(){
+  const porUsar = FLATS.filter(f=>f.convite==='por usar');
+  return `
+  <div class="page-head">
+    <div><h1>Convites de registo</h1><p class="sub">Jardim das Acácias · código de uso único, ligado à flat para sempre</p></div>
+  </div>
+  <div class="grid g-kpi">
+    ${kpi('Convites usados','check','21 <small>de 24</small>','Proprietários já registados')}
+    ${kpi('Por usar','key','3','Expiram 30 dias após a emissão')}
+    ${kpi('Último registo','clock','ontem','Flat 204 · Olga Muianga')}
+  </div>
+  <div class="card mt">
+    <div class="card-head"><h2>Por usar</h2></div>
+    <ul class="row-list">${porUsar.map(f=>`
+      <li><span class="row-ico a">${ico('key')}</span>
+        <div class="row-body"><div class="t">Flat ${f.numero} · Bloco ${f.bloco} — ${f.nome}</div><div class="s">Emitido a 12 Out · expira a 11 Nov</div></div>
+        <div class="row-end" style="display:flex;align-items:center;gap:10px">
+          <span class="ref-box num" style="padding:8px 13px;font-size:13.5px">${f.codigo}</span>
+          <button class="btn btn-ghost sm" data-copy-conv="${f.codigo}">${ico('copy','icon sm')}${S.convitesCopiados[f.codigo]?'Copiado':'Copiar'}</button>
+        </div>
+      </li>`).join('')}</ul>
+  </div>`;
+}
+
+/* ============================================================
+   render + eventos
+   ============================================================ */
+const SCREENS = {
+  gestor:{painel:scrGestorPainel, flats:scrGestorFlats, transf:scrGestorTransf, tesouraria:scrGestorTesouraria, avisos:scrGestorAvisos},
+  proprietario:{inicio:scrPropInicio, historico:scrPropHistorico, avisosP:scrPropAvisos},
+  admin:{visao:scrAdminVisao, condos:scrAdminCondos, colabs:scrAdminColabs, repasses:scrAdminRepasses, config:scrAdminConfig},
+  colaborador:{cadastro:scrColabCadastro, convites:scrColabConvites},
+};
+
+function render(){
+  renderNav();
+  const scr = SCREENS[S.role][S.screen] || Object.values(SCREENS[S.role])[0];
+  const el = $('#screen');
+  el.innerHTML = scr();
+  el.classList.remove('screen'); void el.offsetWidth; el.classList.add('screen');
+  bindMonth();
+  bindScreen(el);
+  window.scrollTo({top:0});
+}
+
+function confirmarTransf(id){
+  const t = S.transf.find(x=>x.id===id);
+  if(!t) return;
+  S.transf = S.transf.filter(x=>x.id!==id);
+  S.pagos[t.flat.id] = 'pago';
+  toast(`Flat ${t.flat.numero} marcada como paga · recibo enviado`);
+  render();
+}
+function bindScreen(el){
+  el.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',()=>confirmarTransf(+b.dataset.conf)));
+  el.querySelectorAll('[data-rej]').forEach(b=>b.addEventListener('click',()=>{
+    S.transf = S.transf.filter(x=>x.id!==+b.dataset.rej);
+    toast('Transferência rejeitada · o proprietário foi notificado'); render();
+  }));
+  el.querySelectorAll('[data-flat]').forEach(b=>b.addEventListener('click',()=>{
+    const f = FLATS.find(x=>x.id===+b.dataset.flat); abrirDrawer(drawerFlat(f)); bindGlobais($('#drawer'));
+  }));
+  el.querySelectorAll('[data-comp]').forEach(b=>b.addEventListener('click',()=>toast('A abrir comprovativo (demonstração)')));
+  el.querySelectorAll('[data-recibo]').forEach(b=>b.addEventListener('click',()=>toast(`Recibo ${b.dataset.recibo} enviado por email`)));
+  el.querySelectorAll('[data-chip]').forEach(b=>b.addEventListener('click',()=>{S.filtro=b.dataset.chip;render();}));
+  const q = el.querySelector('#flats-q');
+  if(q){ q.addEventListener('input',()=>{S.procura=q.value; render(); const nq=$('#flats-q'); nq.focus(); nq.setSelectionRange(nq.value.length,nq.value.length);}); }
+  const vf = el.querySelector('#ver-flats'); if(vf) vf.addEventListener('click',()=>setScreen('flats'));
+  const vh = el.querySelector('#ver-hist'); if(vh) vh.addEventListener('click',()=>setScreen('historico'));
+  const vt = el.querySelector('#ver-transf'); if(vt) vt.addEventListener('click',()=>setScreen('transf'));
+  const vc = el.querySelector('#ver-condos'); if(vc) vc.addEventListener('click',()=>setScreen('condos'));
+  const lb = el.querySelector('#btn-lembretes');
+  if(lb) lb.addEventListener('click',()=>toast('Lembretes enviados por SMS e email às flats em falta'));
+  const av = el.querySelector('#btn-aviso');
+  if(av) av.addEventListener('click',()=>{
+    const t = $('#av-t').value.trim();
+    if(!t){ toast('Escreva um título para o aviso'); $('#av-t').focus(); return; }
+    toast(`Aviso "${t}" enviado a 24 flats`); $('#av-t').value=''; $('#av-c').value='';
+  });
+  const nd = el.querySelector('#btn-despesa');
+  if(nd) nd.addEventListener('click',()=>{ abrirDrawer(drawerDespesa()); bindGlobais($('#drawer')); });
+  el.querySelectorAll('[data-pagar]').forEach(b=>b.addEventListener('click',()=>{
+    const m = b.dataset.pagar;
+    if(m==='banco'){ abrirModal(modalBanco()); }
+    else { abrirModal(modalMpesa(m)); }
+    bindGlobais($('#modal'));
+    const push = $('#btn-push');
+    if(push) push.addEventListener('click',()=>{
+      abrirModal(modalPush(m));
+      setTimeout(()=>{ abrirModal(modalRecibo()); bindGlobais($('#modal')); }, 2200);
+    });
+    const up = $('#btn-upload');
+    if(up) up.addEventListener('click',()=>{ fecharTudo(); toast('Comprovativo enviado · aguarda confirmação do gestor'); });
+  }));
+  el.querySelectorAll('[data-susp]').forEach(b=>b.addEventListener('click',()=>{
+    const c = S.colabs[+b.dataset.susp]; c.estado='suspenso';
+    toast(`${c.nome} suspenso · registado na auditoria`); render();
+  }));
+  el.querySelectorAll('[data-react]').forEach(b=>b.addEventListener('click',()=>{
+    const c = S.colabs[+b.dataset.react]; c.estado='activo';
+    toast(`${c.nome} reactivado · registado na auditoria`); render();
+  }));
+  el.querySelectorAll('[data-repasse]').forEach(b=>b.addEventListener('click',()=>{
+    const c = CONDOS[+b.dataset.repasse]; abrirDrawer(drawerRepasse(c)); bindGlobais($('#drawer'));
+  }));
+  const bt = el.querySelector('#btn-taxas');
+  if(bt) bt.addEventListener('click',()=>toast('Taxas guardadas · aplicam-se a cobranças futuras'));
+  const nf = el.querySelector('#btn-nova-flat');
+  if(nf) nf.addEventListener('click',()=>{
+    const bloco=$('#nf-bloco').value.trim(), andar=$('#nf-andar').value.trim(), num=$('#nf-num').value.trim();
+    const nome=$('#nf-nome').value.trim(), cond=$('#nf-cond').value;
+    const dup = cond==='Jardim das Acácias' && FLATS.find(f=>f.bloco.toLowerCase()===bloco.toLowerCase() && String(f.andar)===andar && f.numero===num);
+    const slot = $('#dup-slot');
+    if(dup){
+      slot.innerHTML = `
+      <div class="alert-dup" role="alert">
+        ${ico('alert')}
+        <div style="flex:1">
+          <b>Registo duplicado — cadastro negado</b>
+          <p style="font-size:13.5px;margin-top:3px">Já existe uma flat com esta identificação neste condomínio. O cruzamento de proprietário, flat e endereço impede o registo.</p>
+          <div class="conflito">
+            <div class="cell-main">Flat ${dup.numero} · Bloco ${dup.bloco} · ${dup.andar}º andar</div>
+            <div class="cell-sub">Proprietário: ${dup.nome} · registado em Mar 2026 por Yolanda Macie</div>
+          </div>
+        </div>
+      </div>`;
+      slot.scrollIntoView({behavior:'smooth',block:'center'});
+    } else {
+      slot.innerHTML='';
+      toast(`Flat ${num||'—'} registada · convite gerado${nome?` para ${nome.split(' ')[0]}`:''}`);
+      $('#nf-num').value=''; $('#nf-nome').value=''; $('#nf-tel').value='';
+    }
+  });
+  el.querySelectorAll('[data-copy-conv]').forEach(b=>b.addEventListener('click',()=>{
+    S.convitesCopiados[b.dataset.copyConv]=true;
+    try{navigator.clipboard.writeText(b.dataset.copyConv);}catch(e){}
+    toast('Código de convite copiado'); render();
+  }));
+}
+function drawerDespesa(){
+  return `
+  <div class="drawer-head"><h3>Nova despesa</h3><span style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
+  <div class="drawer-body">
+    <div class="field"><label for="dsp-d">Descrição</label><input id="dsp-d" placeholder="Ex.: Reparação do portão"></div>
+    <div class="f-row">
+      <div class="field"><label for="dsp-c">Categoria</label><select id="dsp-c"><option>Manutenção</option><option>Limpeza</option><option>Segurança</option><option>Energia</option><option>Outra</option></select></div>
+      <div class="field"><label for="dsp-v">Valor (MT)</label><input id="dsp-v" class="num" inputmode="numeric" placeholder="0"></div>
+    </div>
+    <div class="field"><label>Comprovativo</label>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;border-style:dashed">${ico('file','icon sm')}Carregar factura ou recibo</button></div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost sm" data-close>Cancelar</button>
+    <button class="btn btn-primary sm" data-save-despesa>${ico('check','icon sm')}Registar despesa</button>
+  </div>`;
+}
+function drawerRepasse(c){
+  return `
+  <div class="drawer-head"><h3>Registar repasse</h3><span style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
+  <div class="drawer-body">
+    <div class="note" style="margin-bottom:16px">${ico('bank','icon sm')}<span><b>${c.nome}</b> · saldo a repassar <b class="num">${MT(c.saldo)}</b></span></div>
+    <div class="f-row">
+      <div class="field"><label for="rp-v">Valor (MT)</label><input id="rp-v" class="num" value="${fmt(c.saldo)}"></div>
+      <div class="field"><label for="rp-d">Data</label><input id="rp-d" class="num" value="03/11/2026"></div>
+    </div>
+    <div class="field"><label for="rp-b">Conta de destino</label><input id="rp-b" value="BIM · 143 228 4471 (conta do condomínio)"></div>
+    <div class="field"><label>Comprovativo da transferência</label>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;border-style:dashed">${ico('file','icon sm')}Carregar comprovativo</button></div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost sm" data-close>Cancelar</button>
+    <button class="btn btn-primary sm" data-save-repasse>${ico('check','icon sm')}Registar repasse</button>
+  </div>`;
+}
+function bindGlobais(root){
+  root.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',fecharTudo));
+  root.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',()=>{
+    try{navigator.clipboard.writeText(b.dataset.copy);}catch(e){}
+    toast('Referência copiada');
+  }));
+  root.querySelectorAll('[data-lembrete]').forEach(b=>b.addEventListener('click',()=>{ fecharTudo(); toast('Lembrete enviado por SMS e email'); }));
+  root.querySelectorAll('[data-save-despesa]').forEach(b=>b.addEventListener('click',()=>{ fecharTudo(); toast('Despesa registada na tesouraria'); }));
+  root.querySelectorAll('[data-save-repasse]').forEach(b=>b.addEventListener('click',()=>{ fecharTudo(); toast('Repasse registado · o gestor foi notificado'); }));
+}
+
+/* topbar sombra ao rolar */
+let lastY = 0;
+addEventListener('scroll',()=>{ $('#topbar').classList.toggle('scrolled', scrollY>8); },{passive:true});
+
+render();
+</script>
+</body>
+</html>
