@@ -655,16 +655,16 @@ const S = {
 
 const ROLES = {
   gestor:{label:'Gestor', user:'Arlindo Macuácua', sub:'Jardim das Acácias', nav:[
-    ['painel','Painel','grid'],['pagamentosG','Pagamentos','bank'],['tesouraria','Tesouraria','wallet'],['suporteG','Suporte','mail'],['avisos','Avisos','bell'],['perfil','Configurações','settings'],
+    ['painel','Painel','grid'],['pagamentosG','Pagamentos','bank'],['tesouraria','Tesouraria','wallet'],['suporteG','Suporte','mail'],['avisos','Avisos','bell'],['perfil','O meu perfil','settings'],
   ]},
   proprietario:{label:'Proprietário', user:'Celeste Mabjaia', sub:'Flat 302 · JDA-A302', nav:[
-    ['inicio','A minha quota','home'],['minhaflat','A minha flat','flats'],['faturas','Faturas','receipt'],['suporte','Suporte','mail'],['avisosP','Avisos','bell'],['perfil','Configurações','settings'],
+    ['inicio','A minha quota','home'],['minhaflat','A minha flat','flats'],['faturas','Faturas','receipt'],['suporte','Suporte','mail'],['avisosP','Avisos','bell'],['perfil','O meu perfil','settings'],
   ]},
   admin:{label:'Consola', user:'Nádia Waty', sub:'Super administradora', nav:[
     ['visao','Visão geral','grid'],['condos','Condomínios','building'],['colabs','Colaboradores','users'],['repasses','Repasses','bank'],['config','Configuração','settings'],['perfil','O meu perfil','users'],
   ]},
   colaborador:{label:'Agente', user:'Stélio Nhantumbo', sub:'Cadastro de condomínios', nav:[
-    ['cadastro','Cadastro','plus'],['convites','Convites','key'],['perfil','Configurações','settings'],
+    ['cadastro','Cadastro','plus'],['convites','Convites','key'],['perfil','O meu perfil','settings'],
   ]},
 };
 const EMAILS = {
@@ -1641,9 +1641,8 @@ function bindLogin(el){
 }
 function scrPerfil(){
   const r = ROLES[S.role];
-  const titulo = S.role==='admin' ? 'O meu perfil' : 'Configurações';
   return `
-  <div class="page-head"><div><h1>${titulo}</h1><p class="sub">A sua conta no Maputo Renova</p></div></div>
+  <div class="page-head"><div><h1>O meu perfil</h1><p class="sub">A sua conta no Maputo Renova</p></div></div>
   <div class="grid g-12">
     <div class="card" style="align-self:start">
       <div class="card-head"><span class="card-ico">${ico('users')}</span><h2>Perfil</h2></div>
