@@ -184,14 +184,12 @@ img,svg{display:block}
 .bar{
   width:100%;max-width:34px;border-radius:8px 8px 4px 4px;background:var(--green-150);
   position:relative;transition:background .15s var(--ease);
-  transform-origin:bottom;animation:bar-in .6s var(--ease) backwards;
 }
 .bar:hover,.bar.sel{background:var(--green-600)}
 .bar.sel::after{
   content:attr(data-v);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
   background:var(--ink);color:#fff;font-size:12px;font-weight:700;padding:4px 9px;border-radius:7px;white-space:nowrap;
 }
-@keyframes bar-in{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 .bar-lbl{font-size:12px;font-weight:700;color:var(--ink-3)}
 .chart-legend{display:flex;gap:16px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
 .chart-legend i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px}
@@ -669,7 +667,7 @@ function scrGestorPainel(){
   const bars = COBRANCAS_12M.map((v,i)=>{
     const val = i===9 ? cobradoActualMil() : v;
     const h = Math.max(4, val/40*100);
-    return `<div class="bar-col"><div class="bar ${i===S.mes?'sel':''}" data-v="${fmt(val*1000)} MT" style="height:${h}%;animation-delay:${i*30}ms" data-mes="${i}" role="img" aria-label="${MESES[i]}: ${fmt(val*1000)} MT"></div><span class="bar-lbl">${MESES_S[i]}</span></div>`;
+    return `<div class="bar-col"><div class="bar ${i===S.mes?'sel':''}" data-v="${fmt(val*1000)} MT" style="height:${h}%" data-mes="${i}" role="img" aria-label="${MESES[i]}: ${fmt(val*1000)} MT"></div><span class="bar-lbl">${MESES_S[i]}</span></div>`;
   }).join('');
   return `
   <div class="page-head">
