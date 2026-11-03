@@ -21,7 +21,7 @@ Sistema de gestão de condomínios para Maputo, Moçambique. Multi-condomínio (
 1. **Super Administrador (consola):** visão global de todas as organizações e finanças (bruto, taxas, líquido, inadimplência); gere colaboradores (criar, suspender, reactivar, remover — **exclusivo dele**); configura taxas de métodos e % da plataforma; regista repasses; auditoria.
 2. **Colaborador:** cadastro operacional — cria condomínios, regista flats, gera convites de registo. **Não vê dados financeiros.**
 3. **Gestor do condomínio:** apenas o seu condomínio — mapa de flats com estado de pagamento, devedores, confirmação de transferências bancárias (valida comprovativo), despesas, avisos, razão e repasses recebidos.
-4. **Proprietário (morador):** a conta pertence ao **proprietário do apartamento, não ao inquilino** — registo único por flat via código de convite de uso único. Vê mensalidades e histórico, paga via M-Pesa/eMola ou submete comprovativo de transferência, recebe recibos e avisos.
+4. **Proprietário (morador):** a conta pertence ao **proprietário do apartamento, não ao inquilino** — registo único por flat via código de convite de uso único. Vê as suas **faturas por estado (pendentes, pagas, não pagas/em atraso)** e o **histórico de pagamentos** com recibos, paga via M-Pesa/eMola (incluindo faturas em atraso) ou submete comprovativo de transferência, recebe recibos e avisos.
 
 ## Regras de negócio críticas
 
@@ -31,6 +31,9 @@ Sistema de gestão de condomínios para Maputo, Moçambique. Multi-condomínio (
 
 ### Registo único por flat
 Cada flat tem um código de convite de uso único ligado a ela; quem o usa fica vinculado àquela flat (consumido na criação da conta, não no clique). O vínculo só muda por acção administrativa (mudança de proprietário), com auditoria.
+
+### Referência única de cadastro
+Cada flat recebe uma **referência única alfanumérica** gerada automaticamente no banco: código do condomínio (iniciais, ex.: JDA) + bloco + número — ex.: **JDA-A302** — com sufixo numérico em caso de colisão. Cada condomínio recebe o seu código curto único. A referência identifica a flat em toda a comunicação e nos ecrãs de gestor, consola e proprietário.
 
 ### Faturas e conciliação
 - Mensalidades geradas automaticamente por mês de referência (única por flat+mês), com **referência única** (ex.: MR-000123) usada na transferência bancária.

@@ -480,18 +480,23 @@ function estadoFlat(i, mes){
   if(r < 21) return 'pendente';
   return 'atraso';
 }
-const FLATS = NOMES.map((nome,i)=>({
+/* sigla do condomínio para a referência de cadastro (ex.: JDA, EM4) */
+const sigla = nome => nome.split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,4);
+const FLATS = NOMES.map((nome,i)=>{
+  const bloco = BLOCOS[i%2], numero = `${Math.floor(i/6)+1}0${(i%6)+1}`;
+  return {
   id:i+1,
-  bloco:BLOCOS[i%2],
+  bloco,
   andar:Math.floor(i/6)+1,
-  numero:`${Math.floor(i/6)+1}0${(i%6)+1}`,
+  numero,
   nome,
   tel:`84 ${String(210+i*7).padStart(3,'0')} ${String(1240+i*53).slice(-4)}`,
   quota: i%5===0 ? 1800 : 1500,
   ref:`MR-000${821+i}`,
+  regref:`JDA-${bloco}${numero}`,
   convite: i<21 ? 'usado' : 'por usar',
   codigo:`JDA-${(i+1).toString().padStart(2,'0')}${String.fromCharCode(65+(i%9))}${String(312+i*7).slice(-3)}`,
-}));
+};});
 const COBRANCAS_12M = [28.5,30,31.5,30,33,31.5,34.5,33,34.5,36,0,0]; // ×1000 MT
 const TRANSF = [
   {id:1, flat:FLATS[11], valor:1500, data:'28 Out', ficheiro:'comprovativo_bci_302.pdf'},
@@ -541,16 +546,20 @@ function flatsDoCondo(c){
   if(c.nome==='Jardim das Acácias') return FLATS;
   const seed = c.nome.length;
   const quotaBase = Math.round(c.esperado*1000/c.flats/50)*50;
-  return Array.from({length:c.flats},(_,i)=>({
+  const sg = sigla(c.nome);
+  return Array.from({length:c.flats},(_,i)=>{
+    const bloco = BLOCOS[i%2], numero = `${Math.floor(i/6)+1}0${(i%6)+1}`;
+    return {
     id:i+1,
-    bloco:BLOCOS[i%2],
+    bloco,
     andar:Math.floor(i/6)+1,
-    numero:`${Math.floor(i/6)+1}0${(i%6)+1}`,
+    numero,
     nome:NOMES[(i*7+seed)%24],
     tel:`8${[2,4,5][i%3]} ${String(300+i*9+seed).padStart(3,'0')} ${String(2110+i*67).slice(-4)}`,
     quota: i%5===0 ? quotaBase+300 : quotaBase,
     ref:`MR-00${1200+seed*40+i}`,
-  }));
+    regref:`${sg}-${bloco}${numero}`,
+  };});
 }
 function estadosDoCondo(c){
   if(c.nome==='Jardim das Acácias') return FLATS.map(f=>estadoDe(f));
@@ -565,11 +574,19 @@ function estadosDoCondo(c){
     return 'pendente';
   });
 }
-const FATURAS_PROP = MESES_S.slice(0,10).map((m,i)=>({
-  mes:`${MESES[i]} 2026`, valor:1500, estado: i===9 ? 'pendente' : 'pago',
-  metodo: i===9 ? '—' : (i%3===0 ? 'Transferência' : 'M-Pesa'),
-  recibo:`REC-2026-${String(i+1).padStart(2,'0')}44`,
-})).reverse();
+const FATURAS_PROP = MESES_S.slice(0,10).map((m,i)=>{
+  const estado = i===9 ? 'pendente' : i===5 ? 'atraso' : 'pago';
+  return {
+    mes:`${MESES[i]} 2026`, mesS:MESES_S[i], valor:1500,
+    venc:`05 ${MESES_S[(i+1)%12]}`,
+    ref:`MR-000${562+i*30}`,
+    estado,
+    metodo: estado==='pago' ? (i%3===0 ? 'Transferência' : 'M-Pesa') : null,
+    dataPag: estado==='pago' ? `0${(i%5)+2} ${MESES_S[(i+1)%12]}` : null,
+    recibo: estado==='pago' ? `REC-2026-${String(i+1).padStart(2,'0')}44` : null,
+  };
+}).reverse();
+const PAGAMENTOS_PROP = FATURAS_PROP.filter(f=>f.estado==='pago');
 
 /* ---------------- estado ---------------- */
 const S = {
@@ -589,8 +606,8 @@ const ROLES = {
   gestor:{label:'Gestor', user:'Arlindo Macuácua', sub:'Jardim das Acácias', nav:[
     ['painel','Painel','grid'],['flats','Flats','flats'],['transf','Transferências','bank'],['tesouraria','Tesouraria','wallet'],['avisos','Avisos','bell'],
   ]},
-  proprietario:{label:'Proprietário', user:'Celeste Mabjaia', sub:'Flat 302 · Bloco A', nav:[
-    ['inicio','A minha quota','home'],['historico','Histórico','hist'],['avisosP','Avisos','bell'],
+  proprietario:{label:'Proprietário', user:'Celeste Mabjaia', sub:'Flat 302 · JDA-A302', nav:[
+    ['inicio','A minha quota','home'],['faturas','Faturas','receipt'],['pagamentos','Pagamentos','hist'],['avisosP','Avisos','bell'],
   ]},
   admin:{label:'Consola', user:'Nádia Waty', sub:'Super administradora', nav:[
     ['visao','Visão geral','grid'],['condos','Condomínios','building'],['colabs','Colaboradores','users'],['repasses','Repasses','bank'],['config','Configuração','settings'],
@@ -750,7 +767,7 @@ function tabelaFlats(lista){
     <thead><tr><th>Flat</th><th>Proprietário</th><th class="r">Quota</th><th>Estado</th><th class="r"></th></tr></thead>
     <tbody>${lista.map(f=>`
       <tr>
-        <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar</div></td>
+        <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar · <span class="num">${f.regref}</span></div></td>
         <td><div class="cell-main">${f.nome}</div><div class="cell-sub num">${f.tel}</div></td>
         <td class="r num b">${MT(f.quota)}</td>
         <td>${pill(estadoDe(f))}</td>
@@ -800,7 +817,10 @@ function drawerFlat(f, condoNome, estadoActual){
   </div>
   <div class="drawer-body">
     <div class="note" style="margin-bottom:18px">${ico('shield','icon sm')}<span>Registo em nome do <b>proprietário</b>. Mudança de titular só por acção administrativa, com auditoria.</span></div>
-    <div class="field"><label>Proprietário</label><input value="${f.nome}" readonly></div>
+    <div class="f-row">
+      <div class="field"><label>Proprietário</label><input value="${f.nome}" readonly></div>
+      <div class="field"><label>Referência de cadastro</label><input class="num" value="${f.regref||'—'}" readonly></div>
+    </div>
     <div class="f-row">
       <div class="field"><label>Telefone</label><input class="num" value="+258 ${f.tel}" readonly></div>
       <div class="field"><label>Quota mensal</label><input class="num" value="${MT(f.quota)}" readonly></div>
@@ -894,12 +914,18 @@ function scrGestorAvisos(){
    ============================================================ */
 function scrPropInicio(){
   const taxa = Math.round(1500*S.taxas.mpesa)/100;
+  const atr = FATURAS_PROP.find(f=>f.estado==='atraso');
   return `
   <div class="page-head">
-    <div><h1>Olá, Celeste</h1><p class="sub">Flat 302 · Bloco A · Jardim das Acácias</p></div>
+    <div><h1>Olá, Celeste</h1><p class="sub">Flat 302 · Bloco A · Jardim das Acácias · Referência de cadastro <b class="num">JDA-A302</b></p></div>
   </div>
   <div class="grid g-12">
     <div>
+      ${atr?`<div class="note" style="border-color:var(--red-700);background:var(--red-100);align-items:center;margin-bottom:16px">
+        <svg class="icon sm" viewBox="0 0 24 24" style="color:var(--red-700)" aria-hidden="true">${ICONS.alert}</svg>
+        <span style="flex:1"><b style="color:var(--red-700)">Fatura de ${atr.mes} em atraso</b> · ${MT(atr.valor)}</span>
+        <button class="btn btn-danger sm" data-pagar-fat="${FATURAS_PROP.indexOf(atr)}">Pagar agora</button>
+      </div>`:''}
       <div class="pay-hero">
         <div class="q-lbl">Quota de Outubro 2026</div>
         <div class="q-val num">1 500 <small>MT</small></div>
@@ -912,14 +938,11 @@ function scrPropInicio(){
       </div>
       <div class="note mt">${ico('shield','icon sm')}<span>O seu pagamento é confirmado automaticamente e o recibo chega por SMS e email.</span></div>
       <div class="card mt">
-        <div class="card-head"><h2>Últimos pagamentos</h2><span class="spacer"></span><button class="link" id="ver-hist">Ver histórico</button></div>
-        <ul class="row-list">
+        <div class="card-head"><h2>Últimos pagamentos</h2><span class="spacer"></span><button class="link" id="ver-hist">Ver todos</button></div>
+        <ul class="row-list">${PAGAMENTOS_PROP.slice(0,2).map(f=>`
           <li><span class="row-ico g">${ico('check')}</span>
-            <div class="row-body"><div class="t">Setembro 2026</div><div class="s">M-Pesa · Recibo REC-2026-0944</div></div>
-            <div class="row-end cell-main num">1 500 MT</div></li>
-          <li><span class="row-ico g">${ico('check')}</span>
-            <div class="row-body"><div class="t">Agosto 2026</div><div class="s">Transferência · Recibo REC-2026-0844</div></div>
-            <div class="row-end cell-main num">1 500 MT</div></li>
+            <div class="row-body"><div class="t">${f.mes}</div><div class="s">${f.metodo} · Recibo ${f.recibo}</div></div>
+            <div class="row-end cell-main num">${MT(f.valor)}</div></li>`).join('')}
         </ul>
       </div>
     </div>
@@ -943,13 +966,25 @@ function scrPropInicio(){
     </div>
   </div>`;
 }
+function ctxPay(){ return S.payCtx || FATURAS_PROP.find(f=>f.estado==='pendente') || FATURAS_PROP[0]; }
+function modalPagar(){
+  const c = ctxPay();
+  return `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div><h3 style="font-size:17px;font-weight:800">Pagar ${c.mes}</h3><div class="cell-sub num">${MT(c.valor)} · Referência ${c.ref}</div></div>
+    <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
+  </div>
+  <button class="method" data-m="mpesa"><span class="m-ico mpesa">M-PESA</span><span><b>M-Pesa</b><div class="s">Confirma com o PIN no telemóvel</div></span>${ico('chevR','icon sm')}</button>
+  <button class="method" data-m="emola"><span class="m-ico emola">e-MOLA</span><span><b>eMola</b><div class="s">Confirma com o PIN da conta eMola</div></span>${ico('chevR','icon sm')}</button>
+  <button class="method" data-m="banco" style="margin-bottom:0"><span class="m-ico banco">${ico('bank','icon sm')}</span><span><b>Transferência bancária</b><div class="s">Com a referência e comprovativo</div></span>${ico('chevR','icon sm')}</button>`;
+}
 function modalMpesa(rede){
   const nome = rede==='mpesa'?'M-Pesa':'eMola';
-  const taxa = Math.round(1500*(rede==='mpesa'?S.taxas.mpesa:S.taxas.emola))/100;
+  const taxa = Math.round(ctxPay().valor*(rede==='mpesa'?S.taxas.mpesa:S.taxas.emola))/100;
   return `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
     <span class="m-ico ${rede}" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:8.5px;line-height:1.1;text-align:center">${rede==='mpesa'?'M-PESA':'e-MOLA'}</span>
-    <div><h3 style="font-size:17px;font-weight:800">Pagar com ${nome}</h3><div class="cell-sub num">Total: ${fmtD(1500+taxa)} MT (quota + taxa)</div></div>
+    <div><h3 style="font-size:17px;font-weight:800">Pagar ${ctxPay().mes} com ${nome}</h3><div class="cell-sub num">Total: ${fmtD(ctxPay().valor+taxa)} MT (quota + taxa)</div></div>
     <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
   </div>
   <div class="field"><label for="msisdn">Número ${nome}</label><input id="msisdn" class="num" inputmode="tel" value="84 210 1240"></div>
@@ -963,12 +998,12 @@ function modalPush(rede){
     <p style="color:var(--ink-2);font-size:14px">Enviámos o pedido ${rede==='mpesa'?'M-Pesa':'eMola'} para <b class="num">84 210 1240</b>.<br>Introduza o seu PIN para concluir.</p>
   </div>`;
 }
-function modalRecibo(){
+function modalRecibo(total){
   return `
   <div style="text-align:center;padding:4px">
     <span class="e-ico" style="width:56px;height:56px;border-radius:18px;background:var(--green-100);color:var(--green-700);display:grid;place-items:center;margin:0 auto">${ico('check')}</span>
     <h3 style="font-size:18px;font-weight:800;margin:16px 0 4px">Quota paga. Obrigado!</h3>
-    <p style="color:var(--ink-2);font-size:14px">Outubro 2026 · <b class="num">1 518 MT</b> · Recibo <b class="num">REC-2026-1044</b><br>Enviámos o recibo por SMS e email.</p>
+    <p style="color:var(--ink-2);font-size:14px">${ctxPay().mes} · <b class="num">${fmtD(total)} MT</b> · Recibo <b class="num">REC-2026-1044</b><br>Enviámos o recibo por SMS e email.</p>
     <button class="btn btn-primary" data-close style="margin-top:18px;width:100%;justify-content:center">Fechar</button>
   </div>`;
 }
@@ -979,8 +1014,8 @@ function modalBanco(){
     <h3 style="font-size:17px;font-weight:800">Transferência bancária</h3>
     <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
   </div>
-  <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:12px">Transfira <b class="num">1 500 MT</b> para a conta do condomínio e use a referência no descritivo:</p>
-  <div class="ref-box num">MR-000832 <button class="copy-btn" data-copy="MR-000832">${ico('copy','icon sm')}Copiar</button></div>
+  <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:12px">Transfira <b class="num">${MT(ctxPay().valor)}</b> (${ctxPay().mes}) para a conta do condomínio e use a referência no descritivo:</p>
+  <div class="ref-box num">${ctxPay().ref} <button class="copy-btn" data-copy="${ctxPay().ref}">${ico('copy','icon sm')}Copiar</button></div>
   <div class="f-row" style="margin-top:14px">
     <div class="field"><label>Banco</label><input value="BIM" readonly></div>
     <div class="field"><label>Conta</label><input class="num" value="143 228 4471" readonly></div>
@@ -990,18 +1025,52 @@ function modalBanco(){
     <span class="hint">O gestor confirma o pagamento depois de validar o comprovativo.</span>
   </div>`;
 }
-function scrPropHistorico(){
+function scrPropFaturas(){
+  const divida = FATURAS_PROP.filter(f=>f.estado!=='pago');
+  const totalDiv = divida.reduce((s,f)=>s+f.valor,0);
+  const filtro = S.filtroFat || 'todas';
+  const lista = FATURAS_PROP.filter(f =>
+    filtro==='todas' ? true :
+    filtro==='pendentes' ? f.estado==='pendente' :
+    filtro==='pagas' ? f.estado==='pago' : f.estado==='atraso');
+  const chips = [['todas','Todas'],['pendentes','Pendentes'],['pagas','Pagas'],['atraso','Não pagas']];
   return `
-  <div class="page-head"><div><h1>Histórico</h1><p class="sub">As suas quotas de 2026 · Flat 302</p></div></div>
+  <div class="page-head"><div><h1>Faturas</h1><p class="sub">As suas quotas de 2026 · Flat 302 · JDA-A302</p></div></div>
+  <div class="grid g-kpi">
+    ${kpi('Em dívida','alert',MT(totalDiv),`${divida.length} faturas por pagar`)}
+    ${kpi('Pagas em 2026','check',String(PAGAMENTOS_PROP.length)+' <small>faturas</small>',MT(PAGAMENTOS_PROP.reduce((s,f)=>s+f.valor,0))+' no total')}
+    ${kpi('Próximo vencimento','clock','05 Nov','Quota de Outubro · '+MT(1500))}
+  </div>
+  <div class="card mt">
+    <div class="card-head"><div class="chips">${chips.map(([k,l])=>`<button class="chip ${filtro===k?'on':''}" data-chip-fat="${k}">${l}</button>`).join('')}</div></div>
+    ${lista.length?`<div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Mês</th><th>Vencimento</th><th class="r">Valor</th><th>Estado</th><th class="r"></th></tr></thead>
+      <tbody>${lista.map(f=>`
+        <tr>
+          <td><div class="cell-main">${f.mes}</div><div class="cell-sub num">${f.ref}</div></td>
+          <td class="num">${f.venc}</td>
+          <td class="r num b">${MT(f.valor)}</td>
+          <td>${pill(f.estado)}</td>
+          <td class="r">${f.estado==='pago'
+            ?`<button class="link" data-recibo="${f.recibo}">Recibo</button>`
+            :`<button class="btn btn-primary sm" data-pagar-fat="${FATURAS_PROP.indexOf(f)}">Pagar</button>`}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>`
+    :`<div class="empty"><span class="e-ico">${ico('check')}</span><b>Nada aqui</b><p>Nenhuma fatura corresponde a este filtro.</p></div>`}
+  </div>`;
+}
+function scrPropPagamentos(){
+  return `
+  <div class="page-head"><div><h1>Pagamentos</h1><p class="sub">Histórico de tudo o que já pagou nesta flat · recibos por SMS e email</p></div></div>
   <div class="card"><div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th>Mês</th><th class="r">Valor</th><th>Método</th><th>Estado</th><th class="r">Recibo</th></tr></thead>
-    <tbody>${FATURAS_PROP.map(f=>`
+    <thead><tr><th>Data</th><th>Fatura</th><th>Método</th><th class="r">Valor</th><th class="r">Recibo</th></tr></thead>
+    <tbody>${PAGAMENTOS_PROP.map(f=>`
       <tr>
-        <td class="cell-main">${f.mes}</td>
-        <td class="r num b">${MT(f.valor)}</td>
+        <td class="num">${f.dataPag}</td>
+        <td><div class="cell-main">${f.mes}</div><div class="cell-sub num">${f.ref}</div></td>
         <td>${f.metodo}</td>
-        <td>${pill(f.estado)}</td>
-        <td class="r">${f.estado==='pago'?`<button class="link" data-recibo="${f.recibo}">${f.recibo}</button>`:'<span class="cell-sub">—</span>'}</td>
+        <td class="r num b">${MT(f.valor)}</td>
+        <td class="r"><button class="link" data-recibo="${f.recibo}">${f.recibo}</button></td>
       </tr>`).join('')}</tbody>
   </table></div></div>`;
 }
@@ -1088,7 +1157,7 @@ function scrAdminCondoDetail(){
   const emAtraso = estados.filter(e=>e==='atraso').length;
   const rows = flats.map((f,i)=>`
     <tr>
-      <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar</div></td>
+      <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar · <span class="num">${f.regref}</span></div></td>
       <td><div class="cell-main">${f.nome}</div><div class="cell-sub num">${f.tel}</div></td>
       <td class="r num b">${MT(f.quota)}</td>
       <td>${pill(estados[i])}</td>
@@ -1273,7 +1342,7 @@ function scrColabConvites(){
     <div class="card-head"><h2>Por usar</h2></div>
     <ul class="row-list">${porUsar.map(f=>`
       <li><span class="row-ico a">${ico('key')}</span>
-        <div class="row-body"><div class="t">Flat ${f.numero} · Bloco ${f.bloco} — ${f.nome}</div><div class="s">Emitido a 12 Out · expira a 11 Nov</div></div>
+        <div class="row-body"><div class="t">Flat ${f.numero} · Bloco ${f.bloco} — ${f.nome}</div><div class="s">Ref. <span class="num">${f.regref}</span> · emitido a 12 Out · expira a 11 Nov</div></div>
         <div class="row-end" style="display:flex;align-items:center;gap:10px">
           <span class="ref-box num" style="padding:8px 13px;font-size:13.5px">${f.codigo}</span>
           <button class="btn btn-ghost sm" data-copy-conv="${f.codigo}">${ico('copy','icon sm')}${S.convitesCopiados[f.codigo]?'Copiado':'Copiar'}</button>
@@ -1287,7 +1356,7 @@ function scrColabConvites(){
    ============================================================ */
 const SCREENS = {
   gestor:{painel:scrGestorPainel, flats:scrGestorFlats, transf:scrGestorTransf, tesouraria:scrGestorTesouraria, avisos:scrGestorAvisos},
-  proprietario:{inicio:scrPropInicio, historico:scrPropHistorico, avisosP:scrPropAvisos},
+  proprietario:{inicio:scrPropInicio, faturas:scrPropFaturas, pagamentos:scrPropPagamentos, avisosP:scrPropAvisos},
   admin:{visao:scrAdminVisao, condos:scrAdminCondos, condoDetail:scrAdminCondoDetail, colabs:scrAdminColabs, repasses:scrAdminRepasses, config:scrAdminConfig},
   colaborador:{cadastro:scrColabCadastro, convites:scrColabConvites},
 };
@@ -1326,7 +1395,8 @@ function bindScreen(el){
   const q = el.querySelector('#flats-q');
   if(q){ q.addEventListener('input',()=>{S.procura=q.value; render(); const nq=$('#flats-q'); nq.focus(); nq.setSelectionRange(nq.value.length,nq.value.length);}); }
   const vf = el.querySelector('#ver-flats'); if(vf) vf.addEventListener('click',()=>setScreen('flats'));
-  const vh = el.querySelector('#ver-hist'); if(vh) vh.addEventListener('click',()=>setScreen('historico'));
+  const vh = el.querySelector('#ver-hist'); if(vh) vh.addEventListener('click',()=>setScreen('pagamentos'));
+  el.querySelectorAll('[data-chip-fat]').forEach(b=>b.addEventListener('click',()=>{S.filtroFat=b.dataset.chipFat;render();}));
   const vt = el.querySelector('#ver-transf'); if(vt) vt.addEventListener('click',()=>setScreen('transf'));
   const vc = el.querySelector('#ver-condos'); if(vc) vc.addEventListener('click',()=>setScreen('condos'));
   const lb = el.querySelector('#btn-lembretes');
@@ -1340,17 +1410,13 @@ function bindScreen(el){
   const nd = el.querySelector('#btn-despesa');
   if(nd) nd.addEventListener('click',()=>{ abrirDrawer(drawerDespesa()); bindGlobais($('#drawer')); });
   el.querySelectorAll('[data-pagar]').forEach(b=>b.addEventListener('click',()=>{
-    const m = b.dataset.pagar;
-    if(m==='banco'){ abrirModal(modalBanco()); }
-    else { abrirModal(modalMpesa(m)); }
-    bindGlobais($('#modal'));
-    const push = $('#btn-push');
-    if(push) push.addEventListener('click',()=>{
-      abrirModal(modalPush(m));
-      setTimeout(()=>{ abrirModal(modalRecibo()); bindGlobais($('#modal')); }, 2200);
-    });
-    const up = $('#btn-upload');
-    if(up) up.addEventListener('click',()=>{ fecharTudo(); toast('Comprovativo enviado · aguarda confirmação do gestor'); });
+    S.payCtx = FATURAS_PROP.find(f=>f.estado==='pendente') || FATURAS_PROP[0];
+    abrirPagamento(b.dataset.pagar);
+  }));
+  el.querySelectorAll('[data-pagar-fat]').forEach(b=>b.addEventListener('click',()=>{
+    S.payCtx = FATURAS_PROP[+b.dataset.pagarFat];
+    abrirModal(modalPagar()); bindGlobais($('#modal'));
+    $('#modal').querySelectorAll('[data-m]').forEach(x=>x.addEventListener('click',()=>abrirPagamento(x.dataset.m)));
   }));
   el.querySelectorAll('[data-susp]').forEach(b=>b.addEventListener('click',()=>{
     const c = S.colabs[+b.dataset.susp]; c.estado='suspenso';
@@ -1403,7 +1469,8 @@ function bindScreen(el){
       slot.scrollIntoView({behavior:'smooth',block:'center'});
     } else {
       slot.innerHTML='';
-      toast(`Flat ${num||'—'} registada · convite gerado${nome?` para ${nome.split(' ')[0]}`:''}`);
+      const rr = `${sigla(cond)}-${(bloco||'').toUpperCase()}${num}`;
+      toast(`Flat registada · referência ${rr} · convite gerado${nome?` para ${nome.split(' ')[0]}`:''}`);
       $('#nf-num').value=''; $('#nf-nome').value=''; $('#nf-tel').value='';
     }
   });
@@ -1412,6 +1479,19 @@ function bindScreen(el){
     try{navigator.clipboard.writeText(b.dataset.copyConv);}catch(e){}
     toast('Código de convite copiado'); render();
   }));
+}
+function abrirPagamento(m){
+  if(m==='banco'){ abrirModal(modalBanco()); }
+  else { abrirModal(modalMpesa(m)); }
+  bindGlobais($('#modal'));
+  const push = $('#btn-push');
+  if(push) push.addEventListener('click',()=>{
+    abrirModal(modalPush(m));
+    const taxa = Math.round(ctxPay().valor*(m==='mpesa'?S.taxas.mpesa:S.taxas.emola))/100;
+    setTimeout(()=>{ abrirModal(modalRecibo(ctxPay().valor+taxa)); bindGlobais($('#modal')); }, 2200);
+  });
+  const up = $('#btn-upload');
+  if(up) up.addEventListener('click',()=>{ fecharTudo(); toast('Comprovativo enviado · aguarda confirmação do gestor'); });
 }
 function drawerDespesa(){
   return `
