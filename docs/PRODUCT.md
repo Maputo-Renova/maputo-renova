@@ -47,6 +47,13 @@ Cada flat recebe uma **referência única alfanumérica** gerada automaticamente
 - **Transferência bancária:** sempre disponível desde o MVP (não depende de contratos).
 - Contratos (M-Pesa, eMola, SMS, Resend, domínio) **em nome da empresa do cliente desde o dia 1** — não se transferem como código.
 
+## Projectos (obras do condomínio)
+
+- O **gestor cria** o projecto: nome, categoria (Construção, Reparação, Melhoria, Segurança), descrição, **orçamento previsto**, **data prevista** e financiamento — **fundo do condomínio** (sem cobrança extra) ou **quota extraordinária** (orçamento dividido pelas flats e cobrado nas faturas normais, com os mesmos métodos, recibos e lembretes).
+- A **consola aprova ou rejeita** (uma quota extraordinária cria cobranças novas; o gestor nunca se auto-aprova — garantido pelo RLS). Estados: pendente → aprovado/rejeitado → concluído.
+- Os **proprietários acompanham** os projectos aprovados: progresso físico (% e actualizações datadas do gestor), progresso financeiro (angariado vs orçamento) e a sua quota extraordinária nas Faturas.
+- As **despesas** do condomínio podem ser ligadas ao projecto (gasto real vs orçamento) — transparência total.
+
 ## Notificações
 
 - **Email:** Resend. **SMS:** gateway local moçambicano (custo por SMS registado em cada envio).

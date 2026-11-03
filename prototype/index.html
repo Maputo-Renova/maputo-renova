@@ -317,7 +317,7 @@ img,svg{display:block}
 .copy-btn:hover{text-decoration:underline;text-underline-offset:3px}
 
 /* progress */
-.prog{height:7px;background:var(--line-soft);border-radius:999px;overflow:hidden;min-width:90px}
+.prog{display:block;height:7px;background:var(--line-soft);border-radius:999px;overflow:hidden;min-width:90px}
 .prog i{display:block;height:100%;border-radius:999px;background:var(--green-600)}
 .prog.warn i{background:var(--amber-700)}
 .prog.bad i{background:var(--red-700)}
@@ -487,6 +487,7 @@ const ICONS = {
   key:'<circle cx="8" cy="15.5" r="4"/><path d="m11 12.5 8.5-8.5M16 7l2.5 2.5M13.5 9.5 16 12"/>',
   ledger:'<path d="M5 3.5h14v17H5Z"/><path d="M5 7.5h14M9 3.5v17"/>',
   logout:'<path d="M9.5 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3.5M15 8l4 4-4 4M19 12H9.5"/>',
+  obra:'<path d="M11.5 7.5 15 4l5 5-3.5 3.5M11.5 7.5l5 5M11.5 7.5 3 16v5h5l8.5-8.5"/>',
   bank2:'<path d="M12 3 3.5 8.2v1.3h17V8.2Z"/><path d="M5.6 12.5v4.5M9.9 12.5v4.5M14.1 12.5v4.5M18.4 12.5v4.5M4.4 19.5h15.2M3 21.5h18"/><circle cx="12" cy="6.6" r=".4" fill="currentColor" stroke="none"/>',
   camera:'<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.1l1.2-1.8h6.4L16.4 6h1.1A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5Z"/><circle cx="12" cy="12.5" r="3.2"/>',
 };
@@ -574,6 +575,24 @@ const AVISOS = [
   {t:'Assembleia de condóminos', c:'Convocatória para 15 de Novembro às 10h, salão do R/C. Ponto único: orçamento 2027.', data:'22 Out', env:24},
   {t:'Obras no elevador', c:'Manutenção programada do elevador no sábado de manhã. Use as escadas entre as 7h e as 12h.', data:'11 Out', env:24},
 ];
+const PROJECTOS_INIT = [
+  {id:1, cond:'Jardim das Acácias', nome:'Pintura e impermeabilização das fachadas', cat:'Melhoria',
+   desc:'Pintura completa das fachadas dos blocos A e B, com tratamento de fissuras e impermeabilização das platibandas.',
+   orc:180000, data:'Mar 2027', fin:'quota', quotaExtra:7500, angariado:112500, gasto:64000,
+   estado:'aprovado', progresso:35,
+   updates:[{t:'Andaimes montados no Bloco A; início da lavagem das fachadas.', data:'20 Out'},{t:'Empreiteiro adjudicado: Construções Zitamar, Lda.', data:'02 Out'}]},
+  {id:2, cond:'Jardim das Acácias', nome:'Substituição da bomba de água principal', cat:'Reparação',
+   desc:'Substituição da bomba principal e das válvulas de retenção; a bomba actual falha nos picos da manhã.',
+   orc:48000, data:'Dez 2026', fin:'fundo', gasto:0,
+   estado:'pendente', progresso:0, updates:[]},
+  {id:3, cond:'Jardim das Acácias', nome:'Iluminação solar do pátio e garagem', cat:'Segurança',
+   desc:'Instalação de 12 candeeiros solares com sensores de movimento no pátio e na garagem.',
+   orc:95000, data:'Ago 2026', fin:'fundo', gasto:91300,
+   estado:'concluido', progresso:100,
+   updates:[{t:'Obra concluída e recebida. Custo final 4% abaixo do orçamento.', data:'28 Ago'}]},
+];
+const PROJ_PILL = {pendente:['pendente','Aguarda aprovação'], aprovado:['activo','Em curso'], concluido:['neutro','Concluído'], rejeitado:['suspenso','Rejeitado']};
+const pillProj = e => { const [c,l]=PROJ_PILL[e]; return `<span class="pill ${c}">${l}</span>`; };
 const TICKETS_INIT = [
   {id:1, flat:'302', de:'Celeste Mabjaia', cat:'Avaria', assunto:'Infiltração na parede da sala', msg:'Desde as chuvas da semana passada aparece humidade na parede que dá para a varanda.', data:'29 Out', estado:'novo'},
   {id:2, flat:'105', de:'Paulo Macamo', cat:'Reclamação', assunto:'Barulho das obras fora de horas', msg:'As obras do elevador continuaram depois das 17h de sábado.', data:'27 Out', estado:'em_curso'},
@@ -664,14 +683,16 @@ const S = {
   gestoresPendentes: [
     {nome:'Hortência Cuambe', condominio:'Residencial Katembe Sul', email:'hortencia.cuambe@gmail.com', tel:'85 441 2209', data:'registou-se há 3 horas'},
   ],
+  projectos: PROJECTOS_INIT.map(p=>({...p, updates:[...p.updates]})),
+  proxProjecto: 4,
 };
 
 const ROLES = {
   gestor:{label:'Gestor', user:'Arlindo Macuácua', sub:'Jardim das Acácias', nav:[
-    ['painel','Painel','grid'],['pagamentosG','Pagamentos','bank'],['tesouraria','Tesouraria','wallet'],['suporteG','Suporte','mail'],['avisos','Avisos','bell'],['perfil','O meu perfil','settings'],
+    ['painel','Painel','grid'],['pagamentosG','Pagamentos','bank'],['tesouraria','Tesouraria','wallet'],['projectosG','Projectos','obra'],['suporteG','Suporte','mail'],['avisos','Avisos','bell'],['perfil','O meu perfil','settings'],
   ]},
   proprietario:{label:'Proprietário', user:'Celeste Mabjaia', sub:'Flat 302 · JDA-A302', nav:[
-    ['inicio','A minha quota','home'],['minhaflat','A minha flat','flats'],['faturas','Faturas','receipt'],['suporte','Suporte','mail'],['avisosP','Avisos','bell'],['perfil','O meu perfil','settings'],
+    ['inicio','A minha quota','home'],['minhaflat','A minha flat','flats'],['faturas','Faturas','receipt'],['projectosP','Projectos','obra'],['suporte','Suporte','mail'],['avisosP','Avisos','bell'],['perfil','O meu perfil','settings'],
   ]},
   admin:{label:'Consola', user:'Nádia Waty', sub:'Super administradora', nav:[
     ['visao','Visão geral','grid'],['condos','Condomínios','building'],['colabs','Colaboradores','users'],['repasses','Repasses','bank'],['config','Configuração','settings'],['perfil','O meu perfil','users'],
@@ -748,7 +769,8 @@ function renderNav(){
   $('#nav').innerHTML = `<div class="nav-label">Menu</div>` + r.nav.map(([id,label,icon])=>{
     let badge = (id==='pagamentosG' && S.transf.length) ? `<span class="nav-badge">${S.transf.length}</span>` : '';
     if(id==='suporteG' && novosTk) badge = `<span class="nav-badge">${novosTk}</span>`;
-    if(id==='visao' && S.gestoresPendentes.length) badge = `<span class="nav-badge">${S.gestoresPendentes.length}</span>`;
+    const pendVisao = S.gestoresPendentes.length + S.projectos.filter(p=>p.estado==='pendente').length;
+    if(id==='visao' && pendVisao) badge = `<span class="nav-badge">${pendVisao}</span>`;
     return `<button class="nav-item" data-screen="${id}" ${cur===id?'aria-current="page"':''}>${ico(icon)}${label}${badge}</button>`;
   }).join('');
   $('#nav').querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>setScreen(b.dataset.screen)));
@@ -1016,6 +1038,111 @@ function scrGestorAvisos(){
           <div class="row-end"><div class="cell-sub">${a.data}</div><div class="cell-sub num">${a.env} envios</div></div>
         </li>`).join('')}</ul>
     </div>
+  </div>`;
+}
+
+/* ============================================================
+   PROJECTOS (obras do condomínio)
+   ============================================================ */
+function projCard(p, papel){
+  const finTxt = p.fin==='quota'
+    ? `Quota extraordinária · <b class="num">${MT(p.quotaExtra)}</b> por flat`
+    : 'Fundo do condomínio';
+  const pctFin = p.fin==='quota' ? Math.round((p.angariado||0)/p.orc*100) : null;
+  return `
+  <div class="card">
+    <div class="card-head" style="flex-wrap:wrap;row-gap:8px">
+      <span class="card-ico">${ico('obra')}</span>
+      <div><h2>${p.nome}</h2><div class="cell-sub">${p.cat} · conclusão prevista: ${p.data}</div></div>
+      <span class="spacer"></span>${pillProj(p.estado)}
+    </div>
+    <p style="font-size:14px;color:var(--ink-2);margin-bottom:14px">${p.desc}</p>
+    <div class="grid g-12" style="gap:12px;margin-bottom:4px">
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:5px"><span>Execução da obra</span><span class="num">${p.progresso}%</span></div>
+        <span class="prog"><i style="width:${p.progresso}%"></i></span>
+        <div class="cell-sub" style="margin-top:7px">Orçamento <b class="num">${MT(p.orc)}</b>${p.gasto?` · gasto <b class="num">${MT(p.gasto)}</b>`:''}</div>
+      </div>
+      <div>
+        ${pctFin!==null?`
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:5px"><span>Angariado</span><span class="num">${pctFin}%</span></div>
+        <span class="prog ${pctFin<60?'warn':''}"><i style="width:${Math.min(pctFin,100)}%"></i></span>
+        <div class="cell-sub" style="margin-top:7px"><b class="num">${MT(p.angariado||0)}</b> de ${MT(p.orc)} · ${finTxt}</div>`
+        :`<div style="font-size:13px;font-weight:700;margin-bottom:5px">Financiamento</div>
+        <div class="cell-sub">${finTxt}${p.estado==='pendente'?' · sem cobrança extra aos proprietários':''}</div>`}
+      </div>
+    </div>
+    ${p.updates.length?`<ul class="row-list" style="margin-top:6px">${p.updates.slice(0,2).map(u=>`
+      <li><span class="row-ico g">${ico('clock')}</span>
+        <div class="row-body"><div class="t" style="font-weight:600;font-size:13.5px">${u.t}</div></div>
+        <div class="row-end cell-sub">${u.data}</div></li>`).join('')}</ul>`:''}
+    ${papel==='gestor' && p.estado==='aprovado'?`<div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn btn-ghost sm" data-proj-upd="${p.id}">${ico('send','icon sm')}Actualizar progresso</button>
+      <button class="btn btn-primary sm" data-proj-concluir="${p.id}">${ico('check','icon sm')}Marcar concluído</button>
+    </div>`:''}
+    ${papel==='gestor' && p.estado==='pendente'?`<div class="note" style="margin-top:12px">${ico('shield','icon sm')}<span>Enviado à consola. ${p.fin==='quota'?'A quota extraordinária só é cobrada depois da aprovação.':'Será pago pelo fundo do condomínio depois da aprovação.'}</span></div>`:''}
+  </div>`;
+}
+function scrGestorProjectos(){
+  const lista = S.projectos.filter(p=>p.estado!=='rejeitado');
+  return `
+  <div class="page-head">
+    <div><h1>Projectos</h1><p class="sub">Obras e melhorias do condomínio · aprovadas pela consola, acompanhadas pelos proprietários</p></div>
+    <div class="page-head-actions"><button class="btn btn-primary" id="btn-novo-proj">${ico('plus','icon sm')}Novo projecto</button></div>
+  </div>
+  ${lista.length?`<div class="grid">${lista.map(p=>projCard(p,'gestor')).join('')}</div>`
+  :`<div class="card"><div class="empty"><span class="e-ico">${ico('obra')}</span><b>Sem projectos</b><p>Crie o primeiro projecto de obra ou melhoria do condomínio.</p></div></div>`}`;
+}
+function scrPropProjectos(){
+  const lista = S.projectos.filter(p=>['aprovado','concluido'].includes(p.estado));
+  return `
+  <div class="page-head">
+    <div><h1>Projectos do condomínio</h1><p class="sub">Obras aprovadas e o seu andamento · Jardim das Acácias</p></div>
+  </div>
+  ${lista.length?`<div class="grid">${lista.map(p=>projCard(p,'prop')).join('')}</div>`
+  :`<div class="card"><div class="empty"><span class="e-ico">${ico('obra')}</span><b>Sem projectos em curso</b><p>Quando o condomínio aprovar uma obra, acompanha aqui o progresso e os custos.</p></div></div>`}
+  <div class="note mt">${ico('shield','icon sm')}<span>Quotas extraordinárias aprovadas aparecem nas suas <b>Faturas</b> e pagam-se como a quota normal.</span></div>`;
+}
+function drawerNovoProjecto(){
+  return `
+  <div class="drawer-head"><h3>Novo projecto</h3><span style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
+  <div class="drawer-body">
+    <div class="field"><label for="pj-nome">Nome do projecto</label><input id="pj-nome" placeholder="Ex.: Reparação do portão da garagem"></div>
+    <div class="f-row">
+      <div class="field"><label for="pj-cat">Categoria</label>
+        <select id="pj-cat"><option>Reparação</option><option>Construção</option><option>Melhoria</option><option>Segurança</option></select></div>
+      <div class="field"><label for="pj-data">Conclusão prevista</label><input id="pj-data" placeholder="Ex.: Mar 2027"></div>
+    </div>
+    <div class="field"><label for="pj-desc">Descrição</label><textarea id="pj-desc" rows="3" placeholder="O que vai ser feito, porquê, e o que fica resolvido."></textarea></div>
+    <div class="field"><label for="pj-orc">Orçamento previsto (MT)</label><input id="pj-orc" class="num" inputmode="numeric" placeholder="0"></div>
+    <div class="field"><label for="pj-fin">Financiamento</label>
+      <select id="pj-fin">
+        <option value="fundo">Fundo do condomínio (sem cobrança extra)</option>
+        <option value="quota">Quota extraordinária (dividida pelas 24 flats)</option>
+      </select>
+      <span class="hint">Com quota extraordinária, o valor por flat entra nas faturas dos proprietários depois da aprovação da consola.</span></div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost sm" data-close>Cancelar</button>
+    <button class="btn btn-primary sm" id="btn-save-proj">${ico('send','icon sm')}Enviar à consola</button>
+  </div>`;
+}
+function drawerUpdProjecto(p){
+  return `
+  <div class="drawer-head"><h3>Actualizar progresso</h3><span style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
+  <div class="drawer-body">
+    <div class="note" style="margin-bottom:16px">${ico('obra','icon sm')}<span><b>${p.nome}</b> · execução actual: <b class="num">${p.progresso}%</b></span></div>
+    <div class="field"><label for="up-txt">O que avançou</label><textarea id="up-txt" rows="3" placeholder="Ex.: Fachada do Bloco A concluída; iniciado o Bloco B."></textarea></div>
+    <div class="f-row">
+      <div class="field"><label for="up-pct">Execução (%)</label><input id="up-pct" class="num" inputmode="numeric" value="${p.progresso}"></div>
+      <div class="field"><label for="up-gasto">Gasto até agora (MT)</label><input id="up-gasto" class="num" inputmode="numeric" value="${p.gasto||0}"></div>
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost sm" data-close>Cancelar</button>
+    <button class="btn btn-primary sm" id="btn-save-upd" data-id="${p.id}">${ico('check','icon sm')}Publicar actualização</button>
   </div>`;
 }
 
@@ -1302,6 +1429,22 @@ function scrAdminVisao(){
         <div class="row-end" style="display:flex;align-items:center;gap:10px">
           <button class="btn btn-danger sm" data-grej="${i}">Rejeitar</button>
           <button class="btn btn-primary sm" data-gaprov="${i}">${ico('check','icon sm')}Aprovar</button>
+        </div>
+      </li>`).join('')}</ul>
+  </div>`:''}
+  ${S.projectos.filter(p=>p.estado==='pendente').length?`
+  <div class="card mt" style="border:1px solid var(--blue-700);background:#FBFCFE">
+    <div class="card-head"><span class="card-ico" style="background:var(--blue-100);color:var(--blue-700)">${ico('obra')}</span><h2>Projectos por aprovar</h2><span class="spacer"></span><span class="pill confirmar">${S.projectos.filter(p=>p.estado==='pendente').length} pendente${S.projectos.filter(p=>p.estado==='pendente').length>1?'s':''}</span></div>
+    <ul class="row-list">${S.projectos.filter(p=>p.estado==='pendente').map(p=>`
+      <li>
+        <span class="row-ico b">${ico('obra')}</span>
+        <div class="row-body">
+          <div class="t">${p.nome} — ${p.cond}</div>
+          <div class="s">${p.cat} · orçamento <b class="num">${MT(p.orc)}</b> · prevista ${p.data} · ${p.fin==='quota'?`quota extraordinária de <b class="num">${MT(p.quotaExtra)}</b>/flat`:'fundo do condomínio'}</div>
+        </div>
+        <div class="row-end" style="display:flex;align-items:center;gap:10px">
+          <button class="btn btn-danger sm" data-proj-rej="${p.id}">Rejeitar</button>
+          <button class="btn btn-primary sm" data-proj-aprov="${p.id}">${ico('check','icon sm')}Aprovar</button>
         </div>
       </li>`).join('')}</ul>
   </div>`:''}
@@ -1686,8 +1829,8 @@ function scrPerfil(){
    render + eventos
    ============================================================ */
 const SCREENS = {
-  gestor:{painel:scrGestorPainel, pagamentosG:scrGestorPagamentos, tesouraria:scrGestorTesouraria, suporteG:scrGestorSuporte, avisos:scrGestorAvisos, perfil:scrPerfil},
-  proprietario:{inicio:scrPropInicio, minhaflat:scrPropFlat, faturas:scrPropFaturas, suporte:scrPropSuporte, avisosP:scrPropAvisos, perfil:scrPerfil},
+  gestor:{painel:scrGestorPainel, pagamentosG:scrGestorPagamentos, tesouraria:scrGestorTesouraria, projectosG:scrGestorProjectos, suporteG:scrGestorSuporte, avisos:scrGestorAvisos, perfil:scrPerfil},
+  proprietario:{inicio:scrPropInicio, minhaflat:scrPropFlat, faturas:scrPropFaturas, projectosP:scrPropProjectos, suporte:scrPropSuporte, avisosP:scrPropAvisos, perfil:scrPerfil},
   admin:{visao:scrAdminVisao, condos:scrAdminCondos, condoDetail:scrAdminCondoDetail, colabs:scrAdminColabs, repasses:scrAdminRepasses, config:scrAdminConfig, perfil:scrPerfil},
   colaborador:{cadastro:scrColabCadastro, convites:scrColabConvites, perfil:scrPerfil},
 };
@@ -1834,6 +1977,53 @@ function bindScreen(el){
       S.metodosManuais.push({nome, instrucoes:$('#mm-inst').value.trim()||'—', comprovativo:$('#mm-comp').value==='sim', activo:true});
       fecharTudo(); toast(`Método "${nome}" adicionado e activo`); render();
     });
+  }));
+  const np = el.querySelector('#btn-novo-proj');
+  if(np) np.addEventListener('click',()=>{
+    abrirDrawer(drawerNovoProjecto()); bindGlobais($('#drawer'));
+    $('#btn-save-proj').addEventListener('click',()=>{
+      const nome = $('#pj-nome').value.trim(), orc = +($('#pj-orc').value.replace(/\D/g,''))||0;
+      if(!nome){ toast('Dê um nome ao projecto'); $('#pj-nome').focus(); return; }
+      if(!orc){ toast('Indique o orçamento previsto'); $('#pj-orc').focus(); return; }
+      if(!$('#pj-data').value.trim()){ toast('Indique a data prevista de conclusão'); $('#pj-data').focus(); return; }
+      const fin = $('#pj-fin').value;
+      S.projectos.unshift({
+        id:S.proxProjecto++, cond:'Jardim das Acácias',
+        nome, cat:$('#pj-cat').value, desc:$('#pj-desc').value.trim()||'—',
+        orc, data:$('#pj-data').value.trim(), fin,
+        quotaExtra: fin==='quota' ? Math.ceil(orc/24/50)*50 : null,
+        angariado:0, gasto:0, estado:'pendente', progresso:0, updates:[],
+      });
+      fecharTudo(); toast('Projecto enviado à consola para aprovação'); render();
+    });
+  });
+  el.querySelectorAll('[data-proj-upd]').forEach(b=>b.addEventListener('click',()=>{
+    const p = S.projectos.find(x=>x.id===+b.dataset.projUpd);
+    abrirDrawer(drawerUpdProjecto(p)); bindGlobais($('#drawer'));
+    $('#btn-save-upd').addEventListener('click',()=>{
+      const txt = $('#up-txt').value.trim();
+      if(!txt){ toast('Descreva o que avançou'); $('#up-txt').focus(); return; }
+      p.progresso = Math.min(100, Math.max(0, +($('#up-pct').value.replace(/\D/g,''))||p.progresso));
+      p.gasto = +($('#up-gasto').value.replace(/\D/g,''))||p.gasto;
+      p.updates.unshift({t:txt, data:'Hoje'});
+      fecharTudo(); toast('Actualização publicada · os proprietários foram notificados'); render();
+    });
+  }));
+  el.querySelectorAll('[data-proj-concluir]').forEach(b=>b.addEventListener('click',()=>{
+    const p = S.projectos.find(x=>x.id===+b.dataset.projConcluir);
+    p.estado='concluido'; p.progresso=100;
+    p.updates.unshift({t:'Obra concluída e recebida pelo condomínio.', data:'Hoje'});
+    toast('Projecto concluído · os proprietários foram notificados'); render();
+  }));
+  el.querySelectorAll('[data-proj-aprov]').forEach(b=>b.addEventListener('click',()=>{
+    const p = S.projectos.find(x=>x.id===+b.dataset.projAprov);
+    p.estado='aprovado';
+    toast(`"${p.nome}" aprovado${p.fin==='quota'?' · quota extraordinária entra nas faturas':''}`); render();
+  }));
+  el.querySelectorAll('[data-proj-rej]').forEach(b=>b.addEventListener('click',()=>{
+    const p = S.projectos.find(x=>x.id===+b.dataset.projRej);
+    p.estado='rejeitado';
+    toast(`"${p.nome}" rejeitado · o gestor foi notificado`); render();
   }));
   el.querySelectorAll('[data-gaprov]').forEach(b=>b.addEventListener('click',()=>{
     const g = S.gestoresPendentes[+b.dataset.gaprov];
