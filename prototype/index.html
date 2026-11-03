@@ -326,6 +326,18 @@ img,svg{display:block}
 .cfg-row .inp{width:86px}
 .cfg-row .inp input{border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%;font-size:14px;font-weight:700;text-align:right}
 
+/* página de acesso */
+body.auth .sidebar,body.auth .topbar{display:none}
+body.auth .app{grid-template-columns:1fr}
+body.auth .screen{max-width:480px;padding-top:6vh}
+.auth-brand{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:22px;text-align:center}
+.auth-brand .brand-mark{width:56px;height:56px;border-radius:16px}
+.auth-brand .brand-mark svg{width:30px;height:30px}
+.auth-links{display:flex;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:8px}
+.avatar{cursor:pointer;transition:border-color .15s var(--ease)}
+.avatar:hover{border-color:var(--green-600)}
+.pf-pic{width:68px;height:68px;border-radius:50%;background:var(--green-150);color:var(--green-800);display:grid;place-items:center;font-size:23px;font-weight:800;flex:none}
+
 /* responsive */
 @media (max-width:1060px){
   .g-kpi{grid-template-columns:1fr 1fr}
@@ -390,6 +402,10 @@ img,svg{display:block}
         <div class="role-grid" id="role-grid"></div>
         <span class="demo-tag"><span class="demo-dot"></span>Dados de demonstração</span>
       </div>
+      <button class="nav-item" id="logout-btn" style="margin-top:8px">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3.5M15 8l4 4-4 4M19 12H9.5"/></svg>
+        Terminar sessão
+      </button>
     </div>
   </aside>
 
@@ -407,7 +423,7 @@ img,svg{display:block}
           <svg class="icon" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>
           <span class="dot" aria-hidden="true"></span>
         </button>
-        <span class="avatar"><span class="avatar-pic" id="avatar-pic">AM</span><span class="avatar-name" id="avatar-name">Arlindo Macuácua</span></span>
+        <button class="avatar" id="avatar-btn" title="O meu perfil"><span class="avatar-pic" id="avatar-pic">AM</span><span class="avatar-name" id="avatar-name">Arlindo Macuácua</span></button>
       </div>
     </header>
     <main class="screen" id="screen" tabindex="-1"></main>
@@ -456,6 +472,8 @@ const ICONS = {
   mail:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
   key:'<circle cx="8" cy="15.5" r="4"/><path d="m11 12.5 8.5-8.5M16 7l2.5 2.5M13.5 9.5 16 12"/>',
   ledger:'<path d="M5 3.5h14v17H5Z"/><path d="M5 7.5h14M9 3.5v17"/>',
+  logout:'<path d="M9.5 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3.5M15 8l4 4-4 4M19 12H9.5"/>',
+  camera:'<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.1l1.2-1.8h6.4L16.4 6h1.1A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5Z"/><circle cx="12" cy="12.5" r="3.2"/>',
 };
 const ico = (n,cls='icon') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
 
@@ -608,6 +626,8 @@ const PAGAMENTOS_PROP = FATURAS_PROP.filter(f=>f.estado==='pago');
 
 /* ---------------- estado ---------------- */
 const S = {
+  aut:false,
+  loginView:'entrar',
   role:'gestor',
   screen:'painel',
   mes:9,                      // Outubro
@@ -635,18 +655,34 @@ const S = {
 
 const ROLES = {
   gestor:{label:'Gestor', user:'Arlindo Macuácua', sub:'Jardim das Acácias', nav:[
-    ['painel','Painel','grid'],['pagamentosG','Pagamentos','bank'],['tesouraria','Tesouraria','wallet'],['suporteG','Suporte','mail'],['avisos','Avisos','bell'],
+    ['painel','Painel','grid'],['pagamentosG','Pagamentos','bank'],['tesouraria','Tesouraria','wallet'],['suporteG','Suporte','mail'],['avisos','Avisos','bell'],['perfil','Configurações','settings'],
   ]},
   proprietario:{label:'Proprietário', user:'Celeste Mabjaia', sub:'Flat 302 · JDA-A302', nav:[
-    ['inicio','A minha quota','home'],['minhaflat','A minha flat','flats'],['faturas','Faturas','receipt'],['suporte','Suporte','mail'],['avisosP','Avisos','bell'],
+    ['inicio','A minha quota','home'],['minhaflat','A minha flat','flats'],['faturas','Faturas','receipt'],['suporte','Suporte','mail'],['avisosP','Avisos','bell'],['perfil','Configurações','settings'],
   ]},
   admin:{label:'Consola', user:'Nádia Waty', sub:'Super administradora', nav:[
-    ['visao','Visão geral','grid'],['condos','Condomínios','building'],['colabs','Colaboradores','users'],['repasses','Repasses','bank'],['config','Configuração','settings'],
+    ['visao','Visão geral','grid'],['condos','Condomínios','building'],['colabs','Colaboradores','users'],['repasses','Repasses','bank'],['config','Configuração','settings'],['perfil','O meu perfil','users'],
   ]},
   colaborador:{label:'Agente', user:'Stélio Nhantumbo', sub:'Cadastro de condomínios', nav:[
-    ['cadastro','Cadastro','plus'],['convites','Convites','key'],
+    ['cadastro','Cadastro','plus'],['convites','Convites','key'],['perfil','Configurações','settings'],
   ]},
 };
+const EMAILS = {
+  gestor:'arlindo.macuacua@jardimacacias.co.mz',
+  proprietario:'celeste.mabjaia@gmail.com',
+  admin:'nadia.waty@maputorenova.co.za',
+  colaborador:'stelio.nhantumbo@maputorenova.co.za',
+};
+const EMAIL_LOCK = {
+  gestor:'O email está bloqueado. Só a consola pode alterá-lo e reenviar o acesso.',
+  proprietario:'O email está bloqueado. Só o gestor do condomínio pode alterá-lo e reenviar o acesso.',
+  admin:'O email está bloqueado. Alterações de email de administradores são feitas pelo suporte da plataforma.',
+  colaborador:'O email está bloqueado. Só a consola pode alterá-lo e reenviar o acesso.',
+};
+const slug = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const emailDe = f => `${slug(f.nome.split(' ')[0])}.${slug(f.nome.split(' ').slice(-1)[0])}@gmail.com`;
+function login(r){ S.aut = true; setRole(r); }
+
 
 /* ---------------- helpers de UI ---------------- */
 const $ = s => document.querySelector(s);
@@ -884,6 +920,13 @@ function drawerFlat(f, condoNome, estadoActual){
     <div class="f-row">
       <div class="field"><label>Telefone</label><input class="num" value="+258 ${f.tel}" readonly></div>
       <div class="field"><label>Quota mensal</label><input class="num" value="${MT(f.quota)}" readonly></div>
+    </div>
+    <h3 style="font-size:14px;margin:16px 0 8px">Acesso do proprietário</h3>
+    <div class="field"><label for="fd-email">Email de acesso</label><input id="fd-email" type="email" value="${emailDe(f)}">
+      <span class="hint">O proprietário não pode alterar o próprio email — só o gestor.</span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+      <button class="btn btn-ghost sm" id="fd-save">${ico('check','icon sm')}Guardar email</button>
+      <button class="btn btn-primary sm" id="fd-resend">${ico('send','icon sm')}Reenviar acesso</button>
     </div>
     <h3 style="font-size:14px;margin:16px 0 4px">Últimos 6 meses</h3>
     <ul class="row-list">${hist}</ul>
@@ -1385,9 +1428,11 @@ function scrAdminColabs(){
         <td>${c.area}</td>
         <td>${c.desde}</td>
         <td><span class="pill ${c.estado}">${c.estado==='activo'?'Activo':'Suspenso'}</span></td>
-        <td class="r">${c.eu?'<span class="cell-sub">—</span>':c.estado==='activo'
-          ?`<button class="btn btn-danger sm" data-susp="${i}">Suspender</button>`
-          :`<button class="btn btn-ghost sm" data-react="${i}">Reactivar</button>`}</td>
+        <td class="r">${c.eu?'<span class="cell-sub">—</span>':`
+          <button class="btn btn-ghost sm" data-acesso="${i}">Acesso</button>
+          ${c.estado==='activo'
+            ?`<button class="btn btn-danger sm" data-susp="${i}">Suspender</button>`
+            :`<button class="btn btn-ghost sm" data-react="${i}">Reactivar</button>`}`}</td>
       </tr>`).join('')}</tbody>
   </table></div></div>
   <div class="note mt">${ico('shield','icon sm')}<span><b>Agente</b> faz os cadastros de condomínios e flats (sem finanças); <b>Administrador</b> tem acesso total à consola; <b>Gestor</b> gere apenas o seu condomínio. Um colaborador suspenso perde o acesso de imediato; o histórico fica preservado.</span></div>`;
@@ -1535,16 +1580,116 @@ function scrColabConvites(){
 }
 
 /* ============================================================
+   ACESSO (login) e PERFIL
+   ============================================================ */
+function scrLogin(){
+  const entrar = S.loginView==='entrar';
+  return `
+  <div class="auth-brand">
+    <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" style="stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20V9l4-3v14M10 20V6l4-3v17M16 20v-9l4-3v12M2 20h20"/></svg></span>
+    <div><div class="brand-name" style="font-size:21px">Maputo Renova</div><div class="brand-sub">Gestão de condomínios · Maputo</div></div>
+  </div>
+  <div class="card">
+    ${entrar?`
+    <h1 style="font-size:19px;font-weight:800;margin-bottom:16px">Entrar</h1>
+    <div class="field"><label for="lg-email">Email</label><input id="lg-email" type="email" placeholder="o.seu@email.co.mz"></div>
+    <div class="field"><label for="lg-pw">Password</label><input id="lg-pw" type="password" placeholder="••••••••"></div>
+    <button class="btn btn-primary" id="btn-entrar" style="width:100%;justify-content:center">Entrar</button>
+    <div class="auth-links">
+      <button class="link" id="lnk-rec">Esqueci a password</button>
+      <button class="link" id="lnk-conv">Tenho um código de convite</button>
+    </div>`
+    :`
+    <h1 style="font-size:19px;font-weight:800;margin-bottom:6px">Criar conta com convite</h1>
+    <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:14px">Use o código único da sua flat (entregue pelo condomínio). A conta fica ligada à flat em nome do proprietário.</p>
+    <div class="field"><label for="cv-cod">Código de convite</label><input id="cv-cod" class="num" placeholder="JDA-22W466" style="text-transform:uppercase"></div>
+    <div class="field"><label for="cv-pw">Criar password</label><input id="cv-pw" type="password" placeholder="Mínimo 8 caracteres"></div>
+    <div class="field"><label for="cv-pw2">Confirmar password</label><input id="cv-pw2" type="password" placeholder="Repita a password"></div>
+    <button class="btn btn-primary" id="btn-conv" style="width:100%;justify-content:center">Criar conta e entrar</button>
+    <div class="auth-links"><button class="link" id="lnk-voltar">Voltar ao login</button></div>`}
+  </div>
+  <div class="card mt">
+    <p style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px">Demonstração · entrar como</p>
+    <div class="role-grid">${Object.entries(ROLES).map(([k,v])=>`<button class="role-btn" data-login="${k}">${v.label}</button>`).join('')}</div>
+    <span class="demo-tag"><span class="demo-dot"></span>Protótipo com dados de demonstração</span>
+  </div>`;
+}
+function bindLogin(el){
+  const be = el.querySelector('#btn-entrar');
+  if(be) be.addEventListener('click',()=>{
+    const em = $('#lg-email').value.trim();
+    if(!em){ toast('Escreva o seu email'); $('#lg-email').focus(); return; }
+    if(!$('#lg-pw').value){ toast('Escreva a sua password'); $('#lg-pw').focus(); return; }
+    login('gestor');
+  });
+  const lr = el.querySelector('#lnk-rec');
+  if(lr) lr.addEventListener('click',()=>toast('Enviámos um link de recuperação para o seu email'));
+  const lc = el.querySelector('#lnk-conv');
+  if(lc) lc.addEventListener('click',()=>{ S.loginView='convite'; render(); });
+  const lv = el.querySelector('#lnk-voltar');
+  if(lv) lv.addEventListener('click',()=>{ S.loginView='entrar'; render(); });
+  const bc = el.querySelector('#btn-conv');
+  if(bc) bc.addEventListener('click',()=>{
+    if(!$('#cv-cod').value.trim()){ toast('Escreva o código de convite da sua flat'); $('#cv-cod').focus(); return; }
+    const p1=$('#cv-pw').value, p2=$('#cv-pw2').value;
+    if(p1.length<8){ toast('A password precisa de pelo menos 8 caracteres'); $('#cv-pw').focus(); return; }
+    if(p1!==p2){ toast('As passwords não coincidem'); $('#cv-pw2').focus(); return; }
+    toast('Conta criada e ligada à Flat 302 · bem-vinda, Celeste');
+    login('proprietario');
+  });
+  el.querySelectorAll('[data-login]').forEach(b=>b.addEventListener('click',()=>login(b.dataset.login)));
+}
+function scrPerfil(){
+  const r = ROLES[S.role];
+  const titulo = S.role==='admin' ? 'O meu perfil' : 'Configurações';
+  return `
+  <div class="page-head"><div><h1>${titulo}</h1><p class="sub">A sua conta no Maputo Renova</p></div></div>
+  <div class="grid g-12">
+    <div class="card" style="align-self:start">
+      <div class="card-head"><span class="card-ico">${ico('users')}</span><h2>Perfil</h2></div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
+        <span class="pf-pic">${iniciais(r.user)}</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost sm" id="pf-foto">${ico('camera','icon sm')}Carregar foto</button>
+          <button class="btn btn-ghost sm" id="pf-foto-rm">Remover</button>
+        </div>
+      </div>
+      <div class="field"><label for="pf-nome">Nome</label><input id="pf-nome" value="${r.user}"></div>
+      <div class="field"><label for="pf-email">Email</label><input id="pf-email" value="${EMAILS[S.role]}" readonly style="background:var(--bg);color:var(--ink-2)">
+        <span class="hint">${EMAIL_LOCK[S.role]}</span></div>
+      <button class="btn btn-primary sm" id="pf-save">${ico('check','icon sm')}Guardar alterações</button>
+    </div>
+    <div class="card" style="align-self:start">
+      <div class="card-head"><span class="card-ico">${ico('key')}</span><h2>Password</h2></div>
+      <div class="field"><label for="pw-actual">Password actual</label><input id="pw-actual" type="password" placeholder="••••••••"></div>
+      <div class="field"><label for="pw-nova">Nova password</label><input id="pw-nova" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="field"><label for="pw-conf">Confirmar nova password</label><input id="pw-conf" type="password" placeholder="Repita a nova password"></div>
+      <button class="btn btn-primary sm" id="pw-save">${ico('check','icon sm')}Alterar password</button>
+      <div class="note mt">${ico('shield','icon sm')}<span>Se esquecer a password, use "Esqueci a password" na página de entrada — o link de recuperação vai para o seu email.</span></div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
    render + eventos
    ============================================================ */
 const SCREENS = {
-  gestor:{painel:scrGestorPainel, pagamentosG:scrGestorPagamentos, tesouraria:scrGestorTesouraria, suporteG:scrGestorSuporte, avisos:scrGestorAvisos},
-  proprietario:{inicio:scrPropInicio, minhaflat:scrPropFlat, faturas:scrPropFaturas, suporte:scrPropSuporte, avisosP:scrPropAvisos},
-  admin:{visao:scrAdminVisao, condos:scrAdminCondos, condoDetail:scrAdminCondoDetail, colabs:scrAdminColabs, repasses:scrAdminRepasses, config:scrAdminConfig},
-  colaborador:{cadastro:scrColabCadastro, convites:scrColabConvites},
+  gestor:{painel:scrGestorPainel, pagamentosG:scrGestorPagamentos, tesouraria:scrGestorTesouraria, suporteG:scrGestorSuporte, avisos:scrGestorAvisos, perfil:scrPerfil},
+  proprietario:{inicio:scrPropInicio, minhaflat:scrPropFlat, faturas:scrPropFaturas, suporte:scrPropSuporte, avisosP:scrPropAvisos, perfil:scrPerfil},
+  admin:{visao:scrAdminVisao, condos:scrAdminCondos, condoDetail:scrAdminCondoDetail, colabs:scrAdminColabs, repasses:scrAdminRepasses, config:scrAdminConfig, perfil:scrPerfil},
+  colaborador:{cadastro:scrColabCadastro, convites:scrColabConvites, perfil:scrPerfil},
 };
 
 function render(){
+  document.body.classList.toggle('auth', !S.aut);
+  if(!S.aut){
+    const el = $('#screen');
+    el.innerHTML = scrLogin();
+    el.classList.remove('screen'); void el.offsetWidth; el.classList.add('screen');
+    bindLogin(el);
+    window.scrollTo({top:0});
+    return;
+  }
   renderNav();
   const scr = SCREENS[S.role][S.screen] || Object.values(SCREENS[S.role])[0];
   const el = $('#screen');
@@ -1610,7 +1755,7 @@ function bindScreen(el){
       if(!nome){ toast('Escreva o nome do colaborador'); $('#cl-nome').focus(); return; }
       if(!$('#cl-email').value.trim()){ toast('Indique o email para o convite'); $('#cl-email').focus(); return; }
       if(!tel){ toast('Indique o contacto'); $('#cl-tel').focus(); return; }
-      S.colabs.push({nome, tel, funcao:fn,
+      S.colabs.push({nome, tel, funcao:fn, email:$('#cl-email').value.trim(),
         area: fn==='Gestor' ? $('#cl-condo').value : fn==='Administrador' ? 'Consola total' : '0 cadastros',
         desde:'Hoje', estado:'activo'});
       fecharTudo();
@@ -1619,6 +1764,17 @@ function bindScreen(el){
     });
   });
   el.querySelectorAll('[data-chip-colab]').forEach(b=>b.addEventListener('click',()=>{S.filtroColab=b.dataset.chipColab;render();}));
+  el.querySelectorAll('[data-acesso]').forEach(b=>b.addEventListener('click',()=>{
+    const i = +b.dataset.acesso;
+    abrirDrawer(drawerAcesso(i)); bindGlobais($('#drawer'));
+    $('#ca-save').addEventListener('click',()=>{
+      const em = $('#ca-email').value.trim();
+      if(!em){ toast('O email não pode ficar vazio'); return; }
+      S.colabs[i].email = em;
+      toast('Email actualizado · registado na auditoria');
+    });
+    $('#ca-resend').addEventListener('click',()=>toast(`Acesso reenviado para ${$('#ca-email').value.trim()}`));
+  }));
   el.querySelectorAll('[data-susp]').forEach(b=>b.addEventListener('click',()=>{
     const c = S.colabs[+b.dataset.susp]; c.estado='suspenso';
     toast(`${c.nome} suspenso · registado na auditoria`); render();
@@ -1708,6 +1864,26 @@ function bindScreen(el){
       toast(`Flat registada · referência ${rr} · convite gerado${nome?` para ${nome.split(' ')[0]}`:''}`);
       $('#nf-num').value=''; $('#nf-nome').value=''; $('#nf-tel').value='';
     }
+  });
+  const pfs = el.querySelector('#pf-save');
+  if(pfs) pfs.addEventListener('click',()=>{
+    const n = $('#pf-nome').value.trim();
+    if(!n){ toast('O nome não pode ficar vazio'); $('#pf-nome').focus(); return; }
+    ROLES[S.role].user = n;
+    toast('Perfil actualizado'); render(); setScreen('perfil');
+  });
+  const pff = el.querySelector('#pf-foto');
+  if(pff) pff.addEventListener('click',()=>toast('Foto de perfil carregada (demonstração)'));
+  const pfr = el.querySelector('#pf-foto-rm');
+  if(pfr) pfr.addEventListener('click',()=>toast('Foto de perfil removida'));
+  const pws = el.querySelector('#pw-save');
+  if(pws) pws.addEventListener('click',()=>{
+    if(!$('#pw-actual').value){ toast('Escreva a password actual'); $('#pw-actual').focus(); return; }
+    const p1=$('#pw-nova').value, p2=$('#pw-conf').value;
+    if(p1.length<8){ toast('A nova password precisa de pelo menos 8 caracteres'); $('#pw-nova').focus(); return; }
+    if(p1!==p2){ toast('As passwords não coincidem'); $('#pw-conf').focus(); return; }
+    $('#pw-actual').value=''; $('#pw-nova').value=''; $('#pw-conf').value='';
+    toast('Password alterada com sucesso');
   });
   const pc = el.querySelector('#pedir-correcao');
   if(pc) pc.addEventListener('click',()=>setScreen('suporte'));
@@ -1816,6 +1992,28 @@ function drawerNovoCondo(){
     <button class="btn btn-primary sm" id="btn-save-condo">${ico('check','icon sm')}Criar condomínio</button>
   </div>`;
 }
+function emailColab(c){
+  if(c.email) return c.email;
+  const p = slug(c.nome.split(' ')[0]), u = slug(c.nome.split(' ').slice(-1)[0]);
+  return c.funcao==='Gestor' ? `${p}.${u}@gmail.com` : `${p}.${u}@maputorenova.co.za`;
+}
+function drawerAcesso(i){
+  const c = S.colabs[i];
+  return `
+  <div class="drawer-head">
+    <div><h3>Acesso de ${c.nome.split(' ')[0]}</h3><div class="cell-sub">${c.funcao} · ${c.area}</div></div>
+    <span style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
+  <div class="drawer-body">
+    <div class="note" style="margin-bottom:16px">${ico('shield','icon sm')}<span>O próprio ${c.funcao.toLowerCase()} não pode alterar o email — apenas a consola. Todas as alterações ficam na auditoria.</span></div>
+    <div class="field"><label for="ca-email">Email de acesso</label><input id="ca-email" type="email" value="${emailColab(c)}"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-ghost sm" id="ca-save" data-i="${i}">${ico('check','icon sm')}Guardar email</button>
+      <button class="btn btn-primary sm" id="ca-resend">${ico('send','icon sm')}Reenviar acesso</button>
+    </div>
+  </div>
+  <div class="drawer-foot"><button class="btn btn-ghost sm" data-close>Fechar</button></div>`;
+}
 function drawerNovoColab(){
   return `
   <div class="drawer-head"><h3>Novo colaborador</h3><span style="margin-left:auto"></span>
@@ -1912,6 +2110,14 @@ function drawerRepasse(c){
 }
 function bindGlobais(root){
   root.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',fecharTudo));
+  const fds = root.querySelector('#fd-save');
+  if(fds) fds.addEventListener('click',()=>{
+    const em = root.querySelector('#fd-email').value.trim();
+    if(!em){ toast('O email não pode ficar vazio'); return; }
+    toast('Email do proprietário actualizado · registado na auditoria');
+  });
+  const fdr = root.querySelector('#fd-resend');
+  if(fdr) fdr.addEventListener('click',()=>toast(`Acesso reenviado para ${root.querySelector('#fd-email').value.trim()}`));
   root.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',()=>{
     try{navigator.clipboard.writeText(b.dataset.copy);}catch(e){}
     toast('Referência copiada');
@@ -1923,6 +2129,9 @@ function bindGlobais(root){
 /* topbar sombra ao rolar */
 let lastY = 0;
 addEventListener('scroll',()=>{ $('#topbar').classList.toggle('scrolled', scrollY>8); },{passive:true});
+
+$('#avatar-btn').addEventListener('click',()=>{ if(S.aut) setScreen('perfil'); });
+$('#logout-btn').addEventListener('click',()=>{ S.aut=false; S.loginView='entrar'; fecharTudo(); render(); });
 
 render();
 </script>
