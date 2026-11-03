@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt">
+<html lang="pt-MZ">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -172,7 +172,8 @@ img,svg{display:block}
 .kpi .lbl{display:flex;align-items:center;gap:10px;color:var(--ink-2);font-size:13.5px;font-weight:700}
 .kpi .val{font-size:29px;font-weight:800;letter-spacing:-.02em;margin:10px 0 6px}
 .kpi .val small{font-size:15px;font-weight:700;color:var(--ink-3);letter-spacing:0}
-.kpi .cmp{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--ink-3)}
+.kpi .cmp{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12.5px;font-weight:700;color:var(--ink-3)}
+.kpi .cmp .up,.kpi .cmp .down{display:inline-flex;align-items:center;gap:5px}
 .kpi .cmp .up{color:var(--green-700)}
 .kpi .cmp .down{color:var(--red-700)}
 
@@ -199,7 +200,7 @@ img,svg{display:block}
 .tbl{width:100%;border-collapse:collapse}
 .tbl th{
   text-align:left;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
-  padding:10px 14px;border-bottom:1px solid var(--line);
+  padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap;
 }
 .tbl td{padding:13px 14px;border-bottom:1px solid var(--line-soft);font-size:14px;vertical-align:middle}
 .tbl tr:last-child td{border-bottom:none}
@@ -332,6 +333,21 @@ img,svg{display:block}
   .g-23,.g-12,.g-13{grid-template-columns:1fr}
 }
 @media (max-width:860px){
+  /* tabelas viram listas empilhadas: descrição à esquerda, valores/estados à direita */
+  .tbl thead{display:none}
+  .tbl,.tbl tbody{display:block}
+  .tbl tr{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-content:start;padding:14px 0;border-bottom:1px solid var(--line-soft)}
+  .tbl tbody tr:hover{background:transparent}
+  .tbl tr:last-child{border-bottom:none}
+  .tbl td{display:block;border-bottom:none;padding:0}
+  .tbl td.r,.tbl td:has(.pill){grid-column:2;text-align:right;justify-self:end}
+  .tbl td:not(.r):not(:has(.pill)){grid-column:1}
+  .tbl-wrap{margin:0;padding:0;overflow:visible}
+  /* gráfico condensado: últimos 6 meses */
+  .chart-bars{grid-template-columns:repeat(6,1fr);gap:10px;height:150px}
+  .bar-col:nth-child(-n+6){display:none}
+  .bar-col:nth-last-child(-n+2) .bar.sel::after{left:auto;right:0;transform:none}
+  .card-head{flex-wrap:wrap;row-gap:8px}
   .app{grid-template-columns:1fr}
   .sidebar{
     position:fixed;z-index:70;width:min(300px,86vw);height:100vh;left:0;top:0;
@@ -663,11 +679,11 @@ function scrGestorPainel(){
   </div>
   <div class="grid g-kpi">
     ${kpi(`Cobrado em ${MESES_S[S.mes]}`,'wallet',MT(cobrado)+' <small></small>',
-      corrente?`<span class="up">${ico('arrUp','icon sm')} ${Math.round(cobrado/37500*100)}% do esperado</span>&nbsp;· ${pagos.length} de 24 flats`:`Mês fechado`)}
+      corrente?`<span class="up">${ico('arrUp','icon sm')} ${Math.round(cobrado/37500*100)}% do esperado</span><span>${pagos.length} de 24 flats pagaram</span>`:`Mês fechado`)}
     ${kpi('Por cobrar','clock',MT(porCobrar),
       corrente?`${FLATS.length - pagos.length} flats ainda sem pagamento`:`${hist.length} flats não pagaram`)}
     ${kpi('Em atraso','alert',String(nAtraso)+' <small>flats</small>',
-      corrente?`<span class="down">${ico('arrDown','icon sm')} ${MT(atraso.reduce((s,x)=>s+x.f.quota,0))}</span>&nbsp; por recuperar`:`no fecho do mês`)}
+      corrente?`<span class="down">${ico('arrDown','icon sm')} ${MT(atraso.reduce((s,x)=>s+x.f.quota,0))}</span><span>por recuperar</span>`:`no fecho do mês`)}
   </div>
   <div class="grid g-23 mt">
     <div class="card">
@@ -979,7 +995,7 @@ function scrAdminVisao(){
     <div class="page-head-actions"><button class="btn btn-dark">${ico('file','icon sm')}Exportar relatório</button></div>
   </div>
   <div class="grid g-kpi">
-    ${kpi('Cobranças processadas','wallet',MT(proc),`<span class="up">${ico('arrUp','icon sm')} +6,1%</span>&nbsp; vs. Setembro`)}
+    ${kpi('Cobranças processadas','wallet',MT(proc),`<span class="up">${ico('arrUp','icon sm')} +6,1%</span><span>vs. Setembro</span>`)}
     ${kpi('Receita da plataforma','arrUp',MT(receita),`${String(S.taxas.plataforma).replace('.',',')}% sobre cobranças confirmadas`)}
     ${kpi('Taxas de operadores','receipt',MT(3185),'M-Pesa 1,2% · absorvida pelos apartamentos')}
   </div>
@@ -987,7 +1003,7 @@ function scrAdminVisao(){
     <div class="card">
       <div class="card-head"><h2>Condomínios</h2><span class="spacer"></span><button class="link" id="ver-condos">Ver todos</button></div>
       <div class="tbl-wrap"><table class="tbl">
-        <thead><tr><th>Condomínio</th><th class="r">Flats</th><th>Cobrança do mês</th><th class="r">Inadimplência</th><th class="r">A repassar</th></tr></thead>
+        <thead><tr><th>Condomínio</th><th class="r">Flats</th><th>Cobrança do mês</th><th class="r">Inadimpl.</th><th class="r">Repasse</th></tr></thead>
         <tbody>${CONDOS.map(c=>{
           const pct = Math.round(c.cobrado/c.esperado*100);
           const inad = Math.round(c.atraso/c.flats*100);
