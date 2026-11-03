@@ -203,6 +203,7 @@ img,svg{display:block}
 .tbl td{padding:13px 14px;border-bottom:1px solid var(--line-soft);font-size:14px;vertical-align:middle}
 .tbl tr:last-child td{border-bottom:none}
 .tbl tbody tr{transition:background .12s var(--ease)}
+.tbl tbody tr[data-condo]{cursor:pointer}
 .tbl tbody tr:hover{background:var(--green-50)}
 .tbl .r{text-align:right}
 .tbl .b{font-weight:700}
@@ -497,7 +498,7 @@ const TRANSF = [
   {id:2, flat:FLATS[12], valor:1800, data:'29 Out', ficheiro:'talao_millennium.jpg'},
 ];
 const CONDOS = [
-  {nome:'Jardim das Acácias', zona:'Sommerschield', flats:24, cobrado:36.0, esperado:37.2, atraso:4, saldo:118400, gestor:'Arlindo Macuácua'},
+  {nome:'Jardim das Acácias', zona:'Sommerschield', flats:24, cobrado:25.2, esperado:37.5, atraso:3, saldo:118400, gestor:'Arlindo Macuácua'},
   {nome:'Edifício Marginal 42', zona:'Costa do Sol', flats:36, cobrado:49.5, esperado:57.6, atraso:7, saldo:96200, gestor:'Lídia Monjane'},
   {nome:'Condomínio Polana Mar', zona:'Polana Cimento', flats:18, cobrado:40.5, esperado:43.2, atraso:2, saldo:54300, gestor:'Hermínio Matola'},
   {nome:'Torres do Alto Maé', zona:'Alto Maé', flats:48, cobrado:62.4, esperado:76.8, atraso:11, saldo:131750, gestor:'Salomão Vilanculos'},
@@ -535,6 +536,35 @@ const AUDIT = [
   {a:'Repasse registado', d:'Jardim das Acácias · 29 830 MT', data:'06 Out'},
   {a:'Condomínio criado', d:'Residencial Katembe Sul · por Yolanda M.', data:'02 Out'},
 ];
+/* flats geradas para os outros condomínios (demonstração) */
+function flatsDoCondo(c){
+  if(c.nome==='Jardim das Acácias') return FLATS;
+  const seed = c.nome.length;
+  const quotaBase = Math.round(c.esperado*1000/c.flats/50)*50;
+  return Array.from({length:c.flats},(_,i)=>({
+    id:i+1,
+    bloco:BLOCOS[i%2],
+    andar:Math.floor(i/6)+1,
+    numero:`${Math.floor(i/6)+1}0${(i%6)+1}`,
+    nome:NOMES[(i*7+seed)%24],
+    tel:`8${[2,4,5][i%3]} ${String(300+i*9+seed).padStart(3,'0')} ${String(2110+i*67).slice(-4)}`,
+    quota: i%5===0 ? quotaBase+300 : quotaBase,
+    ref:`MR-00${1200+seed*40+i}`,
+  }));
+}
+function estadosDoCondo(c){
+  if(c.nome==='Jardim das Acácias') return FLATS.map(f=>estadoDe(f));
+  const seed = c.nome.length;
+  const nPagos = Math.min(Math.round(c.cobrado/c.esperado*c.flats), c.flats - c.atraso);
+  const nConf = Math.min(2, Math.max(0, c.flats - nPagos - c.atraso));
+  return Array.from({length:c.flats},(_,i)=>{
+    const j = (i*11+seed)%c.flats;
+    if(j < nPagos) return 'pago';
+    if(j < nPagos+nConf) return 'confirmar';
+    if(j >= c.flats-c.atraso) return 'atraso';
+    return 'pendente';
+  });
+}
 const FATURAS_PROP = MESES_S.slice(0,10).map((m,i)=>({
   mes:`${MESES[i]} 2026`, valor:1500, estado: i===9 ? 'pendente' : 'pago',
   metodo: i===9 ? '—' : (i%3===0 ? 'Transferência' : 'M-Pesa'),
@@ -616,9 +646,10 @@ function renderNav(){
   $('#brand-sub').textContent = r.sub;
   $('#avatar-name').textContent = r.user;
   $('#avatar-pic').textContent = iniciais(r.user);
+  const cur = S.screen==='condoDetail' ? 'condos' : S.screen;
   $('#nav').innerHTML = `<div class="nav-label">Menu</div>` + r.nav.map(([id,label,icon])=>{
     const badge = (id==='transf' && S.transf.length) ? `<span class="nav-badge">${S.transf.length}</span>` : '';
-    return `<button class="nav-item" data-screen="${id}" ${S.screen===id?'aria-current="page"':''}>${ico(icon)}${label}${badge}</button>`;
+    return `<button class="nav-item" data-screen="${id}" ${cur===id?'aria-current="page"':''}>${ico(icon)}${label}${badge}</button>`;
   }).join('');
   $('#nav').querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>setScreen(b.dataset.screen)));
   $('#role-grid').innerHTML = Object.entries(ROLES).map(([k,v])=>
@@ -751,18 +782,19 @@ function scrGestorFlats(){
     ${lista.length ? tabelaFlats(lista) : `<div class="empty"><span class="e-ico">${ico('flats')}</span><b>Nada encontrado</b><p>Nenhuma flat corresponde ao filtro ou à procura.</p></div>`}
   </div>`;
 }
-function drawerFlat(f){
-  const e = estadoDe(f);
+function drawerFlat(f, condoNome, estadoActual){
+  condoNome = condoNome || 'Jardim das Acácias';
+  const e = estadoActual || estadoDe(f);
   const hist = MESES_S.slice(4,10).map((m,ix)=>{
     const i = ix+4;
-    const ee = i===9 ? e : (S.pagos[f.id] && i===9 ? 'pago' : estadoFlat(f.id-1,i));
+    const ee = i===9 ? e : estadoFlat(f.id-1,i);
     return `<li><span class="row-ico ${ee==='pago'?'g':ee==='pendente'||ee==='confirmar'?'a':'r'}">${ico(ee==='pago'?'check':'clock')}</span>
       <div class="row-body"><div class="t">${MESES[i]} 2026</div><div class="s">Referência ${f.ref}</div></div>
       <div class="row-end">${pill(ee)}</div></li>`;
   }).reverse().join('');
   return `
   <div class="drawer-head">
-    <div><h3>Flat ${f.numero} · Bloco ${f.bloco}</h3><div class="cell-sub">${f.andar}º andar · Jardim das Acácias</div></div>
+    <div><h3>Flat ${f.numero} · Bloco ${f.bloco}</h3><div class="cell-sub">${f.andar}º andar · ${condoNome}</div></div>
     <span class="spacer" style="margin-left:auto"></span>
     <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button>
   </div>
@@ -1004,10 +1036,10 @@ function scrAdminVisao(){
       <div class="card-head"><h2>Condomínios</h2><span class="spacer"></span><button class="link" id="ver-condos">Ver todos</button></div>
       <div class="tbl-wrap"><table class="tbl">
         <thead><tr><th>Condomínio</th><th class="r">Flats</th><th>Cobrança do mês</th><th class="r">Inadimpl.</th><th class="r">Repasse</th></tr></thead>
-        <tbody>${CONDOS.map(c=>{
+        <tbody>${CONDOS.map((c,i)=>{
           const pct = Math.round(c.cobrado/c.esperado*100);
           const inad = Math.round(c.atraso/c.flats*100);
-          return `<tr>
+          return `<tr data-condo="${i}" title="Abrir ${c.nome}">
             <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona} · ${c.gestor}</div></td>
             <td class="r num">${c.flats}</td>
             <td><div style="display:flex;align-items:center;gap:10px"><span class="prog ${pct<75?'bad':pct<88?'warn':''}" style="flex:1"><i style="width:${pct}%"></i></span><span class="num b" style="font-size:13px">${pct}%</span></div></td>
@@ -1033,17 +1065,84 @@ function scrAdminCondos(){
     <div class="page-head-actions"><button class="btn btn-primary">${ico('plus','icon sm')}Novo condomínio</button></div>
   </div>
   <div class="card"><div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th>Condomínio</th><th>Gestor</th><th class="r">Flats</th><th class="r">Esperado/mês</th><th class="r">% plataforma</th><th>Estado</th></tr></thead>
+    <thead><tr><th>Condomínio</th><th>Gestor</th><th class="r">Flats</th><th class="r">Esperado/mês</th><th class="r">% plataforma</th><th>Estado</th><th class="r"></th></tr></thead>
     <tbody>${CONDOS.map((c,i)=>`
-      <tr>
+      <tr data-condo="${i}" title="Abrir ${c.nome}">
         <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona}</div></td>
         <td>${c.gestor}</td>
         <td class="r num">${c.flats}</td>
         <td class="r num b">${MT(c.esperado*1000)}</td>
         <td class="r num">${i===3?'4,0%':'5,0%'}</td>
         <td><span class="pill activo">Activo</span></td>
+        <td class="r"><span class="link">Abrir</span></td>
       </tr>`).join('')}</tbody>
   </table></div></div>`;
+}
+function scrAdminCondoDetail(){
+  const c = CONDOS[S.condoSel] || CONDOS[0];
+  const flats = flatsDoCondo(c);
+  const estados = estadosDoCondo(c);
+  S._detFlats = flats; S._detEstados = estados; S._detNome = c.nome;
+  const cobrado = c.cobrado*1000, esperado = c.esperado*1000;
+  const pct = Math.round(cobrado/esperado*100);
+  const emAtraso = estados.filter(e=>e==='atraso').length;
+  const rows = flats.map((f,i)=>`
+    <tr>
+      <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar</div></td>
+      <td><div class="cell-main">${f.nome}</div><div class="cell-sub num">${f.tel}</div></td>
+      <td class="r num b">${MT(f.quota)}</td>
+      <td>${pill(estados[i])}</td>
+      <td class="r"><button class="link" data-dflat="${i}">Ver</button></td>
+    </tr>`).join('');
+  return `
+  <div class="page-head">
+    <div>
+      <button class="link" id="voltar-condos" style="display:inline-flex;align-items:center;gap:5px;margin-bottom:6px">${ico('chevL','icon sm')}Condomínios</button>
+      <h1>${c.nome}</h1><p class="sub">${c.zona} · Gestor: ${c.gestor} · ${c.flats} flats · Outubro 2026</p>
+    </div>
+    <div class="page-head-actions">
+      <button class="btn btn-ghost" data-lembretes-condo="${c.nome}">${ico('send','icon sm')}Enviar lembretes</button>
+      <button class="btn btn-primary" data-repasse="${S.condoSel||0}">${ico('bank','icon sm')}Registar repasse</button>
+    </div>
+  </div>
+  <div class="grid g-kpi">
+    ${kpi('Cobrança de Outubro','wallet',MT(cobrado),`<span class="up">${ico('arrUp','icon sm')} ${pct}% do esperado</span><span>de ${MT(esperado)}</span>`)}
+    ${kpi('Em atraso','alert',String(emAtraso)+' <small>flats</small>',`${Math.round(emAtraso/c.flats*100)}% de inadimplência`)}
+    ${kpi('Saldo a repassar','bank',MT(c.saldo),'Último repasse: Setembro')}
+  </div>
+  <div class="card mt">
+    <div class="card-head"><h2>Flats · Outubro</h2><span class="spacer"></span><span class="cell-sub">Visão da consola — os mesmos dados do gestor</span></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Flat</th><th>Proprietário</th><th class="r">Quota</th><th>Estado</th><th class="r"></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </div>
+  <div class="grid g-12 mt">
+    <div class="card">
+      <div class="card-head"><span class="card-ico">${ico('ledger')}</span><h2>Movimentos recentes</h2></div>
+      <ul class="row-list">${MOVS.map(m=>`
+        <li><span class="row-ico ${m.t==='credito'?'g':m.t==='taxa'?'a':'b'}">${ico(m.t==='credito'?'arrUp':m.t==='taxa'?'receipt':'bank')}</span>
+          <div class="row-body"><div class="t">${m.d}</div><div class="s">${m.data}</div></div>
+          <div class="row-end cell-main num" style="color:${m.v>0?'var(--green-700)':'var(--ink)'}">${m.v>0?'+':'−'} ${fmt(Math.abs(m.v))} MT</div>
+        </li>`).join('')}</ul>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-ico">${ico('receipt')}</span><h2>Despesas de Outubro</h2></div>
+      <ul class="row-list">${DESPESAS.map(d=>`
+        <li><span class="row-ico a">${ico('receipt')}</span>
+          <div class="row-body"><div class="t">${d.d}</div><div class="s">${d.c} · ${d.data}</div></div>
+          <div class="row-end cell-main num">${MT(d.v)}</div>
+        </li>`).join('')}</ul>
+    </div>
+  </div>
+  <div class="card mt">
+    <div class="card-head"><span class="card-ico">${ico('bell')}</span><h2>Avisos enviados pelo gestor</h2></div>
+    <ul class="row-list">${AVISOS.map(a=>`
+      <li><span class="row-ico g">${ico('bell')}</span>
+        <div class="row-body"><div class="t">${a.t}</div><div class="s">${a.c}</div></div>
+        <div class="row-end"><div class="cell-sub">${a.data}</div><div class="cell-sub num">${a.env} envios</div></div>
+      </li>`).join('')}</ul>
+  </div>`;
 }
 function scrAdminColabs(){
   return `
@@ -1189,7 +1288,7 @@ function scrColabConvites(){
 const SCREENS = {
   gestor:{painel:scrGestorPainel, flats:scrGestorFlats, transf:scrGestorTransf, tesouraria:scrGestorTesouraria, avisos:scrGestorAvisos},
   proprietario:{inicio:scrPropInicio, historico:scrPropHistorico, avisosP:scrPropAvisos},
-  admin:{visao:scrAdminVisao, condos:scrAdminCondos, colabs:scrAdminColabs, repasses:scrAdminRepasses, config:scrAdminConfig},
+  admin:{visao:scrAdminVisao, condos:scrAdminCondos, condoDetail:scrAdminCondoDetail, colabs:scrAdminColabs, repasses:scrAdminRepasses, config:scrAdminConfig},
   colaborador:{cadastro:scrColabCadastro, convites:scrColabConvites},
 };
 
@@ -1261,7 +1360,23 @@ function bindScreen(el){
     const c = S.colabs[+b.dataset.react]; c.estado='activo';
     toast(`${c.nome} reactivado · registado na auditoria`); render();
   }));
-  el.querySelectorAll('[data-repasse]').forEach(b=>b.addEventListener('click',()=>{
+  el.querySelectorAll('[data-condo]').forEach(r=>r.addEventListener('click',()=>{
+    S.condoSel = +r.dataset.condo; setScreen('condoDetail');
+  }));
+  const bk = el.querySelector('#voltar-condos');
+  if(bk) bk.addEventListener('click',()=>setScreen('condos'));
+  el.querySelectorAll('[data-dflat]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    const i = +b.dataset.dflat;
+    abrirDrawer(drawerFlat(S._detFlats[i], S._detNome, S._detEstados[i]));
+    bindGlobais($('#drawer'));
+  }));
+  el.querySelectorAll('[data-lembretes-condo]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    toast(`Lembretes enviados às flats em falta de ${b.dataset.lembretesCondo}`);
+  }));
+  el.querySelectorAll('[data-repasse]').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
     const c = CONDOS[+b.dataset.repasse]; abrirDrawer(drawerRepasse(c)); bindGlobais($('#drawer'));
   }));
   const bt = el.querySelector('#btn-taxas');
