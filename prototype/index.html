@@ -302,9 +302,9 @@ img,svg{display:block}
 .method{width:100%;display:flex;align-items:center;gap:13px;padding:15px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);transition:all .15s var(--ease);text-align:left;margin-bottom:10px}
 .method:hover{border-color:var(--green-600);box-shadow:var(--shadow)}
 .method .m-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:8.5px;line-height:1.1;text-align:center;letter-spacing:.02em;color:#fff;flex:none}
-.method .m-ico.mpesa{background:#C41318}
-.method .m-ico.emola{background:#F28A00}
-.method .m-ico.banco{background:var(--ink)}
+.m-ico.mpesa{background:#C41318}
+.m-ico.emola{background:#F28A00}
+.m-ico.banco{background:var(--ink)}
 .method b{font-size:14.5px}
 .method .s{font-size:12.5px;color:var(--ink-3)}
 .method .icon{margin-left:auto;color:var(--ink-3)}
@@ -612,6 +612,17 @@ const S = {
   convitesCopiados:{},
   tickets: TICKETS_INIT.map(t=>({...t})),
   proxTicket: 5,
+  contas: [
+    {banco:'BIM', titular:'Maputo Renova, Lda', conta:'143 228 4471', nib:'0001 0000 0143 2284 471 1', fins:'Recebimentos e repasses'},
+    {banco:'BCI', titular:'Maputo Renova, Lda', conta:'882 100 3356', nib:'0008 0000 0882 1003 356 9', fins:'Repasses'},
+  ],
+  metodosManuais: [
+    {nome:'Transferência bancária', instrucoes:'Transferir com a referência da fatura no descritivo e carregar o comprovativo.', comprovativo:true, activo:true},
+    {nome:'Depósito em numerário', instrucoes:'Depositar no balcão do banco e carregar a foto do talão de depósito.', comprovativo:true, activo:false},
+  ],
+  gestoresPendentes: [
+    {nome:'Hortência Cuambe', condominio:'Residencial Katembe Sul', email:'hortencia.cuambe@gmail.com', tel:'85 441 2209', data:'registou-se há 3 horas'},
+  ],
 };
 
 const ROLES = {
@@ -680,6 +691,7 @@ function renderNav(){
   $('#nav').innerHTML = `<div class="nav-label">Menu</div>` + r.nav.map(([id,label,icon])=>{
     let badge = (id==='pagamentosG' && S.transf.length) ? `<span class="nav-badge">${S.transf.length}</span>` : '';
     if(id==='suporteG' && novosTk) badge = `<span class="nav-badge">${novosTk}</span>`;
+    if(id==='visao' && S.gestoresPendentes.length) badge = `<span class="nav-badge">${S.gestoresPendentes.length}</span>`;
     return `<button class="nav-item" data-screen="${id}" ${cur===id?'aria-current="page"':''}>${ico(icon)}${label}${badge}</button>`;
   }).join('');
   $('#nav').querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>setScreen(b.dataset.screen)));
@@ -1215,6 +1227,20 @@ function scrAdminVisao(){
     ${kpi('Receita da plataforma','arrUp',MT(receita),`${String(S.taxas.plataforma).replace('.',',')}% sobre cobranças confirmadas`)}
     ${kpi('Taxas de operadores','receipt',MT(3185),'M-Pesa 1,2% · absorvida pelos apartamentos')}
   </div>
+  ${S.gestoresPendentes.length?`
+  <div class="card mt" style="border:1px solid var(--amber-700);background:#FFFDF8">
+    <div class="card-head"><span class="card-ico" style="background:var(--amber-100);color:var(--amber-700)">${ico('shield')}</span><h2>Gestores por aprovar</h2><span class="spacer"></span><span class="pill pendente">${S.gestoresPendentes.length} pendente${S.gestoresPendentes.length>1?'s':''}</span></div>
+    <p style="font-size:13px;color:var(--ink-2);margin-bottom:4px">O gestor já consegue entrar na conta, mas só pode gerir o condomínio depois de aprovado aqui.</p>
+    <ul class="row-list">${S.gestoresPendentes.map((g,i)=>`
+      <li>
+        <span class="row-ico a">${ico('users')}</span>
+        <div class="row-body"><div class="t">${g.nome} — ${g.condominio}</div><div class="s">${g.email} · <span class="num">${g.tel}</span> · ${g.data}</div></div>
+        <div class="row-end" style="display:flex;align-items:center;gap:10px">
+          <button class="btn btn-danger sm" data-grej="${i}">Rejeitar</button>
+          <button class="btn btn-primary sm" data-gaprov="${i}">${ico('check','icon sm')}Aprovar</button>
+        </div>
+      </li>`).join('')}</ul>
+  </div>`:''}
   <div class="grid g-23 mt">
     <div class="card">
       <div class="card-head"><h2>Condomínios</h2><span class="spacer"></span><button class="link" id="ver-condos">Ver todos</button></div>
@@ -1369,15 +1395,18 @@ function scrAdminRepasses(){
   </table></div></div>`;
 }
 function scrAdminConfig(){
+  const BANCO_ICO = `<span class="m-ico banco" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff">${ico('bank','icon sm')}</span>`;
   return `
-  <div class="page-head"><div><h1>Configuração</h1><p class="sub">Taxas de métodos de pagamento e receita da plataforma</p></div></div>
+  <div class="page-head">
+    <div><h1>Configuração</h1><p class="sub">Métodos de pagamento, contas bancárias, métodos manuais e receita da plataforma</p></div>
+  </div>
   <div class="grid g-12">
-    <div class="card">
-      <div class="card-head"><span class="card-ico">${ico('receipt')}</span><h2>Taxas dos operadores</h2></div>
-      <p style="font-size:13px;color:var(--ink-2);margin-bottom:6px">Absorvidas pelo apartamento (padrão, configurável por condomínio). Cada pagamento grava a taxa do momento da transacção.</p>
+    <div class="card" style="align-self:start">
+      <div class="card-head"><span class="card-ico">${ico('phone')}</span><h2>Métodos digitais</h2></div>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:6px">Confirmação automática por webhook. Taxas absorvidas pelo apartamento (padrão, configurável por condomínio); cada pagamento grava a taxa do momento da transacção.</p>
       <div class="cfg-row">
         <span class="m-ico mpesa" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:9px">M-PESA</span>
-        <div class="row-body"><div class="t">M-Pesa</div><div class="s">Vodacom · activo</div></div>
+        <div class="row-body"><div class="t">M-Pesa</div><div class="s">Vodacom · conta business 171717 · activo</div></div>
         <div class="inp"><input class="num" id="tx-mpesa" value="${String(S.taxas.mpesa).replace('.',',')} %" aria-label="Taxa M-Pesa"></div>
       </div>
       <div class="cfg-row">
@@ -1385,21 +1414,43 @@ function scrAdminConfig(){
         <div class="row-body"><div class="t">eMola</div><div class="s">Movitel · aguarda contrato</div></div>
         <span class="pill neutro">Inactivo</span>
       </div>
-      <div class="cfg-row">
-        <span class="m-ico banco" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff">${ico('bank','icon sm')}</span>
-        <div class="row-body"><div class="t">Transferência bancária</div><div class="s">Confirmação manual pelo gestor</div></div>
-        <div class="inp"><input class="num" value="0 %" aria-label="Taxa transferência" readonly></div>
-      </div>
       <button class="btn btn-primary sm mt" id="btn-taxas">${ico('check','icon sm')}Guardar taxas</button>
     </div>
     <div class="card" style="align-self:start">
-      <div class="card-head"><span class="card-ico">${ico('wallet')}</span><h2>Receita da plataforma</h2></div>
-      <div class="field"><label for="tx-plat">Percentagem padrão sobre cobranças confirmadas</label>
-        <input id="tx-plat" class="num" value="${String(S.taxas.plataforma).replace('.',',')} %" style="max-width:120px">
-        <span class="hint">Deduzida no razão de cada condomínio no momento da confirmação. Overrides por condomínio na ficha de cada um.</span>
-      </div>
-      <div class="note">${ico('shield','icon sm')}<span>Alterações de taxas ficam registadas na auditoria e só se aplicam a cobranças futuras.</span></div>
+      <div class="card-head"><span class="card-ico">${ico('bank')}</span><h2>Contas bancárias da plataforma</h2><span class="spacer"></span>
+        <button class="btn btn-ghost sm" data-add-conta>${ico('plus','icon sm')}Adicionar conta</button></div>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:6px">Para receber as transferências dos proprietários e enviar os repasses aos condomínios.</p>
+      ${S.contas.length?S.contas.map((c,i)=>`
+      <div class="cfg-row">
+        ${BANCO_ICO}
+        <div class="row-body"><div class="t">${c.banco} · <span class="num">${c.conta}</span></div><div class="s">${c.titular} · NIB <span class="num">${c.nib}</span></div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <span class="pill activo">${c.fins}</span>
+          <button class="link" data-del-conta="${i}" style="font-size:12.5px;color:var(--red-700)">Remover</button>
+        </div>
+      </div>`).join('')
+      :`<div class="empty"><span class="e-ico">${ico('bank')}</span><b>Sem contas</b><p>Adicione a primeira conta bancária da plataforma.</p></div>`}
     </div>
+  </div>
+  <div class="card mt">
+    <div class="card-head"><span class="card-ico">${ico('receipt')}</span><h2>Métodos manuais</h2><span class="spacer"></span>
+      <button class="btn btn-ghost sm" data-add-metodo>${ico('plus','icon sm')}Adicionar método manual</button></div>
+    <p style="font-size:13px;color:var(--ink-2);margin-bottom:6px">Pagamentos confirmados pelo gestor depois de validar o comprovativo. Aparecem ao proprietário na hora de pagar.</p>
+    ${S.metodosManuais.map((m,i)=>`
+    <div class="cfg-row">
+      ${BANCO_ICO}
+      <div class="row-body"><div class="t">${m.nome}</div><div class="s">${m.instrucoes}${m.comprovativo?' · requer comprovativo':''}</div></div>
+      <span class="pill ${m.activo?'activo':'neutro'}">${m.activo?'Activo':'Inactivo'}</span>
+      <button class="btn btn-ghost sm" data-met-toggle="${i}">${m.activo?'Desactivar':'Activar'}</button>
+    </div>`).join('')}
+  </div>
+  <div class="card mt" style="max-width:620px">
+    <div class="card-head"><span class="card-ico">${ico('wallet')}</span><h2>Receita da plataforma</h2></div>
+    <div class="field"><label for="tx-plat">Percentagem padrão sobre cobranças confirmadas</label>
+      <input id="tx-plat" class="num" value="${String(S.taxas.plataforma).replace('.',',')} %" style="max-width:120px">
+      <span class="hint">Deduzida no razão de cada condomínio no momento da confirmação. Overrides por condomínio na ficha de cada um.</span>
+    </div>
+    <div class="note">${ico('shield','icon sm')}<span>Alterações de taxas e de contas ficam registadas na auditoria e só se aplicam a cobranças futuras.</span></div>
   </div>`;
 }
 
@@ -1559,6 +1610,44 @@ function bindScreen(el){
   }));
   const bt = el.querySelector('#btn-taxas');
   if(bt) bt.addEventListener('click',()=>toast('Taxas guardadas · aplicam-se a cobranças futuras'));
+  el.querySelectorAll('[data-add-conta]').forEach(b=>b.addEventListener('click',()=>{
+    abrirDrawer(drawerNovaConta()); bindGlobais($('#drawer'));
+    $('#btn-save-conta').addEventListener('click',()=>{
+      const conta = $('#ct-conta').value.trim();
+      if(!conta){ toast('Indique o número da conta'); $('#ct-conta').focus(); return; }
+      S.contas.push({banco:$('#ct-banco').value, titular:$('#ct-titular').value.trim()||'Maputo Renova, Lda', conta, nib:$('#ct-nib').value.trim()||'—', fins:$('#ct-fins').value});
+      fecharTudo(); toast('Conta bancária adicionada · registada na auditoria'); render();
+    });
+  }));
+  el.querySelectorAll('[data-del-conta]').forEach(b=>b.addEventListener('click',()=>{
+    const c = S.contas[+b.dataset.delConta];
+    S.contas.splice(+b.dataset.delConta,1);
+    toast(`Conta ${c.banco} removida · registada na auditoria`); render();
+  }));
+  el.querySelectorAll('[data-add-metodo]').forEach(b=>b.addEventListener('click',()=>{
+    abrirDrawer(drawerNovoMetodo()); bindGlobais($('#drawer'));
+    $('#btn-save-metodo').addEventListener('click',()=>{
+      const nome = $('#mm-nome').value.trim();
+      if(!nome){ toast('Dê um nome ao método'); $('#mm-nome').focus(); return; }
+      S.metodosManuais.push({nome, instrucoes:$('#mm-inst').value.trim()||'—', comprovativo:$('#mm-comp').value==='sim', activo:true});
+      fecharTudo(); toast(`Método "${nome}" adicionado e activo`); render();
+    });
+  }));
+  el.querySelectorAll('[data-gaprov]').forEach(b=>b.addEventListener('click',()=>{
+    const g = S.gestoresPendentes[+b.dataset.gaprov];
+    S.gestoresPendentes.splice(+b.dataset.gaprov,1);
+    toast(`${g.nome} aprovado · já pode gerir ${g.condominio}`); render();
+  }));
+  el.querySelectorAll('[data-grej]').forEach(b=>b.addEventListener('click',()=>{
+    const g = S.gestoresPendentes[+b.dataset.grej];
+    S.gestoresPendentes.splice(+b.dataset.grej,1);
+    toast(`Registo de ${g.nome} rejeitado · o condomínio continua sem gestor`); render();
+  }));
+  el.querySelectorAll('[data-met-toggle]').forEach(b=>b.addEventListener('click',()=>{
+    const m = S.metodosManuais[+b.dataset.metToggle];
+    m.activo = !m.activo;
+    toast(`${m.nome} ${m.activo?'activado':'desactivado'}`); render();
+  }));
   const nf = el.querySelector('#btn-nova-flat');
   if(nf) nf.addEventListener('click',()=>{
     const bloco=$('#nf-bloco').value.trim(), andar=$('#nf-andar').value.trim(), num=$('#nf-num').value.trim();
@@ -1627,6 +1716,7 @@ function bindScreen(el){
         gestor:v('nc-gestor'),
         endereco:`${v('nc-rua')}${v('nc-num')?`, ${v('nc-num')}`:''} · ${v('nc-bairro')}, ${v('nc-cidade')||'Maputo'} (${v('nc-prov')})`,
       });
+      S.gestoresPendentes.push({nome:v('nc-gestor'), condominio:nome, email:v('nc-email')||'—', tel:v('nc-tel'), data:'convite enviado · aguarda registo e aprovação'});
       fecharTudo();
       toast(`Condomínio "${nome}" criado · código ${sigla(nome)} · gestor ${v('nc-gestor').split(' ')[0]} convidado por email`);
       render();
@@ -1690,6 +1780,41 @@ function drawerNovoCondo(){
   <div class="drawer-foot">
     <button class="btn btn-ghost sm" data-close>Cancelar</button>
     <button class="btn btn-primary sm" id="btn-save-condo">${ico('check','icon sm')}Criar condomínio</button>
+  </div>`;
+}
+function drawerNovaConta(){
+  return `
+  <div class="drawer-head"><h3>Adicionar conta bancária</h3><span style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
+  <div class="drawer-body">
+    <div class="f-row">
+      <div class="field"><label for="ct-banco">Banco</label>
+        <select id="ct-banco"><option>BIM</option><option>BCI</option><option>Standard Bank</option><option>Absa</option><option>Moza Banco</option><option>FNB</option><option>Letshego</option></select></div>
+      <div class="field"><label for="ct-fins">Finalidade</label>
+        <select id="ct-fins"><option>Recebimentos e repasses</option><option>Recebimentos</option><option>Repasses</option></select></div>
+    </div>
+    <div class="field"><label for="ct-titular">Titular</label><input id="ct-titular" value="Maputo Renova, Lda"></div>
+    <div class="field"><label for="ct-conta">Número da conta</label><input id="ct-conta" class="num" inputmode="numeric" placeholder="000 000 0000"></div>
+    <div class="field"><label for="ct-nib">NIB</label><input id="ct-nib" class="num" inputmode="numeric" placeholder="0000 0000 0000 0000 000 0"></div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost sm" data-close>Cancelar</button>
+    <button class="btn btn-primary sm" id="btn-save-conta">${ico('check','icon sm')}Guardar conta</button>
+  </div>`;
+}
+function drawerNovoMetodo(){
+  return `
+  <div class="drawer-head"><h3>Novo método manual</h3><span style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
+  <div class="drawer-body">
+    <div class="field"><label for="mm-nome">Nome do método</label><input id="mm-nome" placeholder="Ex.: POS no escritório do condomínio"></div>
+    <div class="field"><label for="mm-inst">Instruções para o proprietário</label><textarea id="mm-inst" rows="3" placeholder="O que o proprietário deve fazer para pagar por este método."></textarea></div>
+    <div class="field"><label for="mm-comp">Comprovativo</label>
+      <select id="mm-comp"><option value="sim">Requer comprovativo (gestor confirma)</option><option value="nao">Sem comprovativo (gestor regista manualmente)</option></select></div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost sm" data-close>Cancelar</button>
+    <button class="btn btn-primary sm" id="btn-save-metodo">${ico('check','icon sm')}Adicionar método</button>
   </div>`;
 }
 function drawerDespesa(){

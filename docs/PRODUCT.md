@@ -20,7 +20,7 @@ Sistema de gestão de condomínios para Maputo, Moçambique. Multi-condomínio (
 
 1. **Super Administrador (consola):** visão global de todas as organizações e finanças (bruto, taxas, líquido, inadimplência); gere colaboradores (criar, suspender, reactivar, remover — **exclusivo dele**); configura taxas de métodos e % da plataforma; regista repasses; auditoria.
 2. **Colaborador:** cadastro operacional — cria condomínios, regista flats, gera convites de registo. **Não vê dados financeiros.**
-3. **Gestor do condomínio:** apenas o seu condomínio — mapa de flats com estado de pagamento, devedores, confirmação de transferências bancárias (valida comprovativo), despesas, avisos, razão e repasses recebidos.
+3. **Gestor do condomínio:** registo sujeito a **aprovação da consola** — depois do cadastro consegue fazer login, mas só pode gerir o condomínio quando o super admin o aprovar (perfil `pendente` → `activo`; o RLS nega acesso aos dados até lá). Depois de aprovado: apenas o seu condomínio — mapa de flats com estado de pagamento, devedores, confirmação de transferências bancárias (valida comprovativo), despesas, avisos, razão e repasses recebidos.
 4. **Proprietário (morador):** a conta pertence ao **proprietário do apartamento, não ao inquilino** — registo único por flat via código de convite de uso único. Vê as suas **faturas por estado (pendentes, pagas, não pagas/em atraso)** e o **histórico de pagamentos** com recibos, paga via M-Pesa/eMola (incluindo faturas em atraso) ou submete comprovativo de transferência, recebe recibos e avisos.
 
 ## Regras de negócio críticas
