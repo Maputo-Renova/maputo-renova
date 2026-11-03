@@ -535,6 +535,14 @@ const AVISOS = [
   {t:'Assembleia de condóminos', c:'Convocatória para 15 de Novembro às 10h, salão do R/C. Ponto único: orçamento 2027.', data:'22 Out', env:24},
   {t:'Obras no elevador', c:'Manutenção programada do elevador no sábado de manhã. Use as escadas entre as 7h e as 12h.', data:'11 Out', env:24},
 ];
+const TICKETS_INIT = [
+  {id:1, flat:'302', de:'Celeste Mabjaia', cat:'Avaria', assunto:'Infiltração na parede da sala', msg:'Desde as chuvas da semana passada aparece humidade na parede que dá para a varanda.', data:'29 Out', estado:'novo'},
+  {id:2, flat:'105', de:'Paulo Macamo', cat:'Reclamação', assunto:'Barulho das obras fora de horas', msg:'As obras do elevador continuaram depois das 17h de sábado.', data:'27 Out', estado:'em_curso'},
+  {id:3, flat:'302', de:'Celeste Mabjaia', cat:'Pedido', assunto:'Segunda via do recibo de Maio', msg:'Preciso do recibo de Maio para a contabilidade.', data:'14 Out', estado:'resolvido'},
+  {id:4, flat:'204', de:'Teresa Langa', cat:'Avaria', assunto:'Lâmpada fundida no corredor do 2º', msg:'O corredor do 2º andar do Bloco B está às escuras.', data:'09 Out', estado:'resolvido'},
+];
+const TK_PILL = {novo:['confirmar','Novo'], em_curso:['pendente','Em curso'], resolvido:['pago','Resolvido']};
+const pillTk = e => { const [c,l]=TK_PILL[e]; return `<span class="pill ${c}">${l}</span>`; };
 const AUDIT = [
   {a:'Colaboradora suspensa', d:'Gina Mavale · por Admin', data:'há 2 dias'},
   {a:'Taxa M-Pesa actualizada', d:'1,0% → 1,2% · por Admin', data:'há 5 dias'},
@@ -544,6 +552,7 @@ const AUDIT = [
 /* flats geradas para os outros condomínios (demonstração) */
 function flatsDoCondo(c){
   if(c.nome==='Jardim das Acácias') return FLATS;
+  if(!c.flats) return [];
   const seed = c.nome.length;
   const quotaBase = Math.round(c.esperado*1000/c.flats/50)*50;
   const sg = sigla(c.nome);
@@ -563,6 +572,7 @@ function flatsDoCondo(c){
 }
 function estadosDoCondo(c){
   if(c.nome==='Jardim das Acácias') return FLATS.map(f=>estadoDe(f));
+  if(!c.flats) return [];
   const seed = c.nome.length;
   const nPagos = Math.min(Math.round(c.cobrado/c.esperado*c.flats), c.flats - c.atraso);
   const nConf = Math.min(2, Math.max(0, c.flats - nPagos - c.atraso));
@@ -600,14 +610,16 @@ const S = {
   colabs: COLABS.map(c=>({...c})),
   taxas:{mpesa:1.2, emola:1.5, plataforma:5.0},
   convitesCopiados:{},
+  tickets: TICKETS_INIT.map(t=>({...t})),
+  proxTicket: 5,
 };
 
 const ROLES = {
   gestor:{label:'Gestor', user:'Arlindo Macuácua', sub:'Jardim das Acácias', nav:[
-    ['painel','Painel','grid'],['flats','Flats','flats'],['transf','Transferências','bank'],['tesouraria','Tesouraria','wallet'],['avisos','Avisos','bell'],
+    ['painel','Painel','grid'],['flats','Flats','flats'],['transf','Transferências','bank'],['tesouraria','Tesouraria','wallet'],['suporteG','Suporte','mail'],['avisos','Avisos','bell'],
   ]},
   proprietario:{label:'Proprietário', user:'Celeste Mabjaia', sub:'Flat 302 · JDA-A302', nav:[
-    ['inicio','A minha quota','home'],['faturas','Faturas','receipt'],['pagamentos','Pagamentos','hist'],['avisosP','Avisos','bell'],
+    ['inicio','A minha quota','home'],['minhaflat','A minha flat','flats'],['faturas','Faturas','receipt'],['suporte','Suporte','mail'],['avisosP','Avisos','bell'],
   ]},
   admin:{label:'Consola', user:'Nádia Waty', sub:'Super administradora', nav:[
     ['visao','Visão geral','grid'],['condos','Condomínios','building'],['colabs','Colaboradores','users'],['repasses','Repasses','bank'],['config','Configuração','settings'],
@@ -664,8 +676,10 @@ function renderNav(){
   $('#avatar-name').textContent = r.user;
   $('#avatar-pic').textContent = iniciais(r.user);
   const cur = S.screen==='condoDetail' ? 'condos' : S.screen;
+  const novosTk = S.tickets.filter(t=>t.estado==='novo').length;
   $('#nav').innerHTML = `<div class="nav-label">Menu</div>` + r.nav.map(([id,label,icon])=>{
-    const badge = (id==='transf' && S.transf.length) ? `<span class="nav-badge">${S.transf.length}</span>` : '';
+    let badge = (id==='transf' && S.transf.length) ? `<span class="nav-badge">${S.transf.length}</span>` : '';
+    if(id==='suporteG' && novosTk) badge = `<span class="nav-badge">${novosTk}</span>`;
     return `<button class="nav-item" data-screen="${id}" ${cur===id?'aria-current="page"':''}>${ico(icon)}${label}${badge}</button>`;
   }).join('');
   $('#nav').querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>setScreen(b.dataset.screen)));
@@ -1044,12 +1058,15 @@ function scrPropFaturas(){
   <div class="card mt">
     <div class="card-head"><div class="chips">${chips.map(([k,l])=>`<button class="chip ${filtro===k?'on':''}" data-chip-fat="${k}">${l}</button>`).join('')}</div></div>
     ${lista.length?`<div class="tbl-wrap"><table class="tbl">
-      <thead><tr><th>Mês</th><th>Vencimento</th><th class="r">Valor</th><th>Estado</th><th class="r"></th></tr></thead>
+      <thead><tr><th>Mês</th><th>Vencimento</th><th class="r">Valor</th><th>Pagamento</th><th>Estado</th><th class="r"></th></tr></thead>
       <tbody>${lista.map(f=>`
         <tr>
           <td><div class="cell-main">${f.mes}</div><div class="cell-sub num">${f.ref}</div></td>
           <td class="num">${f.venc}</td>
           <td class="r num b">${MT(f.valor)}</td>
+          <td>${f.estado==='pago'
+            ?`<div class="num">${f.dataPag} · ${f.metodo}</div><div class="cell-sub num">Recibo ${f.recibo}</div>`
+            :'<span class="cell-sub">—</span>'}</td>
           <td>${pill(f.estado)}</td>
           <td class="r">${f.estado==='pago'
             ?`<button class="link" data-recibo="${f.recibo}">Recibo</button>`
@@ -1059,20 +1076,98 @@ function scrPropFaturas(){
     :`<div class="empty"><span class="e-ico">${ico('check')}</span><b>Nada aqui</b><p>Nenhuma fatura corresponde a este filtro.</p></div>`}
   </div>`;
 }
-function scrPropPagamentos(){
+function scrPropFlat(){
   return `
-  <div class="page-head"><div><h1>Pagamentos</h1><p class="sub">Histórico de tudo o que já pagou nesta flat · recibos por SMS e email</p></div></div>
-  <div class="card"><div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th>Data</th><th>Fatura</th><th>Método</th><th class="r">Valor</th><th class="r">Recibo</th></tr></thead>
-    <tbody>${PAGAMENTOS_PROP.map(f=>`
-      <tr>
-        <td class="num">${f.dataPag}</td>
-        <td><div class="cell-main">${f.mes}</div><div class="cell-sub num">${f.ref}</div></td>
-        <td>${f.metodo}</td>
-        <td class="r num b">${MT(f.valor)}</td>
-        <td class="r"><button class="link" data-recibo="${f.recibo}">${f.recibo}</button></td>
-      </tr>`).join('')}</tbody>
-  </table></div></div>`;
+  <div class="page-head"><div><h1>A minha flat</h1><p class="sub">Dados de cadastro · Jardim das Acácias</p></div></div>
+  <div class="grid g-12">
+    <div class="card" style="align-self:start">
+      <div class="card-head"><span class="card-ico">${ico('flats')}</span><h2>Identificação</h2></div>
+      <div class="f-row">
+        <div class="field"><label>Referência de cadastro</label><input class="num" value="JDA-A302" readonly></div>
+        <div class="field"><label>Condomínio</label><input value="Jardim das Acácias" readonly></div>
+      </div>
+      <div class="f-row3">
+        <div class="field"><label>Bloco</label><input value="A" readonly></div>
+        <div class="field"><label>Andar</label><input class="num" value="3" readonly></div>
+        <div class="field"><label>Número</label><input class="num" value="302" readonly></div>
+      </div>
+      <div class="field"><label>Endereço</label><input value="Av. Kim Il Sung, 1247 · Sommerschield, Maputo" readonly></div>
+      <div class="field"><label>Quota mensal</label><input class="num" value="1 500 MT" readonly></div>
+    </div>
+    <div style="align-self:start">
+      <div class="card">
+        <div class="card-head"><span class="card-ico">${ico('shield')}</span><h2>Proprietária</h2></div>
+        <div class="field"><label>Nome</label><input value="Celeste Mabjaia" readonly></div>
+        <div class="f-row">
+          <div class="field"><label>Telefone</label><input class="num" value="+258 84 210 1240" readonly></div>
+          <div class="field"><label>Documento</label><input class="num" value="BI 110 100 482 371 B" readonly></div>
+        </div>
+        <div class="field"><label>Email</label><input value="celeste.mabjaia@gmail.com" readonly></div>
+      </div>
+      <div class="note mt" style="align-items:center">
+        ${ico('shield','icon sm')}
+        <span style="flex:1">Os dados de cadastro só podem ser alterados pela administração do condomínio.</span>
+        <button class="btn btn-ghost sm" id="pedir-correcao">Pedir correcção</button>
+      </div>
+    </div>
+  </div>`;
+}
+function scrPropSuporte(){
+  const meus = S.tickets.filter(t=>t.flat==='302');
+  return `
+  <div class="page-head"><div><h1>Suporte</h1><p class="sub">Reclamações e pedidos enviados directamente ao gestor do condomínio</p></div></div>
+  <div class="grid g-13">
+    <div class="card" style="align-self:start">
+      <div class="card-head"><span class="card-ico">${ico('mail')}</span><h2>Novo pedido</h2></div>
+      <div class="field"><label for="tk-cat">Tipo</label>
+        <select id="tk-cat"><option>Reclamação</option><option>Avaria</option><option>Pedido</option><option>Outro</option></select></div>
+      <div class="field"><label for="tk-assunto">Assunto</label><input id="tk-assunto" placeholder="Ex.: Fuga de água na garagem"></div>
+      <div class="field"><label for="tk-msg">Descrição</label><textarea id="tk-msg" rows="4" placeholder="Descreva o problema ou o pedido."></textarea></div>
+      <button class="btn btn-primary" id="btn-ticket" style="width:100%;justify-content:center">${ico('send','icon sm')}Enviar ao gestor</button>
+      <p class="hint" style="font-size:12px;color:var(--ink-3);margin-top:10px">O gestor responde por SMS ou email; o estado aparece aqui.</p>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Os meus pedidos</h2></div>
+      ${meus.length?`<ul class="row-list">${meus.map(t=>`
+        <li><span class="row-ico ${t.estado==='resolvido'?'g':t.estado==='em_curso'?'a':'b'}">${ico('mail')}</span>
+          <div class="row-body"><div class="t">${t.assunto}</div><div class="s">${t.cat} · ${t.data}</div></div>
+          <div class="row-end">${pillTk(t.estado)}</div>
+        </li>`).join('')}</ul>`
+      :`<div class="empty"><span class="e-ico">${ico('check')}</span><b>Sem pedidos</b><p>Quando enviar uma reclamação ou pedido, aparece aqui com o estado.</p></div>`}
+    </div>
+  </div>`;
+}
+function scrGestorSuporte(){
+  const abertos = S.tickets.filter(t=>t.estado!=='resolvido');
+  const resolvidos = S.tickets.filter(t=>t.estado==='resolvido');
+  const card = t => `
+    <div class="card" style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+      <span class="row-ico ${t.estado==='resolvido'?'g':t.estado==='em_curso'?'a':'b'}">${ico('mail')}</span>
+      <div class="row-body" style="flex:1;min-width:220px">
+        <div class="t" style="font-size:15px">${t.assunto}</div>
+        <p style="font-size:13.5px;color:var(--ink-2);margin-top:3px">${t.msg}</p>
+        <div class="cell-sub" style="margin-top:6px">Flat ${t.flat} · ${t.de} · ${t.cat} · ${t.data}</div>
+      </div>
+      <div class="row-end" style="display:flex;align-items:center;gap:10px">
+        ${pillTk(t.estado)}
+        ${t.estado==='novo'?`<button class="btn btn-ghost sm" data-tk-curso="${t.id}">Em curso</button>`:''}
+        ${t.estado!=='resolvido'?`<button class="btn btn-primary sm" data-tk-res="${t.id}">${ico('check','icon sm')}Resolver</button>`:''}
+      </div>
+    </div>`;
+  return `
+  <div class="page-head">
+    <div><h1>Suporte</h1><p class="sub">Reclamações e pedidos dos proprietários · ${abertos.length} em aberto</p></div>
+  </div>
+  ${abertos.length?`<div class="grid">${abertos.map(card).join('')}</div>`
+  :`<div class="card"><div class="empty"><span class="e-ico">${ico('check')}</span><b>Tudo resolvido</b><p>Não há reclamações nem pedidos em aberto.</p></div></div>`}
+  ${resolvidos.length?`<div class="card mt">
+    <div class="card-head"><h2>Resolvidos</h2></div>
+    <ul class="row-list">${resolvidos.map(t=>`
+      <li><span class="row-ico g">${ico('check')}</span>
+        <div class="row-body"><div class="t">${t.assunto}</div><div class="s">Flat ${t.flat} · ${t.de} · ${t.data}</div></div>
+        <div class="row-end">${pillTk(t.estado)}</div>
+      </li>`).join('')}</ul>
+  </div>`:''}`;
 }
 function scrPropAvisos(){
   return `
@@ -1106,8 +1201,8 @@ function scrAdminVisao(){
       <div class="tbl-wrap"><table class="tbl">
         <thead><tr><th>Condomínio</th><th class="r">Flats</th><th>Cobrança do mês</th><th class="r">Inadimpl.</th><th class="r">Repasse</th></tr></thead>
         <tbody>${CONDOS.map((c,i)=>{
-          const pct = Math.round(c.cobrado/c.esperado*100);
-          const inad = Math.round(c.atraso/c.flats*100);
+          const pct = c.esperado ? Math.round(c.cobrado/c.esperado*100) : 0;
+          const inad = c.flats ? Math.round(c.atraso/c.flats*100) : 0;
           return `<tr data-condo="${i}" title="Abrir ${c.nome}">
             <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona} · ${c.gestor}</div></td>
             <td class="r num">${c.flats}</td>
@@ -1131,7 +1226,7 @@ function scrAdminCondos(){
   return `
   <div class="page-head">
     <div><h1>Condomínios</h1><p class="sub">${CONDOS.length} organizações activas · ${CONDOS.reduce((s,c)=>s+c.flats,0)} flats</p></div>
-    <div class="page-head-actions"><button class="btn btn-primary">${ico('plus','icon sm')}Novo condomínio</button></div>
+    <div class="page-head-actions"><button class="btn btn-primary" data-novo-condo>${ico('plus','icon sm')}Novo condomínio</button></div>
   </div>
   <div class="card"><div class="tbl-wrap"><table class="tbl">
     <thead><tr><th>Condomínio</th><th>Gestor</th><th class="r">Flats</th><th class="r">Esperado/mês</th><th class="r">% plataforma</th><th>Estado</th><th class="r"></th></tr></thead>
@@ -1153,8 +1248,9 @@ function scrAdminCondoDetail(){
   const estados = estadosDoCondo(c);
   S._detFlats = flats; S._detEstados = estados; S._detNome = c.nome;
   const cobrado = c.cobrado*1000, esperado = c.esperado*1000;
-  const pct = Math.round(cobrado/esperado*100);
+  const pct = esperado ? Math.round(cobrado/esperado*100) : 0;
   const emAtraso = estados.filter(e=>e==='atraso').length;
+  const inad = c.flats ? Math.round(emAtraso/c.flats*100) : 0;
   const rows = flats.map((f,i)=>`
     <tr>
       <td><div class="cell-main">Flat ${f.numero}</div><div class="cell-sub">Bloco ${f.bloco} · ${f.andar}º andar · <span class="num">${f.regref}</span></div></td>
@@ -1176,15 +1272,16 @@ function scrAdminCondoDetail(){
   </div>
   <div class="grid g-kpi">
     ${kpi('Cobrança de Outubro','wallet',MT(cobrado),`<span class="up">${ico('arrUp','icon sm')} ${pct}% do esperado</span><span>de ${MT(esperado)}</span>`)}
-    ${kpi('Em atraso','alert',String(emAtraso)+' <small>flats</small>',`${Math.round(emAtraso/c.flats*100)}% de inadimplência`)}
+    ${kpi('Em atraso','alert',String(emAtraso)+' <small>flats</small>',`${inad}% de inadimplência`)}
     ${kpi('Saldo a repassar','bank',MT(c.saldo),'Último repasse: Setembro')}
   </div>
   <div class="card mt">
     <div class="card-head"><h2>Flats · Outubro</h2><span class="spacer"></span><span class="cell-sub">Visão da consola — os mesmos dados do gestor</span></div>
-    <div class="tbl-wrap"><table class="tbl">
+    ${flats.length?`<div class="tbl-wrap"><table class="tbl">
       <thead><tr><th>Flat</th><th>Proprietário</th><th class="r">Quota</th><th>Estado</th><th class="r"></th></tr></thead>
       <tbody>${rows}</tbody>
-    </table></div>
+    </table></div>`
+    :`<div class="empty"><span class="e-ico">${ico('flats')}</span><b>Ainda sem flats</b><p>As flats deste condomínio serão registadas pelo colaborador, com convite de registo para cada proprietário.</p></div>`}
   </div>
   <div class="grid g-12 mt">
     <div class="card">
@@ -1245,7 +1342,7 @@ function scrAdminRepasses(){
       <tr>
         <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona}</div></td>
         <td class="r num b">${MT(c.saldo)}</td>
-        <td>${['06 Out','04 Out','06 Out','03 Out','01 Out'][i]} · <span class="cell-sub">Setembro</span></td>
+        <td>${['06 Out','04 Out','06 Out','03 Out','01 Out'][i] ? `${['06 Out','04 Out','06 Out','03 Out','01 Out'][i]} · <span class="cell-sub">Setembro</span>` : '<span class="cell-sub">—</span>'}</td>
         <td class="r"><button class="btn btn-primary sm" data-repasse="${i}">${ico('bank','icon sm')}Registar repasse</button></td>
       </tr>`).join('')}</tbody>
   </table></div></div>`;
@@ -1313,7 +1410,7 @@ function scrColabCadastro(){
       <p class="hint" style="font-size:12px;color:var(--ink-3);margin-top:10px">O sistema cruza proprietário, flat e endereço: registos duplicados são negados automaticamente.</p>
     </div>
     <div class="card">
-      <div class="card-head"><h2>Condomínios cadastrados</h2><span class="spacer"></span><button class="btn btn-ghost sm">${ico('plus','icon sm')}Novo condomínio</button></div>
+      <div class="card-head"><h2>Condomínios cadastrados</h2><span class="spacer"></span><button class="btn btn-ghost sm" data-novo-condo>${ico('plus','icon sm')}Novo condomínio</button></div>
       <div class="tbl-wrap"><table class="tbl">
         <thead><tr><th>Condomínio</th><th>Zona</th><th class="r">Flats</th><th class="r">Convites por usar</th></tr></thead>
         <tbody>${CONDOS.map((c,i)=>`
@@ -1321,7 +1418,7 @@ function scrColabCadastro(){
             <td class="cell-main">${c.nome}</td>
             <td>${c.zona}</td>
             <td class="r num">${c.flats}</td>
-            <td class="r num">${[3,6,1,9,4][i]}</td>
+            <td class="r num">${[3,6,1,9,4][i] ?? 0}</td>
           </tr>`).join('')}</tbody>
       </table></div>
     </div>
@@ -1355,8 +1452,8 @@ function scrColabConvites(){
    render + eventos
    ============================================================ */
 const SCREENS = {
-  gestor:{painel:scrGestorPainel, flats:scrGestorFlats, transf:scrGestorTransf, tesouraria:scrGestorTesouraria, avisos:scrGestorAvisos},
-  proprietario:{inicio:scrPropInicio, faturas:scrPropFaturas, pagamentos:scrPropPagamentos, avisosP:scrPropAvisos},
+  gestor:{painel:scrGestorPainel, flats:scrGestorFlats, transf:scrGestorTransf, tesouraria:scrGestorTesouraria, suporteG:scrGestorSuporte, avisos:scrGestorAvisos},
+  proprietario:{inicio:scrPropInicio, minhaflat:scrPropFlat, faturas:scrPropFaturas, suporte:scrPropSuporte, avisosP:scrPropAvisos},
   admin:{visao:scrAdminVisao, condos:scrAdminCondos, condoDetail:scrAdminCondoDetail, colabs:scrAdminColabs, repasses:scrAdminRepasses, config:scrAdminConfig},
   colaborador:{cadastro:scrColabCadastro, convites:scrColabConvites},
 };
@@ -1395,7 +1492,7 @@ function bindScreen(el){
   const q = el.querySelector('#flats-q');
   if(q){ q.addEventListener('input',()=>{S.procura=q.value; render(); const nq=$('#flats-q'); nq.focus(); nq.setSelectionRange(nq.value.length,nq.value.length);}); }
   const vf = el.querySelector('#ver-flats'); if(vf) vf.addEventListener('click',()=>setScreen('flats'));
-  const vh = el.querySelector('#ver-hist'); if(vh) vh.addEventListener('click',()=>setScreen('pagamentos'));
+  const vh = el.querySelector('#ver-hist'); if(vh) vh.addEventListener('click',()=>{S.filtroFat='pagas'; setScreen('faturas');});
   el.querySelectorAll('[data-chip-fat]').forEach(b=>b.addEventListener('click',()=>{S.filtroFat=b.dataset.chipFat;render();}));
   const vt = el.querySelector('#ver-transf'); if(vt) vt.addEventListener('click',()=>setScreen('transf'));
   const vc = el.querySelector('#ver-condos'); if(vc) vc.addEventListener('click',()=>setScreen('condos'));
@@ -1474,6 +1571,45 @@ function bindScreen(el){
       $('#nf-num').value=''; $('#nf-nome').value=''; $('#nf-tel').value='';
     }
   });
+  const pc = el.querySelector('#pedir-correcao');
+  if(pc) pc.addEventListener('click',()=>setScreen('suporte'));
+  const tk = el.querySelector('#btn-ticket');
+  if(tk) tk.addEventListener('click',()=>{
+    const assunto = $('#tk-assunto').value.trim();
+    if(!assunto){ toast('Escreva o assunto do pedido'); $('#tk-assunto').focus(); return; }
+    S.tickets.unshift({id:S.proxTicket++, flat:'302', de:'Celeste Mabjaia', cat:$('#tk-cat').value, assunto, msg:$('#tk-msg').value.trim()||'—', data:'Hoje', estado:'novo'});
+    toast('Pedido enviado ao gestor do condomínio'); render();
+  });
+  el.querySelectorAll('[data-tk-curso]').forEach(b=>b.addEventListener('click',()=>{
+    const t = S.tickets.find(x=>x.id===+b.dataset.tkCurso); if(t) t.estado='em_curso';
+    toast('Pedido marcado em curso · o proprietário foi notificado'); render();
+  }));
+  el.querySelectorAll('[data-tk-res]').forEach(b=>b.addEventListener('click',()=>{
+    const t = S.tickets.find(x=>x.id===+b.dataset.tkRes); if(t) t.estado='resolvido';
+    toast('Pedido resolvido · o proprietário foi notificado'); render();
+  }));
+  el.querySelectorAll('[data-novo-condo]').forEach(b=>b.addEventListener('click',()=>{
+    abrirDrawer(drawerNovoCondo()); bindGlobais($('#drawer'));
+    $('#btn-save-condo').addEventListener('click',()=>{
+      const nome = $('#nc-nome').value.trim(), zona = $('#nc-zona').value.trim();
+      const slot = $('#nc-dup');
+      if(!nome){ toast('Escreva o nome do condomínio'); $('#nc-nome').focus(); return; }
+      const dup = CONDOS.find(c=>c.nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')===nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
+      if(dup){
+        slot.innerHTML = `<div class="alert-dup" role="alert">${ico('alert')}
+          <div style="flex:1"><b>Condomínio duplicado — cadastro negado</b>
+            <p style="font-size:13.5px;margin-top:3px">Já existe um condomínio com este nome no sistema.</p>
+            <div class="conflito"><div class="cell-main">${dup.nome}</div><div class="cell-sub">${dup.zona} · ${dup.flats} flats · Gestor: ${dup.gestor}</div></div>
+          </div></div>`;
+        return;
+      }
+      CONDOS.push({nome, zona:zona||'Maputo', flats:0, cobrado:0, esperado:0, atraso:0, saldo:0,
+        gestor:$('#nc-gestor').value.trim()||'Por atribuir'});
+      fecharTudo();
+      toast(`Condomínio "${nome}" criado · código ${sigla(nome)}`);
+      render();
+    });
+  }));
   el.querySelectorAll('[data-copy-conv]').forEach(b=>b.addEventListener('click',()=>{
     S.convitesCopiados[b.dataset.copyConv]=true;
     try{navigator.clipboard.writeText(b.dataset.copyConv);}catch(e){}
@@ -1492,6 +1628,29 @@ function abrirPagamento(m){
   });
   const up = $('#btn-upload');
   if(up) up.addEventListener('click',()=>{ fecharTudo(); toast('Comprovativo enviado · aguarda confirmação do gestor'); });
+}
+function drawerNovoCondo(){
+  return `
+  <div class="drawer-head"><h3>Novo condomínio</h3><span style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
+  <div class="drawer-body">
+    <div id="nc-dup"></div>
+    <div class="field"><label for="nc-nome">Nome</label><input id="nc-nome" placeholder="Ex.: Residencial Costa Viva"><span class="hint">O código do condomínio (ex.: JDA) é gerado automaticamente a partir do nome.</span></div>
+    <div class="f-row">
+      <div class="field"><label for="nc-zona">Zona</label><input id="nc-zona" placeholder="Ex.: Polana Caniço"></div>
+      <div class="field"><label for="nc-cidade">Cidade</label><input id="nc-cidade" value="Maputo" readonly></div>
+    </div>
+    <div class="field"><label for="nc-end">Endereço</label><input id="nc-end" placeholder="Avenida e número"></div>
+    <div class="f-row">
+      <div class="field"><label for="nc-quota">Quota padrão (MT)</label><input id="nc-quota" class="num" inputmode="numeric" value="1500"></div>
+      <div class="field"><label for="nc-venc">Dia de vencimento</label><input id="nc-venc" class="num" inputmode="numeric" value="5"></div>
+    </div>
+    <div class="field"><label for="nc-gestor">Gestor do condomínio</label><input id="nc-gestor" placeholder="Nome do gestor"></div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost sm" data-close>Cancelar</button>
+    <button class="btn btn-primary sm" id="btn-save-condo">${ico('check','icon sm')}Criar condomínio</button>
+  </div>`;
 }
 function drawerDespesa(){
   return `
