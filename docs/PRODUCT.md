@@ -11,8 +11,13 @@ Sistema de gestão de condomínios para Maputo, Moçambique. Multi-condomínio (
 ## Modelo financeiro
 
 - **Pagamentos directos** (sem agregador): M-Pesa e eMola entram na conta business da empresa operadora; a plataforma é um sistema de **cobrança e repasse**.
-- **Taxa de manutenção de 15%** (configurável pelo super admin; override por condomínio): é a **única taxa que o morador vê** — paga quota + 15% em qualquer método. **Todas as outras taxas saem destes 15%**: taxas dos operadores (M-Pesa/eMola), custos de SMS, etc.; o remanescente é a receita da plataforma.
-- **O condomínio recebe a quota por inteiro** no seu razão; a manutenção pertence à plataforma.
+- **A fatura mensal do morador tem 3 linhas** (total único, pago em qualquer método):
+  1. **Taxa de condomínio** (variável por condomínio) — entra no razão do condomínio por inteiro e é repassada sempre que necessário para as despesas do dia-a-dia; **toda a despesa exige a fatura de pagamento anexada** (extrato verificável).
+  2. **Taxa da associação de condomínios** (fixa, **499 MT**/flat) — alimenta o fundo da associação, que financia projectos submetidos pelos gestores e **votados em assembleia** (1 condomínio = 1 voto).
+  3. **Taxa de manutenção (15% da quota)** — receita da plataforma; taxas de operadores e SMS são deduzidas dela.
+- **Fatura consolidada da associação:** o gestor recebe mensalmente a fatura do prédio (499 × nº de flats) como prestação de contas, **liquidada automaticamente** pelos pagamentos individuais dos moradores — o gestor nunca intermedia dinheiro.
+- **Elegibilidade (em vez de bloqueio):** o condomínio só está **"em dia com a associação"** quando **100% das flats** pagam o mês; só então pode submeter projectos ao fundo e votar na assembleia. Os valores pagos **transitam sempre** — ninguém perde o que pagou; o painel do gestor mostra exactamente que flats faltam e quanto, para campanhas de sensibilização do prédio.
+- **Ranking de adimplência na consola:** condomínios ordenados por menor inadimplência, com o estado de elegibilidade de cada um.
 - **Repasses:** manuais no MVP (transferência bancária ao condomínio, com comprovativo); cada condomínio tem um livro-razão (créditos de cobranças − taxa da plataforma − repasses = saldo a repassar).
 - Cada pagamento grava **valor bruto, taxa do operador e valor líquido no momento da transacção** (taxas mudam; nunca recalcular retroactivamente).
 

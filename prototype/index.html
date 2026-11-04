@@ -543,7 +543,7 @@ const TRANSF = [
 const CONDOS = [
   {nome:'Jardim das Acácias', zona:'Sommerschield', flats:24, cobrado:25.2, esperado:37.5, atraso:3, saldo:118400, gestor:'Arlindo Macuácua'},
   {nome:'Edifício Marginal 42', zona:'Costa do Sol', flats:36, cobrado:49.5, esperado:57.6, atraso:7, saldo:96200, gestor:'Lídia Monjane'},
-  {nome:'Condomínio Polana Mar', zona:'Polana Cimento', flats:18, cobrado:40.5, esperado:43.2, atraso:2, saldo:54300, gestor:'Hermínio Matola'},
+  {nome:'Condomínio Polana Mar', zona:'Polana Cimento', flats:18, cobrado:43.2, esperado:43.2, atraso:0, saldo:54300, gestor:'Hermínio Matola'},
   {nome:'Torres do Alto Maé', zona:'Alto Maé', flats:48, cobrado:62.4, esperado:76.8, atraso:11, saldo:131750, gestor:'Salomão Vilanculos'},
   {nome:'Residencial Katembe Sul', zona:'Katembe', flats:20, cobrado:24.0, esperado:30.0, atraso:5, saldo:41800, gestor:'Dulce Mahumane'},
 ];
@@ -672,7 +672,7 @@ const S = {
   transf:[...TRANSF],
   pagos:{},                   // overrides: flatId -> 'pago'
   colabs: COLABS.map(c=>({...c})),
-  taxas:{mpesa:1.2, emola:1.5, manutencao:15},
+  taxas:{mpesa:1.2, emola:1.5, manutencao:15, associacao:499},
   convitesCopiados:{},
   tickets: TICKETS_INIT.map(t=>({...t})),
   proxTicket: 5,
@@ -984,6 +984,30 @@ function drawerFlat(f, condoNome, estadoActual){
     <button class="btn btn-ghost sm" data-close>Fechar</button>
   </div>`;
 }
+function assocEstado(){
+  const pagas = FLATS.filter(f=>estadoDe(f)==='pago').length;
+  const total = FLATS.length;
+  return { pagas, total, emDia: pagas===total,
+    valorTotal: total*S.taxas.associacao, liquidado: pagas*S.taxas.associacao,
+    falta: (total-pagas)*S.taxas.associacao,
+    emFalta: FLATS.filter(f=>estadoDe(f)!=='pago').map(f=>f.numero) };
+}
+function cardAssociacao(){
+  const a = assocEstado();
+  const pct = Math.round(a.pagas/a.total*100);
+  return `
+  <div class="card mt">
+    <div class="card-head"><span class="card-ico">${ico('shield')}</span>
+      <div><h2>Taxa da associação · Outubro</h2><div class="cell-sub">Fatura consolidada: ${fmtD(S.taxas.associacao)} MT × ${a.total} flats = <b class="num">${MT(a.valorTotal)}</b> · liquidada automaticamente pelos pagamentos dos moradores</div></div>
+      <span class="spacer"></span>
+      ${a.emDia?'<span class="pill pago">Em dia</span>':'<span class="pill atraso">Em dívida</span>'}
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:5px"><span class="num">${a.pagas} de ${a.total} flats pagaram</span><span class="num">${pct}%</span></div>
+    <span class="prog ${pct<100?'warn':''}"><i style="width:${pct}%"></i></span>
+    ${a.emDia?'':`<div class="cell-sub" style="margin-top:8px">Faltam <b class="num">${MT(a.falta)}</b> · flats em falta: <span class="num">${a.emFalta.slice(0,8).join(', ')}${a.emFalta.length>8?` +${a.emFalta.length-8}`:''}</span> · <button class="link" id="assoc-ver">Ver pagamentos</button></div>`}
+    <div class="note" style="margin-top:12px">${ico('shield','icon sm')}<span>Só com <b>100% das flats em dia</b> o condomínio pode submeter projectos ao fundo da associação e votar na assembleia. Os valores já pagos transitam sempre — ninguém perde o que pagou.</span></div>
+  </div>`;
+}
 function scrGestorTesouraria(){
   const saldo = 118400;
   return `
@@ -994,8 +1018,9 @@ function scrGestorTesouraria(){
   <div class="grid g-kpi">
     ${kpi('Saldo a repassar','wallet',MT(saldo),'Repasse da plataforma previsto para 5 Nov')}
     ${kpi('Entradas em Outubro','arrUp',MT(36000),'34 cobranças confirmadas')}
-    ${kpi('Despesas em Outubro','arrDown',MT(17470),'4 despesas registadas')}
+    ${kpi('Despesas em Outubro','arrDown',MT(17470),'4 despesas registadas · todas com fatura anexada')}
   </div>
+  ${cardAssociacao()}
   <div class="grid g-12 mt">
     <div class="card">
       <div class="card-head"><span class="card-ico">${ico('ledger')}</span><h2>Movimentos recentes</h2></div>
@@ -1009,7 +1034,7 @@ function scrGestorTesouraria(){
       <div class="card-head"><span class="card-ico">${ico('receipt')}</span><h2>Despesas de Outubro</h2></div>
       <ul class="row-list">${DESPESAS.map(d=>`
         <li><span class="row-ico a">${ico('receipt')}</span>
-          <div class="row-body"><div class="t">${d.d}</div><div class="s">${d.c} · ${d.data}</div></div>
+          <div class="row-body"><div class="t">${d.d}</div><div class="s">${d.c} · ${d.data} · <button class="link" data-comp="fatura_${d.c.toLowerCase()}.pdf" style="font-size:12.5px">fatura anexada</button></div></div>
           <div class="row-end cell-main num">${MT(d.v)}</div>
         </li>`).join('')}</ul>
     </div>
@@ -1060,7 +1085,7 @@ function scrGestorAvisos(){
 function projCard(p, papel){
   const finTxt = p.fin==='quota'
     ? `Quota extraordinária · <b class="num">${MT(p.quotaExtra)}</b> por flat`
-    : 'Fundo do condomínio';
+    : p.fin==='associacao' ? 'Fundo da associação · votação na assembleia' : 'Fundo do condomínio';
   const pctFin = p.fin==='quota' ? Math.round((p.angariado||0)/p.orc*100) : null;
   return `
   <div class="card">
@@ -1093,16 +1118,21 @@ function projCard(p, papel){
       <button class="btn btn-ghost sm" data-proj-upd="${p.id}">${ico('send','icon sm')}Actualizar progresso</button>
       <button class="btn btn-primary sm" data-proj-concluir="${p.id}">${ico('check','icon sm')}Marcar concluído</button>
     </div>`:''}
-    ${papel==='gestor' && p.estado==='pendente'?`<div class="note" style="margin-top:12px">${ico('shield','icon sm')}<span>Enviado à consola. ${p.fin==='quota'?'A quota extraordinária só é cobrada depois da aprovação.':'Será pago pelo fundo do condomínio depois da aprovação.'}</span></div>`:''}
+    ${papel==='gestor' && p.estado==='pendente'?`<div class="note" style="margin-top:12px">${ico('shield','icon sm')}<span>Enviado à consola. ${p.fin==='quota'?'A quota extraordinária só é cobrada depois da aprovação.':p.fin==='associacao'?'Depois de validado, segue para votação na assembleia da associação de condomínios.':'Será pago pelo fundo do condomínio depois da aprovação.'}</span></div>`:''}
   </div>`;
 }
 function scrGestorProjectos(){
   const lista = S.projectos.filter(p=>p.estado!=='rejeitado');
+  const a = assocEstado();
   return `
   <div class="page-head">
     <div><h1>Projectos</h1><p class="sub">Obras e melhorias do condomínio · aprovadas pela consola, acompanhadas pelos proprietários</p></div>
     <div class="page-head-actions"><button class="btn btn-primary" id="btn-novo-proj">${ico('plus','icon sm')}Novo projecto</button></div>
   </div>
+  ${a.emDia?'':`<div class="note" style="border-color:var(--amber-700);background:var(--amber-100);margin-bottom:18px;align-items:center">
+    <svg class="icon sm" viewBox="0 0 24 24" style="color:var(--amber-700)" aria-hidden="true">${ICONS.alert}</svg>
+    <span style="flex:1"><b style="color:var(--amber-700)">Associação: ${a.pagas} de ${a.total} flats pagaram Outubro.</b> Para submeter projectos ao fundo da associação e votar na assembleia, o condomínio precisa de estar 100% em dia — faltam ${MT(a.falta)}. Projectos com fundo do condomínio ou quota extraordinária não são afectados.</span>
+  </div>`}
   ${lista.length?`<div class="grid">${lista.map(p=>projCard(p,'gestor')).join('')}</div>`
   :`<div class="card"><div class="empty"><span class="e-ico">${ico('obra')}</span><b>Sem projectos</b><p>Crie o primeiro projecto de obra ou melhoria do condomínio.</p></div></div>`}`;
 }
@@ -1133,8 +1163,9 @@ function drawerNovoProjecto(){
       <select id="pj-fin">
         <option value="fundo">Fundo do condomínio (sem cobrança extra)</option>
         <option value="quota">Quota extraordinária (dividida pelas 24 flats)</option>
+        <option value="associacao">Fundo da associação de condomínios (votação na assembleia)</option>
       </select>
-      <span class="hint">Com quota extraordinária, o valor por flat entra nas faturas dos proprietários depois da aprovação da consola.</span></div>
+      <span class="hint">Quota extraordinária: o valor por flat entra nas faturas depois da aprovação. Fundo da associação: exige o condomínio 100% em dia com a taxa da associação e passa por votação na assembleia.</span></div>
   </div>
   <div class="drawer-foot">
     <button class="btn btn-ghost sm" data-close>Cancelar</button>
@@ -1173,17 +1204,18 @@ function scrPropInicio(){
     <div>
       ${atr?`<div class="note" style="border-color:var(--red-700);background:var(--red-100);align-items:center;margin-bottom:16px">
         <svg class="icon sm" viewBox="0 0 24 24" style="color:var(--red-700)" aria-hidden="true">${ICONS.alert}</svg>
-        <span style="flex:1"><b style="color:var(--red-700)">Fatura de ${atr.mes} em atraso</b> · ${MT(atr.valor)}</span>
+        <span style="flex:1"><b style="color:var(--red-700)">Fatura de ${atr.mes} em atraso</b> · ${fmtD(totalFatura(atr.valor))} MT</span>
         <button class="btn btn-danger sm" data-pagar-fat="${FATURAS_PROP.indexOf(atr)}">Pagar agora</button>
       </div>`:''}
       <div class="pay-hero">
-        <div class="q-lbl">Quota de Outubro 2026</div>
-        <div class="q-val num">1 500 <small>MT</small></div>
+        <div class="q-lbl">Total de Outubro 2026</div>
+        <div class="q-val num">${fmtD(totalFatura(1500))} <small>MT</small></div>
         <div class="q-sub">Vence a 5 de Novembro · Referência <b class="num">MR-000832</b></div>
         <div style="margin-top:18px">
-          <div class="pay-split"><span>Quota do condomínio</span><b class="num">1 500 MT</b></div>
+          <div class="pay-split"><span>Taxa de condomínio</span><b class="num">1 500 MT</b></div>
+          <div class="pay-split"><span>Taxa da associação de condomínios</span><b class="num">${fmtD(S.taxas.associacao)} MT</b></div>
           <div class="pay-split"><span>Taxa de manutenção (15%)</span><b class="num">${fmtD(man)} MT</b></div>
-          <div class="pay-split"><span>Total a pagar</span><b class="num">${fmtD(1500+man)} MT</b></div>
+          <div class="pay-split"><span>Total a pagar</span><b class="num">${fmtD(totalFatura(1500))} MT</b></div>
         </div>
       </div>
       <div class="note mt">${ico('shield','icon sm')}<span>O seu pagamento é confirmado automaticamente e o recibo chega por SMS e email.</span></div>
@@ -1217,11 +1249,13 @@ function scrPropInicio(){
   </div>`;
 }
 function ctxPay(){ return S.payCtx || FATURAS_PROP.find(f=>f.estado==='pendente') || FATURAS_PROP[0]; }
+/* total da fatura do morador: taxa de condomínio + taxa da associação (fixa) + manutenção (15%) */
+function totalFatura(v){ return v + S.taxas.associacao + Math.round(v*S.taxas.manutencao)/100; }
 function modalPagar(){
   const c = ctxPay();
   return `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-    <div><h3 style="font-size:17px;font-weight:800">Pagar ${c.mes}</h3><div class="cell-sub num">${MT(c.valor)} · Referência ${c.ref}</div></div>
+    <div><h3 style="font-size:17px;font-weight:800">Pagar ${c.mes}</h3><div class="cell-sub num">${fmtD(totalFatura(c.valor))} MT · Referência ${c.ref}</div></div>
     <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
   </div>
   <button class="method" data-m="mpesa"><span class="m-ico mpesa">M-PESA</span><span><b>M-Pesa</b><div class="s">Confirma com o PIN no telemóvel</div></span>${ico('chevR','icon sm')}</button>
@@ -1230,11 +1264,10 @@ function modalPagar(){
 }
 function modalMpesa(rede){
   const nome = rede==='mpesa'?'M-Pesa':'eMola';
-  const taxa = Math.round(ctxPay().valor*S.taxas.manutencao)/100;
   return `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
     <span class="m-ico ${rede}" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:8.5px;line-height:1.1;text-align:center">${rede==='mpesa'?'M-PESA':'e-MOLA'}</span>
-    <div><h3 style="font-size:17px;font-weight:800">Pagar ${ctxPay().mes} com ${nome}</h3><div class="cell-sub num">Total: ${fmtD(ctxPay().valor+taxa)} MT (quota + manutenção 15%)</div></div>
+    <div><h3 style="font-size:17px;font-weight:800">Pagar ${ctxPay().mes} com ${nome}</h3><div class="cell-sub num">Total: ${fmtD(totalFatura(ctxPay().valor))} MT (condomínio + associação + manutenção)</div></div>
     <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
   </div>
   <div class="field"><label for="msisdn">Número ${nome}</label><input id="msisdn" class="num" inputmode="tel" value="84 210 1240"></div>
@@ -1264,7 +1297,7 @@ function modalBanco(){
     <h3 style="font-size:17px;font-weight:800">Transferência bancária</h3>
     <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
   </div>
-  <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:12px">Transfira <b class="num">${MT(Math.round(ctxPay().valor*(1+S.taxas.manutencao/100)))}</b> (${ctxPay().mes} · quota + manutenção 15%) e use a referência no descritivo:</p>
+  <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:12px">Transfira <b class="num">${fmtD(totalFatura(ctxPay().valor))} MT</b> (${ctxPay().mes} · condomínio + associação + manutenção) e use a referência no descritivo:</p>
   <div class="ref-box num">${ctxPay().ref} <button class="copy-btn" data-copy="${ctxPay().ref}">${ico('copy','icon sm')}Copiar</button></div>
   <div class="f-row" style="margin-top:14px">
     <div class="field"><label>Banco</label><input value="BIM" readonly></div>
@@ -1277,7 +1310,7 @@ function modalBanco(){
 }
 function scrPropFaturas(){
   const divida = FATURAS_PROP.filter(f=>f.estado!=='pago');
-  const totalDiv = divida.reduce((s,f)=>s+f.valor,0);
+  const totalDiv = divida.reduce((s,f)=>s+totalFatura(f.valor),0);
   const filtro = S.filtroFat || 'todas';
   const lista = FATURAS_PROP.filter(f =>
     filtro==='todas' ? true :
@@ -1288,8 +1321,8 @@ function scrPropFaturas(){
   <div class="page-head"><div><h1>Faturas</h1><p class="sub">As suas quotas de 2026 · Flat 302 · JDA-A302</p></div></div>
   <div class="grid g-kpi">
     ${kpi('Em dívida','alert',MT(totalDiv),`${divida.length} faturas por pagar`)}
-    ${kpi('Pagas em 2026','check',String(PAGAMENTOS_PROP.length)+' <small>faturas</small>',MT(PAGAMENTOS_PROP.reduce((s,f)=>s+f.valor,0))+' no total')}
-    ${kpi('Próximo vencimento','clock','05 Nov','Quota de Outubro · '+MT(1500))}
+    ${kpi('Pagas em 2026','check',String(PAGAMENTOS_PROP.length)+' <small>faturas</small>',fmtD(PAGAMENTOS_PROP.reduce((s,f)=>s+totalFatura(f.valor),0))+' MT no total')}
+    ${kpi('Próximo vencimento','clock','05 Nov','Outubro · total '+fmtD(totalFatura(1500))+' MT')}
   </div>
   <div class="card mt">
     <div class="card-head"><div class="chips">${chips.map(([k,l])=>`<button class="chip ${filtro===k?'on':''}" data-chip-fat="${k}">${l}</button>`).join('')}</div></div>
@@ -1299,7 +1332,7 @@ function scrPropFaturas(){
         <tr>
           <td><div class="cell-main">${f.mes}</div><div class="cell-sub num">${f.ref}</div></td>
           <td class="num" data-th="Vencimento">${f.venc}</td>
-          <td class="r num b" data-th="Valor">${MT(f.valor)}</td>
+          <td class="r num b" data-th="Valor">${fmtD(totalFatura(f.valor))} MT</td>
           <td data-th="Pagamento">${f.estado==='pago'
             ?`<div class="num">${f.dataPag} · ${f.metodo}</div><div class="cell-sub num">Recibo ${f.recibo}</div>`
             :'<span class="cell-sub">—</span>'}</td>
@@ -1434,6 +1467,10 @@ function scrPropAvisos(){
 function scrAdminVisao(){
   const proc = CONDOS.reduce((s,c)=>s+c.cobrado,0)*1000;
   const receita = proc*S.taxas.manutencao/100;
+  const pagasTotal = CONDOS.reduce((s,c)=>s + (c.esperado ? Math.round(c.cobrado/c.esperado*c.flats) : 0), 0);
+  const ranking = CONDOS.filter(c=>c.flats>0)
+    .map(c=>({...c, inad: Math.round(c.atraso/c.flats*100), emDia: c.atraso===0 && c.cobrado>=c.esperado}))
+    .sort((a,b)=>a.inad-b.inad || b.cobrado/b.esperado-a.cobrado/a.esperado);
   return `
   <div class="page-head">
     <div><h1>Visão geral</h1><p class="sub">Todas as organizações · Outubro 2026</p></div>
@@ -1442,7 +1479,7 @@ function scrAdminVisao(){
   <div class="grid g-kpi">
     ${kpi('Cobranças processadas','wallet',MT(proc),`<span class="up">${ico('arrUp','icon sm')} +6,1%</span><span>vs. Setembro</span>`)}
     ${kpi('Taxa de manutenção (15%)','arrUp',MT(receita),'Cobrada aos apartamentos sobre a quota')}
-    ${kpi('Taxas de operadores','receipt',MT(3185),'M-Pesa 1,2% · deduzidas dos 15% de manutenção')}
+    ${kpi('Fundo da associação','shield',MT(pagasTotal*S.taxas.associacao),`${fmtD(S.taxas.associacao)} MT × ${pagasTotal} flats pagas em Outubro`)}
   </div>
   ${S.gestoresPendentes.length?`
   <div class="card mt" style="border:1px solid var(--amber-700);background:#FFFDF8">
@@ -1466,7 +1503,7 @@ function scrAdminVisao(){
         <span class="row-ico b">${ico('obra')}</span>
         <div class="row-body">
           <div class="t">${p.nome} — ${p.cond}</div>
-          <div class="s">${p.cat} · orçamento <b class="num">${MT(p.orc)}</b> · prevista ${p.data} · ${p.fin==='quota'?`quota extraordinária de <b class="num">${MT(p.quotaExtra)}</b>/flat`:'fundo do condomínio'}</div>
+          <div class="s">${p.cat} · orçamento <b class="num">${MT(p.orc)}</b> · prevista ${p.data} · ${p.fin==='quota'?`quota extraordinária de <b class="num">${MT(p.quotaExtra)}</b>/flat`:p.fin==='associacao'?'<b>fundo da associação → votação na assembleia</b>':'fundo do condomínio'}</div>
         </div>
         <div class="row-end" style="display:flex;align-items:center;gap:10px">
           <button class="btn btn-danger sm" data-proj-rej="${p.id}">Rejeitar</button>
@@ -1491,13 +1528,28 @@ function scrAdminVisao(){
           </tr>`;}).join('')}</tbody>
       </table></div>
     </div>
-    <div class="card">
-      <div class="card-head"><span class="card-ico">${ico('shield')}</span><h2>Auditoria recente</h2></div>
-      <ul class="row-list">${AUDIT.map(a=>`
-        <li><span class="row-ico b">${ico('clock')}</span>
-          <div class="row-body"><div class="t">${a.a}</div><div class="s">${a.d}</div></div>
-          <div class="row-end cell-sub">${a.data}</div>
-        </li>`).join('')}</ul>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card">
+        <div class="card-head"><span class="card-ico">${ico('arrUp')}</span><h2>Ranking de adimplência</h2></div>
+        <p style="font-size:12.5px;color:var(--ink-3);margin-bottom:4px">Menor inadimplência primeiro · "Em dia" = elegível para o fundo da associação</p>
+        <ul class="row-list">${ranking.map((c,i)=>`
+          <li>
+            <span class="row-ico ${i===0?'g':'b'}" style="border-radius:50%;font-weight:800;font-size:13px">${i+1}º</span>
+            <div class="row-body"><div class="t">${c.nome}</div><div class="s">${c.zona}</div></div>
+            <div class="row-end" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+              <span class="num b" style="font-size:13.5px">${c.inad}% inadimpl.</span>
+              ${c.emDia?'<span class="pill pago">Em dia</span>':'<span class="pill pendente">Em dívida</span>'}
+            </div>
+          </li>`).join('')}</ul>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-ico">${ico('shield')}</span><h2>Auditoria recente</h2></div>
+        <ul class="row-list">${AUDIT.map(a=>`
+          <li><span class="row-ico b">${ico('clock')}</span>
+            <div class="row-body"><div class="t">${a.a}</div><div class="s">${a.d}</div></div>
+            <div class="row-end cell-sub">${a.data}</div>
+          </li>`).join('')}</ul>
+      </div>
     </div>
   </div>`;
 }
@@ -1687,10 +1739,15 @@ function scrAdminConfig(){
   </div>
   <div class="card mt" style="max-width:620px">
     <div class="card-head"><span class="card-ico">${ico('wallet')}</span><h2>Taxa de manutenção</h2></div>
-    <div class="field"><label for="tx-plat">Percentagem cobrada ao apartamento sobre a quota</label>
-      <input id="tx-plat" class="num" value="${S.taxas.manutencao} %" style="max-width:120px">
-      <span class="hint">O morador vê apenas esta taxa. Todas as outras — operadores (M-Pesa, eMola), SMS — são deduzidas destes 15%; o remanescente é a receita da plataforma. Overrides por condomínio na ficha de cada um.</span>
+    <div class="f-row">
+      <div class="field"><label for="tx-plat">Taxa de manutenção (% sobre a quota)</label>
+        <input id="tx-plat" class="num" value="${S.taxas.manutencao} %" style="max-width:120px">
+      </div>
+      <div class="field"><label for="tx-assoc">Taxa da associação (fixa por flat)</label>
+        <input id="tx-assoc" class="num" value="${fmtD(S.taxas.associacao)} MT" style="max-width:140px">
+      </div>
     </div>
+    <span class="hint">A fatura do morador tem 3 linhas: taxa de condomínio (variável, repassada ao condomínio), taxa da associação (fixa, para o fundo de projectos votados em assembleia) e manutenção (operadores, SMS e plataforma são deduzidos dela). Overrides por condomínio na ficha de cada um.</span>
     <div class="note">${ico('shield','icon sm')}<span>Alterações de taxas e de contas ficam registadas na auditoria e só se aplicam a cobranças futuras.</span></div>
   </div>`;
 }
@@ -1932,6 +1989,7 @@ function bindScreen(el){
   const vh = el.querySelector('#ver-hist'); if(vh) vh.addEventListener('click',()=>{S.filtroFat='pagas'; setScreen('faturas');});
   el.querySelectorAll('[data-chip-fat]').forEach(b=>b.addEventListener('click',()=>{S.filtroFat=b.dataset.chipFat;render();}));
   const vt = el.querySelector('#ver-transf'); if(vt) vt.addEventListener('click',()=>setScreen('pagamentosG'));
+  const av2 = el.querySelector('#assoc-ver'); if(av2) av2.addEventListener('click',()=>{S.filtro='todos'; setScreen('pagamentosG');});
   const vc = el.querySelector('#ver-condos'); if(vc) vc.addEventListener('click',()=>setScreen('condos'));
   const av = el.querySelector('#btn-aviso');
   if(av) av.addEventListener('click',()=>{
@@ -2070,7 +2128,7 @@ function bindScreen(el){
   el.querySelectorAll('[data-proj-aprov]').forEach(b=>b.addEventListener('click',()=>{
     const p = S.projectos.find(x=>x.id===+b.dataset.projAprov);
     p.estado='aprovado';
-    toast(`"${p.nome}" aprovado${p.fin==='quota'?' · quota extraordinária entra nas faturas':''}`); render();
+    toast(`"${p.nome}" aprovado${p.fin==='quota'?' · quota extraordinária entra nas faturas':p.fin==='associacao'?' em assembleia · 4 de 5 condomínios a favor':''}`); render();
   }));
   el.querySelectorAll('[data-proj-rej]').forEach(b=>b.addEventListener('click',()=>{
     const p = S.projectos.find(x=>x.id===+b.dataset.projRej);
@@ -2204,8 +2262,7 @@ function abrirPagamento(m){
   const push = $('#btn-push');
   if(push) push.addEventListener('click',()=>{
     abrirModal(modalPush(m));
-    const taxa = Math.round(ctxPay().valor*S.taxas.manutencao)/100;
-    setTimeout(()=>{ abrirModal(modalRecibo(ctxPay().valor+taxa)); bindGlobais($('#modal')); }, 2200);
+    setTimeout(()=>{ abrirModal(modalRecibo(totalFatura(ctxPay().valor))); bindGlobais($('#modal')); }, 2200);
   });
   const up = $('#btn-upload');
   if(up) up.addEventListener('click',()=>{ fecharTudo(); toast('Comprovativo enviado · aguarda confirmação do gestor'); });
@@ -2382,8 +2439,13 @@ function drawerDespesa(){
       <div class="field"><label for="dsp-c">Categoria</label><select id="dsp-c"><option>Manutenção</option><option>Limpeza</option><option>Segurança</option><option>Energia</option><option>Outra</option></select></div>
       <div class="field"><label for="dsp-v">Valor (MT)</label><input id="dsp-v" class="num" inputmode="numeric" placeholder="0"></div>
     </div>
-    <div class="field"><label>Comprovativo</label>
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;border-style:dashed">${ico('file','icon sm')}Carregar factura ou recibo</button></div>
+    <div class="field"><label>Fatura ou recibo (obrigatório)</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-ghost sm" type="button" data-doc-upload="dsp">${ico('file','icon sm')}Anexar ficheiro</button>
+        <button class="btn btn-ghost sm" type="button" data-doc-foto="dsp">${ico('camera','icon sm')}Tirar foto</button>
+        <span class="cell-sub" id="dsp-doc-estado">Nenhuma fatura anexada</span>
+      </div>
+      <span class="hint">Toda a despesa precisa da fatura de pagamento anexada — entra no extrato visível à consola e aos proprietários.</span></div>
   </div>
   <div class="drawer-foot">
     <button class="btn btn-ghost sm" data-close>Cancelar</button>
@@ -2438,7 +2500,13 @@ function bindGlobais(root){
     try{navigator.clipboard.writeText(b.dataset.copy);}catch(e){}
     toast('Referência copiada');
   }));
-  root.querySelectorAll('[data-save-despesa]').forEach(b=>b.addEventListener('click',()=>{ fecharTudo(); toast('Despesa registada na tesouraria'); }));
+  root.querySelectorAll('[data-save-despesa]').forEach(b=>b.addEventListener('click',()=>{
+    if(!root.querySelector('#dsp-d').value.trim()){ toast('Descreva a despesa'); return; }
+    if(!root.querySelector('#dsp-v').value.trim()){ toast('Indique o valor da despesa'); return; }
+    const st = root.querySelector('#dsp-doc-estado');
+    if(st && !/anexad|capturad/.test(st.textContent)){ toast('Anexe a fatura de pagamento — é obrigatória'); return; }
+    fecharTudo(); toast('Despesa registada na tesouraria · fatura no extrato');
+  }));
   root.querySelectorAll('[data-save-repasse]').forEach(b=>b.addEventListener('click',()=>{ fecharTudo(); toast('Repasse registado · o gestor foi notificado'); }));
 }
 
