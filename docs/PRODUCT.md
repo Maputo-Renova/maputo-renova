@@ -33,7 +33,7 @@ Sistema de gestão de condomínios para Maputo, Moçambique. Multi-condomínio (
 Cada flat tem um código de convite de uso único ligado a ela; quem o usa fica vinculado àquela flat (consumido na criação da conta, não no clique). O vínculo só muda por acção administrativa (mudança de proprietário), com auditoria.
 
 ### Identificação (KYC)
-O cadastro de **gestores e proprietários** inclui: nome e apelido, data de nascimento, **NUIT**, e **BI ou Passaporte** — número e cópia do documento (ficheiro anexado ou foto tirada na hora), guardada no Storage privado. A cópia só pode ser substituída pela administração.
+O cadastro de **gestores e proprietários** inclui: nome e apelido, data de nascimento, **NUIT**, e **BI ou Passaporte** — número e cópia do documento (ficheiro anexado ou foto tirada na hora), guardada no Storage privado. A **residência exige comprovativo de endereço** (fatura de água ou electricidade recente, dos últimos 3 meses). As cópias só podem ser substituídas pela administração.
 
 ### Referência única de cadastro
 Cada flat recebe uma **referência única alfanumérica** gerada automaticamente no banco: código do condomínio (iniciais, ex.: JDA) + bloco + número — ex.: **JDA-A302** — com sufixo numérico em caso de colisão. Cada condomínio recebe o seu código curto único. A referência identifica a flat em toda a comunicação e nos ecrãs de gestor, consola e proprietário.

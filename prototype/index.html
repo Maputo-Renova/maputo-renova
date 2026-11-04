@@ -964,6 +964,7 @@ function drawerFlat(f, condoNome, estadoActual){
       <div class="field"><label>Documento</label><input class="num" value="BI · ${fmt(110100482000+f.id*137)} B" readonly></div>
       <div class="field"><label>NUIT</label><input class="num" value="${fmt(100482300+f.id*917)}" readonly></div>
     </div>
+    <div class="field"><label>Comprovativo de endereço</label><input value="fatura_agua_set2026.pdf · verificado" readonly></div>
     <div class="f-row">
       <div class="field"><label>Telefone</label><input class="num" value="+258 ${f.tel}" readonly></div>
       <div class="field"><label>Quota mensal</label><input class="num" value="${MT(f.quota)}" readonly></div>
@@ -1327,7 +1328,10 @@ function scrPropFlat(){
         <div class="field"><label>Número</label><input class="num" value="302" readonly></div>
       </div>
       <div class="field"><label>Endereço</label><input value="Av. Kim Il Sung, 1247 · Sommerschield, Maputo" readonly></div>
-      <div class="field"><label>Quota mensal</label><input class="num" value="1 500 MT" readonly></div>
+      <div class="f-row">
+        <div class="field"><label>Comprovativo de endereço</label><input value="fatura_agua_set2026.pdf · verificado" readonly></div>
+        <div class="field"><label>Quota mensal</label><input class="num" value="1 500 MT" readonly></div>
+      </div>
     </div>
     <div style="align-self:start">
       <div class="card">
@@ -1712,6 +1716,14 @@ function scrColabCadastro(){
       </div>
       <p class="hint" style="font-size:12.5px;color:var(--ink-3);margin-bottom:10px">A flat fica registada em nome do <b>proprietário</b>, não do inquilino.</p>
       ${camposIdentidade('nf',{nome:'Anselmo',apelido:'Tembe'})}
+      <div class="field"><label>Comprovativo de endereço</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-ghost sm" type="button" data-doc-upload="nf-end">${ico('file','icon sm')}Anexar ficheiro</button>
+          <button class="btn btn-ghost sm" type="button" data-doc-foto="nf-end">${ico('camera','icon sm')}Tirar foto</button>
+          <span class="cell-sub" id="nf-end-doc-estado">Nenhum comprovativo anexado</span>
+        </div>
+        <span class="hint">Fatura de água ou electricidade recente (últimos 3 meses) com o endereço da flat.</span>
+      </div>
       <div class="f-row">
         <div class="field"><label for="nf-tel">Telefone</label><input id="nf-tel" class="num" placeholder="84 000 0000"></div>
         <div class="field"><label for="nf-quota">Quota mensal (MT)</label><input id="nf-quota" class="num" value="1500"></div>
@@ -2097,6 +2109,7 @@ function bindScreen(el){
       $('#nf-num').value=''; $('#nf-nome').value=''; $('#nf-apelido').value=''; $('#nf-tel').value='';
       ['nf-nasc','nf-nuit','nf-docnum'].forEach(i=>{ const e=$('#'+i); if(e) e.value=''; });
       const de=$('#nf-doc-estado'); if(de) de.textContent='Nenhum documento anexado';
+      const ce=$('#nf-end-doc-estado'); if(ce) ce.textContent='Nenhum comprovativo anexado';
     }
   });
   const pfs = el.querySelector('#pf-save');
