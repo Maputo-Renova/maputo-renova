@@ -961,6 +961,10 @@ function drawerFlat(f, condoNome, estadoActual){
       <div class="field"><label>Referência de cadastro</label><input class="num" value="${f.regref||'—'}" readonly></div>
     </div>
     <div class="f-row">
+      <div class="field"><label>Documento</label><input class="num" value="BI · ${fmt(110100482000+f.id*137)} B" readonly></div>
+      <div class="field"><label>NUIT</label><input class="num" value="${fmt(100482300+f.id*917)}" readonly></div>
+    </div>
+    <div class="f-row">
       <div class="field"><label>Telefone</label><input class="num" value="+258 ${f.tel}" readonly></div>
       <div class="field"><label>Quota mensal</label><input class="num" value="${MT(f.quota)}" readonly></div>
     </div>
@@ -1328,12 +1332,22 @@ function scrPropFlat(){
     <div style="align-self:start">
       <div class="card">
         <div class="card-head"><span class="card-ico">${ico('shield')}</span><h2>Proprietária</h2></div>
-        <div class="field"><label>Nome</label><input value="Celeste Mabjaia" readonly></div>
+        <div class="f-row">
+          <div class="field"><label>Nome</label><input value="Celeste" readonly></div>
+          <div class="field"><label>Apelido</label><input value="Mabjaia" readonly></div>
+        </div>
+        <div class="f-row">
+          <div class="field"><label>Data de nascimento</label><input class="num" value="14/03/1986" readonly></div>
+          <div class="field"><label>NUIT</label><input class="num" value="104 827 319" readonly></div>
+        </div>
+        <div class="f-row">
+          <div class="field"><label>Documento</label><input class="num" value="BI · 110 100 482 371 B" readonly></div>
+          <div class="field"><label>Cópia do documento</label><input value="bi_frente_verso.pdf · verificada" readonly></div>
+        </div>
         <div class="f-row">
           <div class="field"><label>Telefone</label><input class="num" value="+258 84 210 1240" readonly></div>
-          <div class="field"><label>Documento</label><input class="num" value="BI 110 100 482 371 B" readonly></div>
+          <div class="field"><label>Email</label><input value="celeste.mabjaia@gmail.com" readonly></div>
         </div>
-        <div class="field"><label>Email</label><input value="celeste.mabjaia@gmail.com" readonly></div>
       </div>
       <div class="note mt" style="align-items:center">
         ${ico('shield','icon sm')}
@@ -1696,7 +1710,8 @@ function scrColabCadastro(){
         <div class="field"><label for="nf-andar">Andar</label><input id="nf-andar" class="num" value="3"></div>
         <div class="field"><label for="nf-num">Número</label><input id="nf-num" class="num" value="301"></div>
       </div>
-      <div class="field"><label for="nf-nome">Nome do proprietário</label><input id="nf-nome" value="Anselmo Tembe"><span class="hint">A flat fica registada em nome do proprietário, não do inquilino.</span></div>
+      <p class="hint" style="font-size:12.5px;color:var(--ink-3);margin-bottom:10px">A flat fica registada em nome do <b>proprietário</b>, não do inquilino.</p>
+      ${camposIdentidade('nf',{nome:'Anselmo',apelido:'Tembe'})}
       <div class="f-row">
         <div class="field"><label for="nf-tel">Telefone</label><input id="nf-tel" class="num" placeholder="84 000 0000"></div>
         <div class="field"><label for="nf-quota">Quota mensal (MT)</label><input id="nf-quota" class="num" value="1500"></div>
@@ -1920,8 +1935,9 @@ function bindScreen(el){
       $('#cl-condo-wrap').style.display = $('#cl-funcao').value==='Gestor' ? '' : 'none';
     });
     $('#btn-save-colab').addEventListener('click',()=>{
-      const nome = $('#cl-nome').value.trim(), tel = $('#cl-tel').value.trim(), fn = $('#cl-funcao').value;
-      if(!nome){ toast('Escreva o nome do colaborador'); $('#cl-nome').focus(); return; }
+      const nome = `${$('#cl-nome').value.trim()} ${$('#cl-apelido').value.trim()}`.trim(), tel = $('#cl-tel').value.trim(), fn = $('#cl-funcao').value;
+      if(!$('#cl-nome').value.trim()){ toast('Escreva o nome do colaborador'); $('#cl-nome').focus(); return; }
+      if(!$('#cl-apelido').value.trim()){ toast('Escreva o apelido do colaborador'); $('#cl-apelido').focus(); return; }
       if(!$('#cl-email').value.trim()){ toast('Indique o email para o convite'); $('#cl-email').focus(); return; }
       if(!tel){ toast('Indique o contacto'); $('#cl-tel').focus(); return; }
       S.colabs.push({nome, tel, funcao:fn, email:$('#cl-email').value.trim(),
@@ -2057,7 +2073,7 @@ function bindScreen(el){
   const nf = el.querySelector('#btn-nova-flat');
   if(nf) nf.addEventListener('click',()=>{
     const bloco=$('#nf-bloco').value.trim(), andar=$('#nf-andar').value.trim(), num=$('#nf-num').value.trim();
-    const nome=$('#nf-nome').value.trim(), cond=$('#nf-cond').value;
+    const nome=`${$('#nf-nome').value.trim()} ${$('#nf-apelido').value.trim()}`.trim(), cond=$('#nf-cond').value;
     const dup = cond==='Jardim das Acácias' && FLATS.find(f=>f.bloco.toLowerCase()===bloco.toLowerCase() && String(f.andar)===andar && f.numero===num);
     const slot = $('#dup-slot');
     if(dup){
@@ -2078,7 +2094,9 @@ function bindScreen(el){
       slot.innerHTML='';
       const rr = `${sigla(cond)}-${(bloco||'').toUpperCase()}${num}`;
       toast(`Flat registada · referência ${rr} · convite gerado${nome?` para ${nome.split(' ')[0]}`:''}`);
-      $('#nf-num').value=''; $('#nf-nome').value=''; $('#nf-tel').value='';
+      $('#nf-num').value=''; $('#nf-nome').value=''; $('#nf-apelido').value=''; $('#nf-tel').value='';
+      ['nf-nasc','nf-nuit','nf-docnum'].forEach(i=>{ const e=$('#'+i); if(e) e.value=''; });
+      const de=$('#nf-doc-estado'); if(de) de.textContent='Nenhum documento anexado';
     }
   });
   const pfs = el.querySelector('#pf-save');
@@ -2124,8 +2142,9 @@ function bindScreen(el){
       const v = id => $('#'+id).value.trim();
       const nome = v('nc-nome');
       const slot = $('#nc-dup');
-      const obrig = [['nc-nome','Escreva o nome do condomínio'],['nc-bairro','Indique o bairro'],['nc-rua','Indique a rua ou avenida'],['nc-moradias','Indique quantas moradias tem o condomínio'],['nc-gestor','Indique o nome do gestor'],['nc-tel','Indique o contacto do gestor']];
+      const obrig = [['nc-nome','Escreva o nome do condomínio'],['nc-bairro','Indique o bairro'],['nc-rua','Indique a rua ou avenida'],['nc-moradias','Indique quantas moradias tem o condomínio'],['ncg-nome','Indique o nome do gestor'],['ncg-apelido','Indique o apelido do gestor'],['ncg-nasc','Indique a data de nascimento do gestor'],['ncg-nuit','Indique o NUIT do gestor'],['ncg-docnum','Indique o número do BI ou passaporte do gestor'],['nc-tel','Indique o contacto do gestor']];
       for(const [id,msg] of obrig){ if(!v(id)){ toast(msg); $('#'+id).focus(); return; } }
+      const gestorNome = `${v('ncg-nome')} ${v('ncg-apelido')}`;
       if(!$('#nc-termos').checked){ toast('Confirme a aceitação dos Termos e Condições'); return; }
       const dup = CONDOS.find(c=>c.nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')===nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
       if(dup){
@@ -2140,12 +2159,12 @@ function bindScreen(el){
       CONDOS.push({
         nome, zona:v('nc-bairro'), flats:0, cobrado:0, esperado:0, atraso:0, saldo:0,
         previstas:+v('nc-moradias')||0,
-        gestor:v('nc-gestor'),
+        gestor:gestorNome,
         endereco:`${v('nc-rua')}${v('nc-num')?`, ${v('nc-num')}`:''} · ${v('nc-bairro')}, ${v('nc-cidade')||'Maputo'} (${v('nc-prov')})`,
       });
-      S.gestoresPendentes.push({nome:v('nc-gestor'), condominio:nome, email:v('nc-email')||'—', tel:v('nc-tel'), data:'convite enviado · aguarda registo e aprovação'});
+      S.gestoresPendentes.push({nome:gestorNome, condominio:nome, email:v('nc-email')||'—', tel:v('nc-tel'), data:'convite enviado · aguarda registo e aprovação'});
       fecharTudo();
-      toast(`Condomínio "${nome}" criado · código ${sigla(nome)} · gestor ${v('nc-gestor').split(' ')[0]} convidado por email`);
+      toast(`Condomínio "${nome}" criado · código ${sigla(nome)} · gestor ${v('ncg-nome')} convidado por email`);
       render();
     });
   }));
@@ -2197,7 +2216,7 @@ function drawerNovoCondo(){
       <div class="field"><label for="nc-venc">Vencimento</label><input id="nc-venc" class="num" inputmode="numeric" value="5"></div>
     </div>
     ${sec('Gestor do condomínio')}
-    <div class="field"><label for="nc-gestor">Nome completo</label><input id="nc-gestor" placeholder="Nome do gestor"></div>
+    ${camposIdentidade('ncg')}
     <div class="field"><label for="nc-email">Email</label><input id="nc-email" type="email" placeholder="gestor@exemplo.co.mz"></div>
     <div class="f-row">
       <div class="field"><label for="nc-tel">Contacto</label><input id="nc-tel" class="num" inputmode="tel" placeholder="84 000 0000"></div>
@@ -2232,6 +2251,30 @@ function drawerAcesso(i){
   </div>
   <div class="drawer-foot"><button class="btn btn-ghost sm" data-close>Fechar</button></div>`;
 }
+/* bloco de identificação (gestor e proprietário): nome+apelido, nascimento, NUIT, BI/Passaporte com anexo */
+function camposIdentidade(px, vals={}){
+  return `
+  <div class="f-row">
+    <div class="field"><label for="${px}-nome">Nome</label><input id="${px}-nome" placeholder="Nome próprio" value="${vals.nome||''}"></div>
+    <div class="field"><label for="${px}-apelido">Apelido</label><input id="${px}-apelido" placeholder="Sobrenome" value="${vals.apelido||''}"></div>
+  </div>
+  <div class="f-row">
+    <div class="field"><label for="${px}-nasc">Data de nascimento</label><input id="${px}-nasc" class="num" inputmode="numeric" placeholder="dd/mm/aaaa"></div>
+    <div class="field"><label for="${px}-nuit">NUIT</label><input id="${px}-nuit" class="num" inputmode="numeric" placeholder="9 dígitos"></div>
+  </div>
+  <div class="f-row">
+    <div class="field"><label for="${px}-doctipo">Documento</label><select id="${px}-doctipo"><option>BI</option><option>Passaporte</option></select></div>
+    <div class="field"><label for="${px}-docnum">Número do documento</label><input id="${px}-docnum" class="num" placeholder="Ex.: 110100482371B"></div>
+  </div>
+  <div class="field"><label>Cópia do documento</label>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-ghost sm" type="button" data-doc-upload="${px}">${ico('file','icon sm')}Anexar ficheiro</button>
+      <button class="btn btn-ghost sm" type="button" data-doc-foto="${px}">${ico('camera','icon sm')}Tirar foto</button>
+      <span class="cell-sub" id="${px}-doc-estado">Nenhum documento anexado</span>
+    </div>
+    <span class="hint">Frente e verso do BI, ou página principal do passaporte.</span>
+  </div>`;
+}
 function modalTermos(){
   return `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
@@ -2262,7 +2305,7 @@ function drawerNovoColab(){
       </select></div>
     <div class="field" id="cl-condo-wrap" style="display:none"><label for="cl-condo">Condomínio a gerir</label>
       <select id="cl-condo">${CONDOS.map(c=>`<option>${c.nome}</option>`).join('')}</select></div>
-    <div class="field"><label for="cl-nome">Nome completo</label><input id="cl-nome" placeholder="Nome do colaborador"></div>
+    ${camposIdentidade('cl')}
     <div class="field"><label for="cl-email">Email</label><input id="cl-email" type="email" placeholder="email@exemplo.co.mz"><span class="hint">O convite de acesso é enviado para este email.</span></div>
     <div class="field"><label for="cl-tel">Contacto</label><input id="cl-tel" class="num" inputmode="tel" placeholder="84 000 0000"></div>
   </div>
@@ -2349,6 +2392,16 @@ function bindGlobais(root){
   root.querySelectorAll('[data-termos]').forEach(b=>b.addEventListener('click',e=>{
     e.preventDefault(); e.stopPropagation();
     abrirModal(modalTermos()); bindGlobais($('#modal'));
+  }));
+  root.querySelectorAll('[data-doc-upload]').forEach(b=>b.addEventListener('click',()=>{
+    const el = root.querySelector('#'+b.dataset.docUpload+'-doc-estado');
+    if(el){ el.innerHTML = '<b style="color:var(--green-700)">documento_frente_verso.pdf anexado</b>'; }
+    toast('Documento anexado (demonstração)');
+  }));
+  root.querySelectorAll('[data-doc-foto]').forEach(b=>b.addEventListener('click',()=>{
+    const el = root.querySelector('#'+b.dataset.docFoto+'-doc-estado');
+    if(el){ el.innerHTML = '<b style="color:var(--green-700)">foto do documento capturada</b>'; }
+    toast('Foto capturada (demonstração)');
   }));
   const fds = root.querySelector('#fd-save');
   if(fds) fds.addEventListener('click',()=>{
