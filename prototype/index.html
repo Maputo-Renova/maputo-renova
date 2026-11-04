@@ -328,6 +328,10 @@ img,svg{display:block}
 .cfg-row .inp{width:86px}
 .cfg-row .inp input{border:1px solid var(--line);border-radius:9px;padding:8px 10px;width:100%;font-size:14px;font-weight:700;text-align:right}
 
+/* aceitação de termos */
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--ink-2);margin:2px 0 14px;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--green-600);margin-top:1px;flex:none;cursor:pointer}
+
 /* página de acesso */
 body.auth .sidebar,body.auth .topbar{display:none}
 body.auth .app{grid-template-columns:1fr}
@@ -733,6 +737,10 @@ function abrirDrawer(html){
 function abrirModal(html){
   $('#modal').innerHTML = `<div class="modal-card">${html}</div>`;
   $('#modal').classList.add('open'); $('#overlay').classList.add('open');
+}
+function fecharModal(){
+  $('#modal').classList.remove('open');
+  if(!$('#drawer').classList.contains('open')) $('#overlay').classList.remove('open');
 }
 function fecharTudo(){
   $('#drawer').classList.remove('open'); $('#modal').classList.remove('open');
@@ -1761,6 +1769,7 @@ function scrLogin(){
     <div class="field"><label for="cv-cod">Código de convite</label><input id="cv-cod" class="num" placeholder="JDA-22W466" style="text-transform:uppercase"></div>
     <div class="field"><label for="cv-pw">Criar password</label><input id="cv-pw" type="password" placeholder="Mínimo 8 caracteres"></div>
     <div class="field"><label for="cv-pw2">Confirmar password</label><input id="cv-pw2" type="password" placeholder="Repita a password"></div>
+    <label class="chk"><input type="checkbox" id="cv-termos"><span>Li e aceito os <button class="link" type="button" data-termos>Termos e Condições</button> e a Política de Privacidade do Maputo Renova.</span></label>
     <button class="btn btn-primary" id="btn-conv" style="width:100%;justify-content:center">Criar conta e entrar</button>
     <div class="auth-links"><button class="link" id="lnk-voltar">Voltar ao login</button></div>`}
   </div>
@@ -1790,10 +1799,15 @@ function bindLogin(el){
     const p1=$('#cv-pw').value, p2=$('#cv-pw2').value;
     if(p1.length<8){ toast('A password precisa de pelo menos 8 caracteres'); $('#cv-pw').focus(); return; }
     if(p1!==p2){ toast('As passwords não coincidem'); $('#cv-pw2').focus(); return; }
+    if(!$('#cv-termos').checked){ toast('Aceite os Termos e Condições para criar a conta'); return; }
     toast('Conta criada e ligada à Flat 302 · bem-vinda, Celeste');
     login('proprietario');
   });
   el.querySelectorAll('[data-login]').forEach(b=>b.addEventListener('click',()=>login(b.dataset.login)));
+  el.querySelectorAll('[data-termos]').forEach(b=>b.addEventListener('click',e=>{
+    e.preventDefault(); e.stopPropagation();
+    abrirModal(modalTermos()); bindGlobais($('#modal'));
+  }));
 }
 function scrPerfil(){
   const r = ROLES[S.role];
@@ -2112,6 +2126,7 @@ function bindScreen(el){
       const slot = $('#nc-dup');
       const obrig = [['nc-nome','Escreva o nome do condomínio'],['nc-bairro','Indique o bairro'],['nc-rua','Indique a rua ou avenida'],['nc-moradias','Indique quantas moradias tem o condomínio'],['nc-gestor','Indique o nome do gestor'],['nc-tel','Indique o contacto do gestor']];
       for(const [id,msg] of obrig){ if(!v(id)){ toast(msg); $('#'+id).focus(); return; } }
+      if(!$('#nc-termos').checked){ toast('Confirme a aceitação dos Termos e Condições'); return; }
       const dup = CONDOS.find(c=>c.nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')===nome.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,''));
       if(dup){
         slot.innerHTML = `<div class="alert-dup" role="alert">${ico('alert')}
@@ -2188,6 +2203,7 @@ function drawerNovoCondo(){
       <div class="field"><label for="nc-tel">Contacto</label><input id="nc-tel" class="num" inputmode="tel" placeholder="84 000 0000"></div>
       <div class="field"><label for="nc-tel2">Contacto alternativo</label><input id="nc-tel2" class="num" inputmode="tel" placeholder="Opcional"></div>
     </div>
+    <label class="chk"><input type="checkbox" id="nc-termos"><span>Declaro que o condomínio e o gestor indicado aceitam os <button class="link" type="button" data-termos>Termos e Condições</button> e o contrato de serviço do Maputo Renova. A aceitação fica registada com data e autor.</span></label>
   </div>
   <div class="drawer-foot">
     <button class="btn btn-ghost sm" data-close>Cancelar</button>
@@ -2215,6 +2231,23 @@ function drawerAcesso(i){
     </div>
   </div>
   <div class="drawer-foot"><button class="btn btn-ghost sm" data-close>Fechar</button></div>`;
+}
+function modalTermos(){
+  return `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <h3 style="font-size:17px;font-weight:800">Termos e Condições</h3>
+    <button class="icon-btn" data-close-modal aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
+  </div>
+  <div style="max-height:52vh;overflow-y:auto;font-size:13.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:10px;padding-right:6px">
+    <p><b>1. O serviço.</b> O Maputo Renova é uma plataforma de gestão e cobrança de quotas de condomínio: emite faturas, recebe pagamentos por M-Pesa, eMola e transferência bancária, envia avisos por SMS e email, e repassa os valores cobrados ao condomínio.</p>
+    <p><b>2. Taxa de manutenção.</b> Sobre cada quota é cobrada uma taxa de manutenção (15%, salvo acordo diferente), a única taxa paga pelo proprietário. Dela são deduzidos os custos de operadores e comunicações.</p>
+    <p><b>3. Repasses.</b> O condomínio recebe as quotas por inteiro, por transferência bancária, com comprovativo e registo no razão.</p>
+    <p><b>4. Dados pessoais.</b> Os dados de proprietários e gestores são usados exclusivamente para a gestão do condomínio e comunicações do serviço, nos termos da lei moçambicana.</p>
+    <p><b>5. Conta e acesso.</b> A conta do proprietário está ligada à flat e ao seu titular; emails de acesso só podem ser alterados pelo gestor (moradores) ou pela consola (gestores e colaboradores), com auditoria.</p>
+    <p><b>6. Rescisão.</b> Qualquer das partes pode terminar o serviço com aviso prévio de 30 dias; os saldos por repassar são liquidados no fecho.</p>
+    <p class="cell-sub">Texto de demonstração — a versão legal final será fornecida pela empresa operadora.</p>
+  </div>
+  <button class="btn btn-primary" data-close-modal style="margin-top:16px;width:100%;justify-content:center">Fechar</button>`;
 }
 function drawerNovoColab(){
   return `
@@ -2312,6 +2345,11 @@ function drawerRepasse(c){
 }
 function bindGlobais(root){
   root.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',fecharTudo));
+  root.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',fecharModal));
+  root.querySelectorAll('[data-termos]').forEach(b=>b.addEventListener('click',e=>{
+    e.preventDefault(); e.stopPropagation();
+    abrirModal(modalTermos()); bindGlobais($('#modal'));
+  }));
   const fds = root.querySelector('#fd-save');
   if(fds) fds.addEventListener('click',()=>{
     const em = root.querySelector('#fd-email').value.trim();
