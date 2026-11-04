@@ -1905,6 +1905,16 @@ function confirmarTransf(id){
   render();
 }
 function bindScreen(el){
+  el.querySelectorAll('[data-doc-upload]').forEach(b=>b.addEventListener('click',()=>{
+    const s = el.querySelector('#'+b.dataset.docUpload+'-doc-estado');
+    if(s){ s.innerHTML = '<b style="color:var(--green-700)">documento_frente_verso.pdf anexado</b>'; }
+    toast('Documento anexado (demonstração)');
+  }));
+  el.querySelectorAll('[data-doc-foto]').forEach(b=>b.addEventListener('click',()=>{
+    const s = el.querySelector('#'+b.dataset.docFoto+'-doc-estado');
+    if(s){ s.innerHTML = '<b style="color:var(--green-700)">foto do documento capturada</b>'; }
+    toast('Foto capturada (demonstração)');
+  }));
   el.querySelectorAll('[data-conf]').forEach(b=>b.addEventListener('click',()=>confirmarTransf(+b.dataset.conf)));
   el.querySelectorAll('[data-rej]').forEach(b=>b.addEventListener('click',()=>{
     S.transf = S.transf.filter(x=>x.id!==+b.dataset.rej);
