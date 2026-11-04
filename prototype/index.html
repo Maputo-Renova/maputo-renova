@@ -672,7 +672,7 @@ const S = {
   transf:[...TRANSF],
   pagos:{},                   // overrides: flatId -> 'pago'
   colabs: COLABS.map(c=>({...c})),
-  taxas:{mpesa:1.2, emola:1.5, manutencao:15, associacao:499},
+  taxas:{mpesa:1.2, emola:1.5, servico:15, associacao:499},
   convitesCopiados:{},
   tickets: TICKETS_INIT.map(t=>({...t})),
   proxTicket: 5,
@@ -1194,7 +1194,7 @@ function drawerUpdProjecto(p){
    PROPRIETÁRIO
    ============================================================ */
 function scrPropInicio(){
-  const man = Math.round(1500*S.taxas.manutencao)/100;
+  const man = Math.round(1500*S.taxas.servico)/100;
   const atr = FATURAS_PROP.find(f=>f.estado==='atraso');
   return `
   <div class="page-head">
@@ -1214,7 +1214,7 @@ function scrPropInicio(){
         <div style="margin-top:18px">
           <div class="pay-split"><span>Taxa de condomínio</span><b class="num">1 500 MT</b></div>
           <div class="pay-split"><span>Taxa da associação de condomínios</span><b class="num">${fmtD(S.taxas.associacao)} MT</b></div>
-          <div class="pay-split"><span>Taxa de manutenção (15%)</span><b class="num">${fmtD(man)} MT</b></div>
+          <div class="pay-split"><span>Taxa de serviço (15%)</span><b class="num">${fmtD(man)} MT</b></div>
           <div class="pay-split"><span>Total a pagar</span><b class="num">${fmtD(totalFatura(1500))} MT</b></div>
         </div>
       </div>
@@ -1249,8 +1249,8 @@ function scrPropInicio(){
   </div>`;
 }
 function ctxPay(){ return S.payCtx || FATURAS_PROP.find(f=>f.estado==='pendente') || FATURAS_PROP[0]; }
-/* total da fatura do morador: taxa de condomínio + taxa da associação (fixa) + manutenção (15%) */
-function totalFatura(v){ return v + S.taxas.associacao + Math.round(v*S.taxas.manutencao)/100; }
+/* total da fatura do morador: taxa de condomínio + taxa da associação (fixa) + serviço (15%) */
+function totalFatura(v){ return v + S.taxas.associacao + Math.round(v*S.taxas.servico)/100; }
 function modalPagar(){
   const c = ctxPay();
   return `
@@ -1267,7 +1267,7 @@ function modalMpesa(rede){
   return `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
     <span class="m-ico ${rede}" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:8.5px;line-height:1.1;text-align:center">${rede==='mpesa'?'M-PESA':'e-MOLA'}</span>
-    <div><h3 style="font-size:17px;font-weight:800">Pagar ${ctxPay().mes} com ${nome}</h3><div class="cell-sub num">Total: ${fmtD(totalFatura(ctxPay().valor))} MT (condomínio + associação + manutenção)</div></div>
+    <div><h3 style="font-size:17px;font-weight:800">Pagar ${ctxPay().mes} com ${nome}</h3><div class="cell-sub num">Total: ${fmtD(totalFatura(ctxPay().valor))} MT (condomínio + associação + serviço)</div></div>
     <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
   </div>
   <div class="field"><label for="msisdn">Número ${nome}</label><input id="msisdn" class="num" inputmode="tel" value="84 210 1240"></div>
@@ -1297,7 +1297,7 @@ function modalBanco(){
     <h3 style="font-size:17px;font-weight:800">Transferência bancária</h3>
     <button class="icon-btn" data-close aria-label="Fechar" style="margin-left:auto">${ico('x','icon sm')}</button>
   </div>
-  <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:12px">Transfira <b class="num">${fmtD(totalFatura(ctxPay().valor))} MT</b> (${ctxPay().mes} · condomínio + associação + manutenção) e use a referência no descritivo:</p>
+  <p style="font-size:13.5px;color:var(--ink-2);margin-bottom:12px">Transfira <b class="num">${fmtD(totalFatura(ctxPay().valor))} MT</b> (${ctxPay().mes} · condomínio + associação + serviço) e use a referência no descritivo:</p>
   <div class="ref-box num">${ctxPay().ref} <button class="copy-btn" data-copy="${ctxPay().ref}">${ico('copy','icon sm')}Copiar</button></div>
   <div class="f-row" style="margin-top:14px">
     <div class="field"><label>Banco</label><input value="BIM" readonly></div>
@@ -1466,7 +1466,7 @@ function scrPropAvisos(){
    ============================================================ */
 function scrAdminVisao(){
   const proc = CONDOS.reduce((s,c)=>s+c.cobrado,0)*1000;
-  const receita = proc*S.taxas.manutencao/100;
+  const receita = proc*S.taxas.servico/100;
   const pagasTotal = CONDOS.reduce((s,c)=>s + (c.esperado ? Math.round(c.cobrado/c.esperado*c.flats) : 0), 0);
   const ranking = CONDOS.filter(c=>c.flats>0)
     .map(c=>({...c, inad: Math.round(c.atraso/c.flats*100), emDia: c.atraso===0 && c.cobrado>=c.esperado}))
@@ -1478,7 +1478,7 @@ function scrAdminVisao(){
   </div>
   <div class="grid g-kpi">
     ${kpi('Cobranças processadas','wallet',MT(proc),`<span class="up">${ico('arrUp','icon sm')} +6,1%</span><span>vs. Setembro</span>`)}
-    ${kpi('Taxa de manutenção (15%)','arrUp',MT(receita),'Cobrada aos apartamentos sobre a quota')}
+    ${kpi('Taxa de serviço (15%)','arrUp',MT(receita),'Cobrada aos apartamentos sobre a quota')}
     ${kpi('Fundo da associação','shield',MT(pagasTotal*S.taxas.associacao),`${fmtD(S.taxas.associacao)} MT × ${pagasTotal} flats pagas em Outubro`)}
   </div>
   ${S.gestoresPendentes.length?`
@@ -1560,14 +1560,14 @@ function scrAdminCondos(){
     <div class="page-head-actions"><button class="btn btn-primary" data-novo-condo>${ico('plus','icon sm')}Novo condomínio</button></div>
   </div>
   <div class="card"><div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th>Condomínio</th><th>Gestor</th><th class="r">Flats</th><th class="r">Esperado/mês</th><th class="r">% manutenção</th><th>Estado</th><th class="r"></th></tr></thead>
+    <thead><tr><th>Condomínio</th><th>Gestor</th><th class="r">Flats</th><th class="r">Esperado/mês</th><th class="r">% serviço</th><th>Estado</th><th class="r"></th></tr></thead>
     <tbody>${CONDOS.map((c,i)=>`
       <tr data-condo="${i}" title="Abrir ${c.nome}">
         <td><div class="cell-main">${c.nome}</div><div class="cell-sub">${c.zona}</div></td>
         <td data-th="Gestor">${c.gestor}</td>
         <td class="r num" data-th="Flats">${c.flats}</td>
         <td class="r num b" data-th="Esperado/mês">${MT(c.esperado*1000)}</td>
-        <td class="r num" data-th="% manutenção">${i===3?'12,0%':'15,0%'}</td>
+        <td class="r num" data-th="% serviço">${i===3?'12,0%':'15,0%'}</td>
         <td><span class="pill activo">Activo</span></td>
         <td class="r"><span class="link">Abrir</span></td>
       </tr>`).join('')}</tbody>
@@ -1696,7 +1696,7 @@ function scrAdminConfig(){
   <div class="grid g-12">
     <div class="card" style="align-self:start">
       <div class="card-head"><span class="card-ico">${ico('phone')}</span><h2>Métodos digitais</h2></div>
-      <p style="font-size:13px;color:var(--ink-2);margin-bottom:6px">Confirmação automática por webhook. As taxas dos operadores são <b>deduzidas da taxa de manutenção de 15%</b> — nunca cobradas à parte ao morador. Cada pagamento grava a taxa do momento da transacção.</p>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:6px">Confirmação automática por webhook. As taxas dos operadores são <b>deduzidas da taxa de serviço de 15%</b> — nunca cobradas à parte ao morador. Cada pagamento grava a taxa do momento da transacção.</p>
       <div class="cfg-row">
         <span class="m-ico mpesa" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:9px">M-PESA</span>
         <div class="row-body"><div class="t">M-Pesa</div><div class="s">Vodacom · conta business 171717 · activo</div></div>
@@ -1738,16 +1738,16 @@ function scrAdminConfig(){
     </div>`).join('')}
   </div>
   <div class="card mt" style="max-width:620px">
-    <div class="card-head"><span class="card-ico">${ico('wallet')}</span><h2>Taxa de manutenção</h2></div>
+    <div class="card-head"><span class="card-ico">${ico('wallet')}</span><h2>Taxa de serviço</h2></div>
     <div class="f-row">
-      <div class="field"><label for="tx-plat">Taxa de manutenção (% sobre a quota)</label>
-        <input id="tx-plat" class="num" value="${S.taxas.manutencao} %" style="max-width:120px">
+      <div class="field"><label for="tx-plat">Taxa de serviço (% sobre a quota)</label>
+        <input id="tx-plat" class="num" value="${S.taxas.servico} %" style="max-width:120px">
       </div>
       <div class="field"><label for="tx-assoc">Taxa da associação (fixa por flat)</label>
         <input id="tx-assoc" class="num" value="${fmtD(S.taxas.associacao)} MT" style="max-width:140px">
       </div>
     </div>
-    <span class="hint">A fatura do morador tem 3 linhas: taxa de condomínio (variável, repassada ao condomínio), taxa da associação (fixa, para o fundo de projectos votados em assembleia) e manutenção (operadores, SMS e plataforma são deduzidos dela). Overrides por condomínio na ficha de cada um.</span>
+    <span class="hint">A fatura do morador tem 3 linhas: taxa de condomínio (variável, repassada ao condomínio), taxa da associação (fixa, para o fundo de projectos votados em assembleia) e serviço (operadores, SMS e plataforma são deduzidos dela). Overrides por condomínio na ficha de cada um.</span>
     <div class="note">${ico('shield','icon sm')}<span>Alterações de taxas e de contas ficam registadas na auditoria e só se aplicam a cobranças futuras.</span></div>
   </div>`;
 }
@@ -2363,7 +2363,7 @@ function modalTermos(){
   </div>
   <div style="max-height:52vh;overflow-y:auto;font-size:13.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:10px;padding-right:6px">
     <p><b>1. O serviço.</b> O Maputo Renova é uma plataforma de gestão e cobrança de quotas de condomínio: emite faturas, recebe pagamentos por M-Pesa, eMola e transferência bancária, envia avisos por SMS e email, e repassa os valores cobrados ao condomínio.</p>
-    <p><b>2. Taxa de manutenção.</b> Sobre cada quota é cobrada uma taxa de manutenção (15%, salvo acordo diferente), a única taxa paga pelo proprietário. Dela são deduzidos os custos de operadores e comunicações.</p>
+    <p><b>2. Taxa de serviço.</b> Sobre cada quota é cobrada uma taxa de serviço (15%, salvo acordo diferente), a única taxa paga pelo proprietário. Dela são deduzidos os custos de operadores e comunicações.</p>
     <p><b>3. Repasses.</b> O condomínio recebe as quotas por inteiro, por transferência bancária, com comprovativo e registo no razão.</p>
     <p><b>4. Dados pessoais.</b> Os dados de proprietários e gestores são usados exclusivamente para a gestão do condomínio e comunicações do serviço, nos termos da lei moçambicana.</p>
     <p><b>5. Conta e acesso.</b> A conta do proprietário está ligada à flat e ao seu titular; emails de acesso só podem ser alterados pelo gestor (moradores) ou pela consola (gestores e colaboradores), com auditoria.</p>
