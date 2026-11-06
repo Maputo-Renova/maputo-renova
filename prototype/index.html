@@ -646,6 +646,15 @@ function estadosDoCondo(c){
     return 'pendente';
   });
 }
+/* estado de um condomínio num mês (demonstração): Outubro usa os valores
+   correntes; meses fechados têm cobrança quase completa, com variação própria */
+function condoMes(c, m){
+  if(m>=9 || !c.esperado || !c.flats) return {cobrado:c.cobrado, atraso:c.atraso};
+  const seed = (c.nome.length*7 + m*13) % 8;
+  const pct = 0.85 + seed*0.02; // 85%–99%
+  const atraso = Math.max(0, Math.round(c.flats*(1-pct)));
+  return {cobrado: Math.round(c.esperado*pct*10)/10, atraso};
+}
 const FATURAS_PROP = MESES_S.slice(0,10).map((m,i)=>{
   const estado = i===9 ? 'pendente' : i===5 ? 'atraso' : 'pago';
   return {
@@ -1464,21 +1473,23 @@ function scrPropAvisos(){
    SUPER ADMIN
    ============================================================ */
 function scrAdminVisao(){
-  const proc = CONDOS.reduce((s,c)=>s+c.cobrado,0)*1000;
+  const corrente = S.mes===9;
+  const CON = CONDOS.map(c=>({...c, ...condoMes(c, S.mes)}));
+  const proc = CON.reduce((s,c)=>s+c.cobrado,0)*1000;
   const receita = proc*S.taxas.servico/100;
-  const pagasTotal = CONDOS.reduce((s,c)=>s + (c.esperado ? Math.round(c.cobrado/c.esperado*c.flats) : 0), 0);
-  const ranking = CONDOS.filter(c=>c.flats>0)
+  const pagasTotal = CON.reduce((s,c)=>s + (c.esperado ? Math.min(c.flats, Math.round(c.cobrado/c.esperado*c.flats)) : 0), 0);
+  const ranking = CON.filter(c=>c.flats>0)
     .map(c=>({...c, inad: Math.round(c.atraso/c.flats*100), emDia: c.atraso===0 && c.cobrado>=c.esperado}))
     .sort((a,b)=>a.inad-b.inad || b.cobrado/b.esperado-a.cobrado/a.esperado);
   return `
   <div class="page-head">
-    <div><h1>Visão geral</h1><p class="sub">Todas as organizações · Outubro 2026</p></div>
-    <div class="page-head-actions"><button class="btn btn-dark">${ico('file','icon sm')}Exportar relatório</button></div>
+    <div><h1>Visão geral</h1><p class="sub">Todas as organizações · ${MESES[S.mes]} 2026</p></div>
+    <div class="page-head-actions">${monthPicker()}<button class="btn btn-dark">${ico('file','icon sm')}Exportar relatório</button></div>
   </div>
   <div class="grid g-kpi">
-    ${kpi('Cobranças processadas','wallet',MT(proc),`<span class="up">${ico('arrUp','icon sm')} +6,1%</span><span>vs. Setembro</span>`)}
+    ${kpi('Cobranças processadas','wallet',MT(proc),corrente?`<span class="up">${ico('arrUp','icon sm')} +6,1%</span><span>vs. Setembro</span>`:'Mês fechado')}
     ${kpi('Taxa de serviço (15%)','arrUp',MT(receita),'Cobrada aos apartamentos sobre a quota')}
-    ${kpi('Fundo da associação','shield',MT(pagasTotal*S.taxas.associacao),`${fmtD(S.taxas.associacao)} MT × ${pagasTotal} flats pagas em Outubro`)}
+    ${kpi('Fundo da associação','shield',MT(pagasTotal*S.taxas.associacao),`${fmtD(S.taxas.associacao)} MT × ${pagasTotal} flats pagas em ${MESES_S[S.mes]}`)}
   </div>
   ${S.gestoresPendentes.length?`
   <div class="card mt" style="border:1px solid var(--amber-700);background:#FFFDF8">
@@ -1499,7 +1510,7 @@ function scrAdminVisao(){
       <div class="card-head"><h2>Condomínios</h2><span class="spacer"></span><button class="link" id="ver-condos">Ver todos</button></div>
       <div class="tbl-wrap"><table class="tbl">
         <thead><tr><th>Condomínio</th><th class="r">Flats</th><th>Cobrança do mês</th><th class="r">Inadimpl.</th><th class="r">Repasse</th></tr></thead>
-        <tbody>${CONDOS.map((c,i)=>{
+        <tbody>${CON.map((c,i)=>{
           const pct = c.esperado ? Math.round(c.cobrado/c.esperado*100) : 0;
           const inad = c.flats ? Math.round(c.atraso/c.flats*100) : 0;
           return `<tr data-condo="${i}" title="Abrir ${c.nome}">
