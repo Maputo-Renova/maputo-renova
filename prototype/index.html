@@ -702,7 +702,7 @@ const ROLES = {
     ['visao','Visão geral','grid'],['condos','Condomínios','building'],['colabs','Colaboradores','users'],['repasses','Repasses','bank'],['config','Configuração','settings'],['perfil','O meu perfil','users'],
   ]},
   colaborador:{label:'Agente', user:'Stélio Nhantumbo', sub:'Cadastro de condomínios', nav:[
-    ['cadastro','Cadastro','plus'],['convites','Convites','key'],['perfil','O meu perfil','settings'],
+    ['cadastro','Cadastro','plus'],['perfil','O meu perfil','settings'],
   ]},
 };
 const EMAILS = {
@@ -1803,33 +1803,6 @@ function scrColabCadastro(){
     </div>
   </div>`;
 }
-function scrColabConvites(){
-  const porUsar = FLATS.filter(f=>f.convite==='por usar');
-  return `
-  <div class="page-head">
-    <div><h1>Convites de registo</h1><p class="sub">Jardim das Acácias · código de uso único, ligado à flat para sempre</p></div>
-  </div>
-  <div class="grid g-kpi">
-    ${kpi('Convites usados','check','21 <small>de 24</small>','Proprietários já registados')}
-    ${kpi('Por usar','key','3','Expiram 30 dias após a emissão')}
-    ${kpi('Último registo','clock','ontem','Flat 204 · Olga Muianga')}
-  </div>
-  <div class="card mt">
-    <div class="card-head"><h2>Por usar</h2></div>
-    <ul class="row-list">${porUsar.map(f=>`
-      <li><span class="row-ico a">${ico('key')}</span>
-        <div class="row-body"><div class="t">Flat ${f.numero} · Bloco ${f.bloco} — ${f.nome}</div><div class="s">Ref. <span class="num">${f.regref}</span> · emitido a 12 Out · expira a 11 Nov</div></div>
-        <div class="row-end" style="display:flex;align-items:center;gap:10px">
-          <span class="ref-box num" style="padding:8px 13px;font-size:13.5px">${f.codigo}</span>
-          <button class="btn btn-ghost sm" data-copy-conv="${f.codigo}">${ico('copy','icon sm')}${S.convitesCopiados[f.codigo]?'Copiado':'Copiar'}</button>
-        </div>
-      </li>`).join('')}</ul>
-  </div>`;
-}
-
-/* ============================================================
-   ACESSO (login) e PERFIL
-   ============================================================ */
 function scrLogin(){
   const entrar = S.loginView==='entrar';
   return `
@@ -1930,7 +1903,7 @@ const SCREENS = {
   gestor:{painel:scrGestorPainel, pagamentosG:scrGestorPagamentos, tesouraria:scrGestorTesouraria, projectosG:scrGestorProjectos, suporteG:scrGestorSuporte, avisos:scrGestorAvisos, perfil:scrPerfil},
   proprietario:{inicio:scrPropInicio, minhaflat:scrPropFlat, faturas:scrPropFaturas, projectosP:scrPropProjectos, suporte:scrPropSuporte, avisosP:scrPropAvisos, perfil:scrPerfil},
   admin:{visao:scrAdminVisao, condos:scrAdminCondos, condoDetail:scrAdminCondoDetail, colabs:scrAdminColabs, repasses:scrAdminRepasses, config:scrAdminConfig, perfil:scrPerfil},
-  colaborador:{cadastro:scrColabCadastro, convites:scrColabConvites, perfil:scrPerfil},
+  colaborador:{cadastro:scrColabCadastro, perfil:scrPerfil},
 };
 
 function render(){
