@@ -694,7 +694,8 @@ const S = {
     {nome:'Depósito em numerário', instrucoes:'Depositar no balcão do banco e carregar a foto do talão de depósito.', comprovativo:true, activo:false},
   ],
   gestoresPendentes: [
-    {nome:'Hortência Cuambe', condominio:'Residencial Katembe Sul', email:'hortencia.cuambe@gmail.com', tel:'85 441 2209', data:'registou-se há 3 horas'},
+    {nome:'Hortência Cuambe', condominio:'Residencial Katembe Sul', email:'hortencia.cuambe@gmail.com', tel:'85 441 2209', telAlt:'84 902 3317', data:'registou-se há 3 horas',
+     nasc:'22/07/1979', nuit:'103 442 877', docTipo:'BI', docNum:'110 200 331 448 C', docFicheiro:'bi_frente_verso.pdf', termos:'aceites no registo, 06 Nov 2026 · 09:14'},
   ],
   projectos: PROJECTOS_INIT.map(p=>({...p, updates:[...p.updates]})),
   proxProjecto: 4,
@@ -1498,7 +1499,10 @@ function scrAdminVisao(){
     <ul class="row-list">${S.gestoresPendentes.map((g,i)=>`
       <li>
         <span class="row-ico a">${ico('users')}</span>
-        <div class="row-body"><div class="t">${g.nome} — ${g.condominio}</div><div class="s">${g.email} · <span class="num">${g.tel}</span> · ${g.data}</div></div>
+        <div class="row-body" data-gver="${i}" style="cursor:pointer" title="Ver todos os dados">
+          <div class="t">${g.nome} — ${g.condominio}</div>
+          <div class="s">${g.email} · <span class="num">${g.tel}</span> · ${g.data} · <span class="link">Ver dados completos</span></div>
+        </div>
         <div class="row-end" style="display:flex;align-items:center;gap:10px">
           <button class="btn btn-danger sm" data-grej="${i}">Rejeitar</button>
           <button class="btn btn-primary sm" data-gaprov="${i}">${ico('check','icon sm')}Aprovar</button>
@@ -2102,15 +2106,13 @@ function bindScreen(el){
     p.estado='rejeitado';
     toast(`"${p.nome}" rejeitado · o gestor foi notificado`); render();
   }));
-  el.querySelectorAll('[data-gaprov]').forEach(b=>b.addEventListener('click',()=>{
-    const g = S.gestoresPendentes[+b.dataset.gaprov];
-    S.gestoresPendentes.splice(+b.dataset.gaprov,1);
-    toast(`${g.nome} aprovado · já pode gerir ${g.condominio}`); render();
-  }));
-  el.querySelectorAll('[data-grej]').forEach(b=>b.addEventListener('click',()=>{
-    const g = S.gestoresPendentes[+b.dataset.grej];
-    S.gestoresPendentes.splice(+b.dataset.grej,1);
-    toast(`Registo de ${g.nome} rejeitado · o condomínio continua sem gestor`); render();
+  el.querySelectorAll('[data-gaprov]').forEach(b=>b.addEventListener('click',()=>aprovarGestor(+b.dataset.gaprov)));
+  el.querySelectorAll('[data-grej]').forEach(b=>b.addEventListener('click',()=>rejeitarGestor(+b.dataset.grej)));
+  el.querySelectorAll('[data-gver]').forEach(b=>b.addEventListener('click',()=>{
+    const i = +b.dataset.gver;
+    abrirDrawer(drawerGestorPendente(i)); bindGlobais($('#drawer'));
+    $('#gp-aprov').addEventListener('click',()=>aprovarGestor(i));
+    $('#gp-rej').addEventListener('click',()=>rejeitarGestor(i));
   }));
   el.querySelectorAll('[data-met-toggle]').forEach(b=>b.addEventListener('click',()=>{
     const m = S.metodosManuais[+b.dataset.metToggle];
@@ -2210,7 +2212,11 @@ function bindScreen(el){
         gestor:gestorNome,
         endereco:`${v('nc-rua')}${v('nc-num')?`, ${v('nc-num')}`:''} · ${v('nc-bairro')}, ${v('nc-cidade')||'Maputo'} (${v('nc-prov')})`,
       });
-      S.gestoresPendentes.push({nome:gestorNome, condominio:nome, email:v('nc-email')||'—', tel:v('nc-tel'), data:'convite enviado · aguarda registo e aprovação'});
+      S.gestoresPendentes.push({nome:gestorNome, condominio:nome, email:v('nc-email')||'—', tel:v('nc-tel'), telAlt:v('nc-tel2')||'—',
+        data:'convite enviado · aguarda registo e aprovação',
+        nasc:v('ncg-nasc'), nuit:v('ncg-nuit'), docTipo:$('#ncg-doctipo').value, docNum:v('ncg-docnum'),
+        docFicheiro:/anexad|capturad/.test($('#ncg-doc-estado')?.textContent||'')?'documento_frente_verso.pdf':'por anexar',
+        termos:'declarados no cadastro do condomínio'});
       fecharTudo();
       toast(`Condomínio "${nome}" criado · código ${sigla(nome)} · gestor ${v('ncg-nome')} convidado por email`);
       render();
@@ -2338,6 +2344,53 @@ function modalTermos(){
     <p class="cell-sub">Texto de demonstração — a versão legal final será fornecida pela empresa operadora.</p>
   </div>
   <button class="btn btn-primary" data-close-modal style="margin-top:16px;width:100%;justify-content:center">Fechar</button>`;
+}
+function aprovarGestor(i){
+  const g = S.gestoresPendentes[i];
+  S.gestoresPendentes.splice(i,1);
+  fecharTudo();
+  toast(`${g.nome} aprovado · já pode gerir ${g.condominio}`); render();
+}
+function rejeitarGestor(i){
+  const g = S.gestoresPendentes[i];
+  S.gestoresPendentes.splice(i,1);
+  fecharTudo();
+  toast(`Registo de ${g.nome} rejeitado · o condomínio continua sem gestor`); render();
+}
+function drawerGestorPendente(i){
+  const g = S.gestoresPendentes[i];
+  const partes = g.nome.split(' ');
+  return `
+  <div class="drawer-head">
+    <div><h3>${g.nome}</h3><div class="cell-sub">Gestor por aprovar · ${g.condominio}</div></div>
+    <span style="margin-left:auto"></span>
+    <button class="icon-btn" data-close aria-label="Fechar">${ico('x','icon sm')}</button></div>
+  <div class="drawer-body">
+    <div class="note" style="margin-bottom:16px">${ico('shield','icon sm')}<span>${g.data} · Termos e Condições ${g.termos||'—'}. Consegue entrar na conta, mas só gere o condomínio depois de aprovado.</span></div>
+    <div class="f-row">
+      <div class="field"><label>Nome</label><input value="${partes[0]||'—'}" readonly></div>
+      <div class="field"><label>Apelido</label><input value="${partes.slice(1).join(' ')||'—'}" readonly></div>
+    </div>
+    <div class="f-row">
+      <div class="field"><label>Data de nascimento</label><input class="num" value="${g.nasc||'—'}" readonly></div>
+      <div class="field"><label>NUIT</label><input class="num" value="${g.nuit||'—'}" readonly></div>
+    </div>
+    <div class="f-row">
+      <div class="field"><label>Documento</label><input class="num" value="${g.docTipo||'BI'} · ${g.docNum||'—'}" readonly></div>
+      <div class="field"><label>Cópia do documento</label><input value="${g.docFicheiro||'—'}" readonly></div>
+    </div>
+    <div class="field"><label>Condomínio a gerir</label><input value="${g.condominio}" readonly></div>
+    <div class="field"><label>Email</label><input value="${g.email}" readonly></div>
+    <div class="f-row">
+      <div class="field"><label>Contacto</label><input class="num" value="${g.tel||'—'}" readonly></div>
+      <div class="field"><label>Contacto alternativo</label><input class="num" value="${g.telAlt||'—'}" readonly></div>
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost sm" data-close>Fechar</button>
+    <button class="btn btn-danger sm" id="gp-rej">Rejeitar</button>
+    <button class="btn btn-primary sm" id="gp-aprov">${ico('check','icon sm')}Aprovar gestor</button>
+  </div>`;
 }
 function drawerNovoColab(){
   return `
