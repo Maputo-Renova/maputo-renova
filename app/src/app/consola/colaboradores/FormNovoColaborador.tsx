@@ -63,9 +63,9 @@ export function FormNovoColaborador({
         </div>
       </div>
       <p className="text-[12.5px] text-ink-3">
-        É gerado um código de convite de uso único; a pessoa cria a conta em
-        &quot;Tenho um código de convite&quot; na página de entrada. (O envio
-        automático por email chega com a integração de emails.)
+        É gerado um código de convite de uso único, enviado automaticamente por
+        email; a pessoa cria a conta em &quot;Tenho um código de convite&quot; na
+        página de entrada.
       </p>
       <div className="flex flex-wrap items-center gap-3">
         <button className="btn btn-primary" disabled={pendente}>

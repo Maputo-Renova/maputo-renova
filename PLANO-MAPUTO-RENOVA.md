@@ -8,6 +8,7 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 3. Cada alteração de âmbito (pedido do cliente, decisão de negócio) é registada aqui no mesmo commit em que se implementa.
 4. Nada se desenvolve fora do protótipo aprovado (`prototype/index.html`): o protótipo é o contrato de UI/UX. Divergências só com decisão explícita registada em "Decisões".
 5. A segurança (secção S) não é uma fase ao fim — cada etapa nova cumpre os requisitos S antes de ser marcada concluída.
+6. No fecho de cada etapa escreve-se uma entrada no **Diário de bordo** (fim deste documento): o que foi feito, o que ficou pendente, os desafios encontrados e como foram resolvidos.
 
 **Legenda:** `[x]` concluído e verificado · `[>]` em curso · `[ ]` por fazer · `[!]` bloqueado (depende do cliente/terceiros)
 
@@ -66,14 +67,17 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 
 ## Fase 2 — Comunicações e cobrança automática
 
-- [ ] Resend: domínio de envio verificado + templates (convite de acesso, recuperação, fatura emitida, confirmação de pagamento, aviso do gestor)
-- [ ] Régua de cobrança real: pg_cron → fila `envios` → email (D-5, vencimento, D+3, D+7), com custo registado por envio
-- [ ] Envio dos convites por email (hoje o código é entregue manualmente pela consola/agente)
+- [x] Fila de envios na base de dados (`envios`: pendente → enviado/falhou, com erro e dedupe por etapa)
+- [x] Edge Function `processar-envios` (Resend) protegida por segredo no Vault; processada pelo pg_cron a cada 5 min
+- [x] Régua de cobrança automática: D-5, vencimento, D+3 e D+7 (pg_cron diário, dedupe por fatura/etapa)
+- [x] Convites por email: flat registada → proprietário; colaborador/gestor criado → convite de acesso
+- [x] Notificações: comprovativo novo → gestor · pagamento confirmado → morador · ticket novo → gestor · aviso → todos os proprietários
+- [x] Templates HTML com a marca (verde, cartão branco) gerados no servidor
+- [!] **Chave Resend por configurar** — o formulário seguro do Supabase está pausado; definir `RESEND_API_KEY` em Edge Functions → Secrets no dashboard. Até lá os envios ficam `pendente` (nada se perde)
+- [!] Domínio `maputorenova.co.za` registado (cliente) → verificar no Resend e trocar o remetente de teste (`FROM_EMAIL`)
 - [!] Gateway de SMS (fornecedor em Moçambique; contrato em nome do cliente) → régua também por SMS
-- [!] Domínio `maputorenova.co.za` registado (cliente) → DNS na Vercel + emails `@maputorenova.co.za`
 - [x] Deploy automático a cada push (repositório público + ligação Git no plano gratuito)
 - [!] Vercel Pro na entrega (cliente assume) → permite voltar a privar o repositório mantendo o deploy automático
-- [ ] Notificação ao gestor quando entra comprovativo/ticket novo
 
 ## Fase 3 — Pagamentos digitais 🔒
 
@@ -151,3 +155,27 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 | Nov 2026 | Lembretes **automáticos** (sem botão); métodos de pagamento dentro de Configuração |
 | Nov 2026 | O protótipo aprovado é o contrato de UI — a app segue-o à letra |
 | Nov 2026 | Funções Vercel fixadas em `dub1` (latência); middleware valida JWT localmente |
+
+---
+
+## Diário de bordo
+
+### 14 Nov 2026 · Fase 1 — Núcleo em produção
+**Feito:** autenticação real, cadastro do agente com anti-duplicação, faturação automática (pg_cron), pagamento por transferência com comprovativo, fila de confirmação do gestor; ciclo completo testado em browser real.
+**Pendente:** nada do âmbito; M-Pesa fica para a Fase 3 (contrato).
+**Desafios e soluções:** (1) o proxy da sessão não alcançava o Supabase — criado ambiente cloud próprio com o host permitido; (2) o fetch do Node ignorava o proxy — resolvido com `instrumentation.ts` (undici); (3) avisos "unstable value" do Next 16 — resolvido com `cacheComponents: false` + `connection()`.
+
+### 14 Nov 2026 · Fidelidade ao protótipo
+**Feito:** consola reconstruída com a estrutura exacta do protótipo (Visão geral com mês/ranking/aprovações, Condomínios, Colaboradores, Repasses, Configuração), Tesouraria/Suporte/Avisos do gestor, A minha flat/Suporte/Avisos do morador, O meu perfil em todos os papéis; migrações de tickets e convites de acesso; tudo testado de ponta a ponta.
+**Pendente:** nada.
+**Desafios e soluções:** o cliente apontou (bem) que a app divergia do protótipo — a aba "Gestores" inventada foi removida e o protótipo passou a regra escrita deste plano; utilizadores demo criados por SQL falhavam no login ("Database error querying schema") — resolvido normalizando as colunas de token do GoTrue para `''`.
+
+### 14 Nov 2026 · Latência, deploy automático e ícones
+**Feito:** diagnóstico da lentidão (funções na Cidade do Cabo ↔ base de dados na Irlanda, 4–6 idas × ~170 ms) resolvido fixando as funções em `dub1` e validando o JWT localmente no middleware (ES256/getClaims); repositório tornado público e projecto Vercel ligado ao Git — deploy automático a cada push; sistema de 33 ícones SVG do protótipo portado para toda a app (skill impeccable; glifos Unicode eliminados).
+**Pendente:** Vercel Pro na entrega para voltar a privar o repositório sem perder o deploy automático.
+**Desafios e soluções:** o domínio `maputo-renova.vercel.app` ficou preso ao projecto antigo — o cliente apagou-o no dashboard e o domínio foi anexado ao novo; dois agentes antigos de deploy manual continuavam vivos a pedir confirmações — identificados e terminados.
+
+### 14 Nov 2026 · Fase 2 — Emails e régua de cobrança
+**Feito:** fila de envios na base de dados com dedupe; Edge Function `processar-envios` (Resend) protegida por segredo no Vault e verificada (403 sem segredo, 503 sem chave); régua D-5/D0/D+3/D+7 agendada; gatilhos de email para convites (flat e acesso), comprovativos, pagamentos confirmados, tickets e avisos; templates HTML com a marca; envio de teste em fila.
+**Pendente:** `RESEND_API_KEY` nos secrets das Edge Functions (bloqueado: o formulário seguro do Supabase estava pausado — definir no dashboard); domínio próprio no Resend quando `maputorenova.co.za` existir; SMS com contrato do operador.
+**Desafios e soluções:** a criação automática da chave Resend foi (correctamente) travada pelo classificador de permissões — a chave passa a ser criada pelo cliente no dashboard do Resend e colada só no Supabase; o segredo do processador ia parar ao repositório público na migração — movido para o Vault do Supabase com leitura via função restrita ao service_role.

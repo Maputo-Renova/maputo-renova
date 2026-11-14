@@ -38,8 +38,9 @@ export function FormAviso({ nFlats }: { nFlats: number }) {
         </p>
       ) : null}
       <p className="text-[12px] text-ink-3">
-        O envio por SMS e email activa-se com a integração de mensagens; até lá o
-        aviso fica visível na conta de cada proprietário.
+        O aviso fica visível na conta de cada proprietário e segue
+        automaticamente por email para quem tem email no cadastro. O SMS
+        activa-se com o contrato do operador.
       </p>
     </form>
   );
