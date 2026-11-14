@@ -1,0 +1,77 @@
+
+import { connection } from "next/server";
+import { AppShell } from "@/components/AppShell";
+import { exigirPapel } from "@/lib/perfil";
+import { createClient } from "@/lib/supabase/server";
+import { NAV_GESTOR } from "@/lib/navs";
+import { FormAviso } from "./FormAviso";
+
+export default async function AvisosGestor() {
+  await connection();
+  const perfil = await exigirPapel("gestor");
+  const supabase = await createClient();
+
+  const [{ data: avisos }, { data: flats }] = await Promise.all([
+    supabase
+      .from("avisos")
+      .select("id, titulo, corpo, created_at")
+      .order("created_at", { ascending: false }),
+    supabase.from("flats").select("id"),
+  ]);
+
+  const nFlats = (flats ?? []).length;
+
+  return (
+    <AppShell perfil={perfil} sub="Gestão do condomínio" itens={NAV_GESTOR}>
+      <div className="mb-5 mt-2">
+        <h1 className="text-[26px] font-extrabold tracking-tight">Avisos</h1>
+        <p className="text-sm text-ink-2">
+          Comunicações enviadas por SMS e email a todos os proprietários
+        </p>
+      </div>
+
+      <div className="grid items-start gap-4 lg:grid-cols-[2fr_3fr]">
+        <div className="grid gap-4">
+          <div className="card">
+            <h2 className="mb-3 text-base font-extrabold">Novo aviso</h2>
+            <FormAviso nFlats={nFlats} />
+          </div>
+          <div className="card">
+            <h2 className="mb-2 text-base font-extrabold">Régua de cobrança automática</h2>
+            <p className="text-[13px] text-ink-2">
+              O sistema envia SMS e email sem intervenção do gestor:{" "}
+              <b>5 dias antes do vencimento</b>, <b>no vencimento</b>, e aos{" "}
+              <b>3 e 7 dias de atraso</b>. Cada envio fica registado com o custo.
+            </p>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 className="mb-2 text-base font-extrabold">Avisos enviados</h2>
+          {(avisos ?? []).length === 0 ? (
+            <div className="empty">
+              <span className="e-ico">!</span>
+              <b>Ainda sem avisos</b>
+              <p>O primeiro aviso que enviar aparece aqui e na conta de cada proprietário.</p>
+            </div>
+          ) : (
+            <ul className="row-list">
+              {avisos!.map((a) => (
+                <li key={a.id}>
+                  <span className="row-ico g">!</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="cell-main">{a.titulo}</div>
+                    <div className="cell-sub">{a.corpo}</div>
+                  </div>
+                  <span className="cell-sub">
+                    {new Date(a.created_at).toLocaleDateString("pt-PT")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </AppShell>
+  );
+}

@@ -55,12 +55,34 @@ export async function criarCondominio(_prev: Resultado, fd: FormData): Promise<R
       termos_aceites_por: user?.id ?? null,
       created_by: user?.id ?? null,
     })
-    .select("nome, codigo")
+    .select("id, nome, codigo")
     .single();
 
   if (error) return { erro: mapearErro(error.message) };
+
+  // Convite de acesso do gestor (uso único): o gestor regista-se com este
+  // código e fica pendente até a consola aprovar.
+  let convite = "";
+  const gestorNome = texto(fd, "gestor_nome");
+  if (gestorNome) {
+    const { data: conv } = await supabase
+      .from("convites_acesso")
+      .insert({
+        papel: "gestor",
+        condominio_id: data.id,
+        nome: gestorNome,
+        apelido: texto(fd, "gestor_apelido") || null,
+        email: texto(fd, "gestor_email") || null,
+        telefone: texto(fd, "gestor_telefone") || null,
+        criado_por: user?.id ?? null,
+      })
+      .select("codigo")
+      .single();
+    if (conv) convite = ` Código de convite do gestor: ${conv.codigo}`;
+  }
+
   revalidatePath("/agente");
-  return { ok: `Condomínio "${data.nome}" criado · código ${data.codigo}.` };
+  return { ok: `Condomínio "${data.nome}" criado · código ${data.codigo}.${convite}` };
 }
 
 export async function criarFlat(_prev: Resultado, fd: FormData): Promise<Resultado> {
