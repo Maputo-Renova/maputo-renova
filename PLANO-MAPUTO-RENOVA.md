@@ -61,7 +61,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 - [x] Morador fiel ao protótipo: A minha flat (só leitura + pedir correcção) · Suporte · Avisos
 - [x] O meu perfil em todos os papéis (nome; password com verificação da actual; email bloqueado por papel)
 - [x] Dados demo: Jardim das Acácias (JDA, 3 flats) + Torres do Índico (TDI, gestor pendente para demonstrar aprovação)
-- [>] Deploy de produção da versão fiel ao protótipo (build verde; envio em curso)
+- [x] Deploy de produção fiel ao protótipo, com o sistema de ícones SVG portado (navegação, KPIs, cartões, linhas, botões)
+- [x] Deploy automático: repositório público ligado ao projecto Vercel — cada push ao `main` publica sozinho (funções em `dub1`)
 
 ## Fase 2 — Comunicações e cobrança automática
 
@@ -70,7 +71,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 - [ ] Envio dos convites por email (hoje o código é entregue manualmente pela consola/agente)
 - [!] Gateway de SMS (fornecedor em Moçambique; contrato em nome do cliente) → régua também por SMS
 - [!] Domínio `maputorenova.co.za` registado (cliente) → DNS na Vercel + emails `@maputorenova.co.za`
-- [!] Vercel Pro (cliente assume) → ligação Git com deploy automático a cada push (hoje o deploy é manual por ficheiros)
+- [x] Deploy automático a cada push (repositório público + ligação Git no plano gratuito)
+- [!] Vercel Pro na entrega (cliente assume) → permite voltar a privar o repositório mantendo o deploy automático
 - [ ] Notificação ao gestor quando entra comprovativo/ticket novo
 
 ## Fase 3 — Pagamentos digitais 🔒
