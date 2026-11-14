@@ -1,5 +1,6 @@
 "use client";
 
+import { Icone } from "@/components/Icone";
 import { useActionState } from "react";
 import { guardarTaxas, criarConta, type EstadoAccao } from "../actions";
 
@@ -59,6 +60,7 @@ export function FormTaxas({
       </p>
       <div className="flex items-center gap-3">
         <button className="btn btn-primary" disabled={pendente}>
+          <Icone nome="check" sm />
           {pendente ? "A guardar…" : "Guardar taxas"}
         </button>
         <Mensagem estado={estado} />
@@ -99,6 +101,7 @@ export function FormNovaConta() {
       </div>
       <div className="flex items-center gap-3">
         <button className="btn btn-primary" disabled={pendente}>
+          <Icone nome="check" sm />
           {pendente ? "A adicionar…" : "Adicionar conta"}
         </button>
         <Mensagem estado={estado} />

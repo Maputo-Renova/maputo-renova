@@ -1,6 +1,7 @@
 
 import { connection } from "next/server";
 import { AppShell } from "@/components/AppShell";
+import { Icone } from "@/components/Icone";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { NAV_GESTOR } from "@/lib/navs";
@@ -42,7 +43,9 @@ export default async function SuporteGestor() {
       {abertos.length === 0 ? (
         <div className="card">
           <div className="empty">
-            <span className="e-ico">✓</span>
+            <span className="e-ico">
+              <Icone nome="check" />
+            </span>
             <b>Tudo resolvido</b>
             <p>Não há reclamações nem pedidos em aberto.</p>
           </div>
@@ -54,7 +57,9 @@ export default async function SuporteGestor() {
             const pill = PILL_TK[t.estado] ?? PILL_TK.novo;
             return (
               <div key={t.id} className="card flex flex-wrap items-start gap-3.5">
-                <span className={`row-ico ${t.estado === "em_curso" ? "a" : "b"}`}>✉</span>
+                <span className={`row-ico ${t.estado === "em_curso" ? "a" : "b"}`}>
+                  <Icone nome="mail" />
+                </span>
                 <div className="min-w-55 flex-1">
                   <div className="text-[15px] font-extrabold">{t.assunto}</div>
                   <p className="mt-0.5 text-[13.5px] text-ink-2">{t.mensagem}</p>
@@ -76,7 +81,10 @@ export default async function SuporteGestor() {
                   <form action={marcarTicket}>
                     <input type="hidden" name="ticket_id" value={t.id} />
                     <input type="hidden" name="estado" value="resolvido" />
-                    <button className="btn btn-primary btn-sm">Resolver</button>
+                    <button className="btn btn-primary btn-sm">
+                      <Icone nome="check" sm />
+                      Resolver
+                    </button>
                   </form>
                 </div>
               </div>
@@ -93,7 +101,9 @@ export default async function SuporteGestor() {
               const flat = flatPorId.get(t.flat_id);
               return (
                 <li key={t.id}>
-                  <span className="row-ico g">✓</span>
+                  <span className="row-ico g">
+                    <Icone nome="check" />
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="cell-main">{t.assunto}</div>
                     <div className="cell-sub">

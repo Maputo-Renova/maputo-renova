@@ -1,6 +1,7 @@
 
 import { connection } from "next/server";
 import { AppShell } from "@/components/AppShell";
+import { Icone } from "@/components/Icone";
 import { MT } from "@/components/Kpi";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
@@ -98,7 +99,9 @@ export default async function Repasses() {
         {(condominios ?? []).length === 0 ? (
           <div className="card">
             <div className="empty">
-              <span className="e-ico">∅</span>
+              <span className="e-ico">
+                <Icone nome="bank" />
+              </span>
               <b>Sem condomínios activos</b>
               <p>Os repasses aparecem aqui quando houver cobranças confirmadas.</p>
             </div>

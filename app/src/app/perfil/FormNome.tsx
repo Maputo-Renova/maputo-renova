@@ -1,5 +1,6 @@
 "use client";
 
+import { Icone } from "@/components/Icone";
 import { useActionState } from "react";
 import { guardarNome, type EstadoAccao } from "./actions";
 
@@ -42,6 +43,7 @@ export function FormNome({
       </div>
       <div className="flex items-center gap-3">
         <button className="btn btn-primary" disabled={pendente}>
+          <Icone nome="check" sm />
           {pendente ? "A guardar…" : "Guardar alterações"}
         </button>
         {estado ? (

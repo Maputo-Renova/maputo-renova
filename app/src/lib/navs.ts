@@ -1,36 +1,38 @@
 import type { ItemNav } from "@/components/NavLateral";
 import type { Papel } from "@/lib/perfil";
 
+/* Navegação por papel — ícones e ordem do protótipo aprovado. */
+
 export const NAV_GESTOR: ItemNav[] = [
-  { href: "/gestor", rotulo: "Painel" },
-  { href: "/gestor/pagamentos", rotulo: "Pagamentos" },
-  { href: "/gestor/tesouraria", rotulo: "Tesouraria" },
-  { href: "/gestor/suporte", rotulo: "Suporte" },
-  { href: "/gestor/avisos", rotulo: "Avisos" },
-  { href: "/perfil", rotulo: "O meu perfil" },
+  { href: "/gestor", rotulo: "Painel", icone: "grid" },
+  { href: "/gestor/pagamentos", rotulo: "Pagamentos", icone: "bank" },
+  { href: "/gestor/tesouraria", rotulo: "Tesouraria", icone: "wallet" },
+  { href: "/gestor/suporte", rotulo: "Suporte", icone: "mail" },
+  { href: "/gestor/avisos", rotulo: "Avisos", icone: "bell" },
+  { href: "/perfil", rotulo: "O meu perfil", icone: "settings" },
 ];
 
 export const NAV_MORADOR: ItemNav[] = [
-  { href: "/morador", rotulo: "A minha quota" },
-  { href: "/morador/flat", rotulo: "A minha flat" },
-  { href: "/morador/faturas", rotulo: "Faturas" },
-  { href: "/morador/suporte", rotulo: "Suporte" },
-  { href: "/morador/avisos", rotulo: "Avisos" },
-  { href: "/perfil", rotulo: "O meu perfil" },
+  { href: "/morador", rotulo: "A minha quota", icone: "home" },
+  { href: "/morador/flat", rotulo: "A minha flat", icone: "flats" },
+  { href: "/morador/faturas", rotulo: "Faturas", icone: "receipt" },
+  { href: "/morador/suporte", rotulo: "Suporte", icone: "mail" },
+  { href: "/morador/avisos", rotulo: "Avisos", icone: "bell" },
+  { href: "/perfil", rotulo: "O meu perfil", icone: "settings" },
 ];
 
 export const NAV_CONSOLA: ItemNav[] = [
-  { href: "/consola", rotulo: "Visão geral" },
-  { href: "/consola/condominios", rotulo: "Condomínios" },
-  { href: "/consola/colaboradores", rotulo: "Colaboradores" },
-  { href: "/consola/repasses", rotulo: "Repasses" },
-  { href: "/consola/configuracao", rotulo: "Configuração" },
-  { href: "/perfil", rotulo: "O meu perfil" },
+  { href: "/consola", rotulo: "Visão geral", icone: "grid" },
+  { href: "/consola/condominios", rotulo: "Condomínios", icone: "building" },
+  { href: "/consola/colaboradores", rotulo: "Colaboradores", icone: "users" },
+  { href: "/consola/repasses", rotulo: "Repasses", icone: "bank" },
+  { href: "/consola/configuracao", rotulo: "Configuração", icone: "settings" },
+  { href: "/perfil", rotulo: "O meu perfil", icone: "users" },
 ];
 
 export const NAV_AGENTE: ItemNav[] = [
-  { href: "/agente", rotulo: "Cadastro" },
-  { href: "/perfil", rotulo: "O meu perfil" },
+  { href: "/agente", rotulo: "Cadastro", icone: "plus" },
+  { href: "/perfil", rotulo: "O meu perfil", icone: "settings" },
 ];
 
 export const NAV_POR_PAPEL: Record<Papel, ItemNav[]> = {

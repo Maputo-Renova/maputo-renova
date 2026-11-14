@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Icone } from "@/components/Icone";
 import { criarTicket, type EstadoAccao } from "../actions";
 
 export function FormTicket({ categoriaInicial }: { categoriaInicial?: string }) {
@@ -35,6 +36,7 @@ export function FormTicket({ categoriaInicial }: { categoriaInicial?: string }) 
         />
       </div>
       <button className="btn btn-primary w-full justify-center" disabled={pendente}>
+        <Icone nome="send" sm />
         {pendente ? "A enviar…" : "Enviar ao gestor"}
       </button>
       {estado ? (

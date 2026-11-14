@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Icone } from "@/components/Icone";
 import { registarRepasse, type EstadoAccao } from "../actions";
 
 export function FormRepasse({
@@ -50,6 +51,7 @@ export function FormRepasse({
       </div>
       <div className="flex items-center gap-3">
         <button className="btn btn-primary btn-sm" disabled={pendente}>
+          <Icone nome="bank" sm />
           {pendente ? "A registar…" : "Registar repasse"}
         </button>
         {estado ? (

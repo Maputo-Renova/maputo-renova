@@ -2,6 +2,7 @@
 import { connection } from "next/server";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { Icone } from "@/components/Icone";
 import { Kpi, MT } from "@/components/Kpi";
 import { MonthPicker } from "@/components/MonthPicker";
 import { exigirPapel } from "@/lib/perfil";
@@ -115,16 +116,19 @@ export default async function Consola({
 
       <div className="grid gap-4 md:grid-cols-3">
         <Kpi
+          icone="wallet"
           rotulo="Cobranças processadas"
           valor={MT(proc)}
           detalhe={mes.corrente ? "mês corrente" : "mês fechado"}
         />
         <Kpi
+          icone="arrUp"
           rotulo={`Taxa de serviço (${taxas.servicoPct}%)`}
           valor={MT(receita)}
           detalhe="cobrada aos apartamentos sobre a quota"
         />
         <Kpi
+          icone="shield"
           rotulo="Fundo da associação"
           valor={MT(fundo)}
           detalhe={`${taxas.associacao} MT × ${pagasTotal} flats pagas`}
@@ -137,6 +141,12 @@ export default async function Consola({
           style={{ border: "1px solid var(--amber-700)", background: "#FFFDF8" }}
         >
           <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span
+              className="card-ico"
+              style={{ background: "var(--amber-100)", color: "var(--amber-700)" }}
+            >
+              <Icone nome="shield" />
+            </span>
             <h2 className="text-base font-extrabold">Gestores por aprovar</h2>
             <span className="pill pill-pendente ml-auto">
               {pendentes!.length} pendente{pendentes!.length > 1 ? "s" : ""}
@@ -151,7 +161,9 @@ export default async function Consola({
               const condo = condoDe(g.condominio_id);
               return (
                 <li key={g.id}>
-                  <span className="row-ico a">{(g.nome ?? "?")[0]}</span>
+                  <span className="row-ico a">
+                    <Icone nome="users" />
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="cell-main">
                       {[g.nome, g.apelido].filter(Boolean).join(" ")}
@@ -176,7 +188,10 @@ export default async function Consola({
                     </form>
                     <form action={aprovarGestor}>
                       <input type="hidden" name="perfil_id" value={g.id} />
-                      <button className="btn btn-primary btn-sm">Aprovar</button>
+                      <button className="btn btn-primary btn-sm">
+                        <Icone nome="check" sm />
+                        Aprovar
+                      </button>
                     </form>
                   </div>
                 </li>
@@ -242,7 +257,12 @@ export default async function Consola({
 
         <div className="grid gap-4">
           <div className="card">
-            <h2 className="mb-1 text-base font-extrabold">Ranking de adimplência</h2>
+            <div className="mb-1 flex items-center gap-2.5">
+              <span className="card-ico">
+                <Icone nome="arrUp" />
+              </span>
+              <h2 className="text-base font-extrabold">Ranking de adimplência</h2>
+            </div>
             <p className="mb-1 text-[12.5px] text-ink-3">
               Menor inadimplência primeiro · &quot;Em dia&quot; = elegível para o
               fundo da associação
@@ -278,7 +298,12 @@ export default async function Consola({
           </div>
 
           <div className="card">
-            <h2 className="mb-1 text-base font-extrabold">Auditoria recente</h2>
+            <div className="mb-1 flex items-center gap-2.5">
+              <span className="card-ico">
+                <Icone nome="shield" />
+              </span>
+              <h2 className="text-base font-extrabold">Auditoria recente</h2>
+            </div>
             {(auditoria ?? []).length === 0 ? (
               <p className="py-3 text-sm text-ink-2">
                 Sem registos recentes — as acções sensíveis (aprovações, taxas,
@@ -288,7 +313,9 @@ export default async function Consola({
               <ul className="row-list">
                 {auditoria!.map((a, i) => (
                   <li key={i}>
-                    <span className="row-ico b">•</span>
+                    <span className="row-ico b">
+                      <Icone nome="clock" />
+                    </span>
                     <div className="min-w-0 flex-1">
                       <div className="cell-main">{a.acao}</div>
                       <div className="cell-sub">{a.entidade}</div>

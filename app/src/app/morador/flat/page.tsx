@@ -2,6 +2,7 @@
 import { connection } from "next/server";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { Icone } from "@/components/Icone";
 import { MT } from "@/components/Kpi";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
@@ -57,7 +58,12 @@ export default async function MinhaFlat() {
       ) : (
         <div className="grid items-start gap-4 lg:grid-cols-2">
           <div className="card">
-            <h2 className="mb-3 text-base font-extrabold">Identificação</h2>
+            <div className="mb-3 flex items-center gap-2.5">
+              <span className="card-ico">
+                <Icone nome="flats" />
+              </span>
+              <h2 className="text-base font-extrabold">Identificação</h2>
+            </div>
             <div className="grid gap-3.5">
               <div className="grid gap-3.5 sm:grid-cols-2">
                 <Campo rotulo="Referência de cadastro" valor={flat.referencia} />
@@ -84,7 +90,12 @@ export default async function MinhaFlat() {
 
           <div className="grid gap-4">
             <div className="card">
-              <h2 className="mb-3 text-base font-extrabold">Proprietário(a)</h2>
+              <div className="mb-3 flex items-center gap-2.5">
+                <span className="card-ico">
+                  <Icone nome="shield" />
+                </span>
+                <h2 className="text-base font-extrabold">Proprietário(a)</h2>
+              </div>
               <div className="grid gap-3.5">
                 <div className="grid gap-3.5 sm:grid-cols-2">
                   <Campo rotulo="Nome" valor={flat.proprietario_nome} />
@@ -118,6 +129,7 @@ export default async function MinhaFlat() {
               </div>
             </div>
             <div className="note items-center">
+              <Icone nome="shield" sm />
               <span className="flex-1">
                 Os dados de cadastro só podem ser alterados pela administração do
                 condomínio.

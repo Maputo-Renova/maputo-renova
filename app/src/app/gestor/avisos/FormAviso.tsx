@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Icone } from "@/components/Icone";
 import { enviarAviso, type EstadoAccao } from "../actions";
 
 export function FormAviso({ nFlats }: { nFlats: number }) {
@@ -25,6 +26,7 @@ export function FormAviso({ nFlats }: { nFlats: number }) {
         />
       </div>
       <button className="btn btn-primary w-full justify-center" disabled={pendente}>
+        <Icone nome="send" sm />
         {pendente ? "A enviar…" : `Enviar a ${nFlats} flats`}
       </button>
       {estado ? (

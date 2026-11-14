@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Icone } from "@/components/Icone";
 import { criarColaborador, type EstadoAccao } from "../actions";
 
 export function FormNovoColaborador({
@@ -68,6 +69,7 @@ export function FormNovoColaborador({
       </p>
       <div className="flex flex-wrap items-center gap-3">
         <button className="btn btn-primary" disabled={pendente}>
+          <Icone nome="check" sm />
           {pendente ? "A criar…" : "Criar e convidar"}
         </button>
       </div>

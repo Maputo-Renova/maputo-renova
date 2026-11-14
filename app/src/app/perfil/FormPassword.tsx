@@ -1,5 +1,6 @@
 "use client";
 
+import { Icone } from "@/components/Icone";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -61,6 +62,7 @@ export function FormPassword({ email }: { email: string }) {
       </div>
       <div className="flex items-center gap-3">
         <button className="btn btn-primary" disabled={pendente}>
+          <Icone nome="check" sm />
           {pendente ? "A alterar…" : "Alterar password"}
         </button>
         {msg ? (

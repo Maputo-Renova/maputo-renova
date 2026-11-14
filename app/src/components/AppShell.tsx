@@ -1,4 +1,5 @@
 import { Marca } from "@/components/Marca";
+import { Icone } from "@/components/Icone";
 import { NavLateral, type ItemNav } from "@/components/NavLateral";
 import { sair } from "@/app/actions/sair";
 import type { Perfil } from "@/lib/perfil";
@@ -30,7 +31,10 @@ export function AppShell({
         </div>
         <NavLateral itens={itens} />
         <form action={sair} className="mt-auto border-t border-line-soft pt-3">
-          <button className="nav-item w-full text-left">Terminar sessão</button>
+          <button className="nav-item w-full text-left">
+            <Icone nome="logout" />
+            Terminar sessão
+          </button>
         </form>
       </aside>
       <div className="min-w-0">

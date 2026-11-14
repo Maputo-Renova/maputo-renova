@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { Icone, type NomeIcone } from "@/components/Icone";
 import { Kpi, MT } from "@/components/Kpi";
 import { MonthPicker } from "@/components/MonthPicker";
 import { exigirPapel } from "@/lib/perfil";
@@ -133,10 +134,10 @@ export default async function CondominioDetalhe({
     ? [gestor.nome, gestor.apelido].filter(Boolean).join(" ")
     : [condo.gestor_nome, condo.gestor_apelido].filter(Boolean).join(" ");
 
-  const TIPO_MOV: Record<string, { rotulo: string; ico: string }> = {
-    credito_cobranca: { rotulo: "Cobrança confirmada", ico: "g" },
-    taxa_plataforma: { rotulo: "Taxa de serviço", ico: "a" },
-    repasse: { rotulo: "Repasse ao condomínio", ico: "b" },
+  const TIPO_MOV: Record<string, { rotulo: string; ico: string; icone: NomeIcone }> = {
+    credito_cobranca: { rotulo: "Cobrança confirmada", ico: "g", icone: "arrUp" },
+    taxa_plataforma: { rotulo: "Taxa de serviço", ico: "a", icone: "receipt" },
+    repasse: { rotulo: "Repasse ao condomínio", ico: "b", icone: "bank" },
   };
 
   return (
@@ -171,6 +172,7 @@ export default async function CondominioDetalhe({
           </span>
           <MonthPicker base={`/consola/condominios/${id}`} {...mes} />
           <Link href="/consola/repasses" className="btn btn-primary">
+            <Icone nome="bank" sm />
             Registar repasse
           </Link>
         </div>
@@ -178,12 +180,13 @@ export default async function CondominioDetalhe({
 
       <div className="grid gap-4 md:grid-cols-3">
         <Kpi
+          icone="wallet"
           rotulo={`Cobrança de ${mes.rotulo.split(" ")[0]}`}
           valor={MT(cobrado)}
           detalhe={`${pct}% do esperado · de ${MT(esperado)}`}
         />
-        <Kpi rotulo="Em atraso" valor={`${emAtraso} flats`} detalhe={`${inad}% de inadimplência`} />
-        <Kpi rotulo="Saldo a repassar" valor={MT(saldo)} detalhe={`vencimento dia ${condo.dia_vencimento}`} />
+        <Kpi icone="alert" rotulo="Em atraso" valor={`${emAtraso} flats`} detalhe={`${inad}% de inadimplência`} />
+        <Kpi icone="bank" rotulo="Saldo a repassar" valor={MT(saldo)} detalhe={`vencimento dia ${condo.dia_vencimento}`} />
       </div>
 
       <div className="card mt-4">
@@ -195,7 +198,9 @@ export default async function CondominioDetalhe({
         </div>
         {lista.length === 0 ? (
           <div className="empty">
-            <span className="e-ico">∅</span>
+            <span className="e-ico">
+              <Icone nome="flats" />
+            </span>
             <b>Ainda sem flats</b>
             <p>
               {condo.total_moradias
@@ -263,7 +268,12 @@ export default async function CondominioDetalhe({
 
       <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
         <div className="card">
-          <h2 className="mb-2 text-base font-extrabold">Movimentos recentes</h2>
+          <div className="mb-2 flex items-center gap-2.5">
+            <span className="card-ico">
+              <Icone nome="ledger" />
+            </span>
+            <h2 className="text-base font-extrabold">Movimentos recentes</h2>
+          </div>
           {(movimentos ?? []).length === 0 ? (
             <p className="py-3 text-sm text-ink-2">
               Sem movimentos — aparecem com a primeira cobrança confirmada.
@@ -271,11 +281,13 @@ export default async function CondominioDetalhe({
           ) : (
             <ul className="row-list">
               {movimentos!.map((m, i) => {
-                const t = TIPO_MOV[m.tipo] ?? { rotulo: m.tipo, ico: "b" };
+                const t = TIPO_MOV[m.tipo] ?? { rotulo: m.tipo, ico: "b", icone: "bank" as NomeIcone };
                 const v = Number(m.valor);
                 return (
                   <li key={i}>
-                    <span className={`row-ico ${t.ico}`}>{v > 0 ? "+" : "−"}</span>
+                    <span className={`row-ico ${t.ico}`}>
+                      <Icone nome={t.icone} />
+                    </span>
                     <div className="min-w-0 flex-1">
                       <div className="cell-main">{t.rotulo}</div>
                       <div className="cell-sub">
@@ -296,9 +308,14 @@ export default async function CondominioDetalhe({
         </div>
 
         <div className="card">
-          <h2 className="mb-2 text-base font-extrabold">
-            Despesas de {mes.rotulo.split(" ")[0]}
-          </h2>
+          <div className="mb-2 flex items-center gap-2.5">
+            <span className="card-ico">
+              <Icone nome="receipt" />
+            </span>
+            <h2 className="text-base font-extrabold">
+              Despesas de {mes.rotulo.split(" ")[0]}
+            </h2>
+          </div>
           {(despesas ?? []).length === 0 ? (
             <p className="py-3 text-sm text-ink-2">
               Sem despesas registadas neste mês — toda a despesa do gestor exige
@@ -308,7 +325,9 @@ export default async function CondominioDetalhe({
             <ul className="row-list">
               {despesas!.map((d, i) => (
                 <li key={i}>
-                  <span className="row-ico a">−</span>
+                  <span className="row-ico a">
+                    <Icone nome="receipt" />
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="cell-main">{d.descricao ?? d.categoria}</div>
                     <div className="cell-sub">
@@ -403,14 +422,21 @@ export default async function CondominioDetalhe({
       </div>
 
       <div className="card mt-4">
-        <h2 className="mb-2 text-base font-extrabold">Avisos enviados pelo gestor</h2>
+        <div className="mb-2 flex items-center gap-2.5">
+          <span className="card-ico">
+            <Icone nome="bell" />
+          </span>
+          <h2 className="text-base font-extrabold">Avisos enviados pelo gestor</h2>
+        </div>
         {(avisos ?? []).length === 0 ? (
           <p className="py-3 text-sm text-ink-2">Ainda sem avisos enviados.</p>
         ) : (
           <ul className="row-list">
             {avisos!.map((a, i) => (
               <li key={i}>
-                <span className="row-ico g">!</span>
+                <span className="row-ico g">
+                  <Icone nome="bell" />
+                </span>
                 <div className="min-w-0 flex-1">
                   <div className="cell-main">{a.titulo}</div>
                   <div className="cell-sub">{a.corpo}</div>

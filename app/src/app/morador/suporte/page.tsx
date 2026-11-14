@@ -1,6 +1,7 @@
 
 import { connection } from "next/server";
 import { AppShell } from "@/components/AppShell";
+import { Icone } from "@/components/Icone";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { NAV_MORADOR } from "@/lib/navs";
@@ -38,7 +39,12 @@ export default async function SuporteMorador({
 
       <div className="grid items-start gap-4 lg:grid-cols-[2fr_3fr]">
         <div className="card">
-          <h2 className="mb-3 text-base font-extrabold">Novo pedido</h2>
+          <div className="mb-3 flex items-center gap-2.5">
+            <span className="card-ico">
+              <Icone nome="mail" />
+            </span>
+            <h2 className="text-base font-extrabold">Novo pedido</h2>
+          </div>
           <FormTicket
             categoriaInicial={categoria === "correccao" ? "Correcção de dados" : undefined}
           />
@@ -48,7 +54,9 @@ export default async function SuporteMorador({
           <h2 className="mb-2 text-base font-extrabold">Os meus pedidos</h2>
           {(tickets ?? []).length === 0 ? (
             <div className="empty">
-              <span className="e-ico">✓</span>
+              <span className="e-ico">
+                <Icone nome="check" />
+              </span>
               <b>Sem pedidos</b>
               <p>Quando enviar uma reclamação ou pedido, aparece aqui com o estado.</p>
             </div>
@@ -61,7 +69,7 @@ export default async function SuporteMorador({
                     <span
                       className={`row-ico ${t.estado === "resolvido" ? "g" : t.estado === "em_curso" ? "a" : "b"}`}
                     >
-                      ✉
+                      <Icone nome="mail" />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="cell-main">{t.assunto}</div>

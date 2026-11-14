@@ -1,6 +1,7 @@
 
 import { connection } from "next/server";
 import { AppShell } from "@/components/AppShell";
+import { Icone } from "@/components/Icone";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { NAV_CONSOLA } from "@/lib/navs";
@@ -55,7 +56,12 @@ export default async function ConfiguracaoConsola() {
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <div className="card">
-          <h2 className="mb-2 text-base font-extrabold">Métodos digitais</h2>
+          <div className="mb-2 flex items-center gap-2.5">
+            <span className="card-ico">
+              <Icone nome="phone" />
+            </span>
+            <h2 className="text-base font-extrabold">Métodos digitais</h2>
+          </div>
           <p className="mb-1 text-[13px] text-ink-2">
             Confirmação automática por webhook. As taxas dos operadores são{" "}
             <b>deduzidas da taxa de serviço</b> — nunca cobradas à parte ao
@@ -104,21 +110,30 @@ export default async function ConfiguracaoConsola() {
         </div>
 
         <div className="card">
-          <h2 className="mb-2 text-base font-extrabold">Contas bancárias da plataforma</h2>
+          <div className="mb-2 flex items-center gap-2.5">
+            <span className="card-ico">
+              <Icone nome="bank" />
+            </span>
+            <h2 className="text-base font-extrabold">Contas bancárias da plataforma</h2>
+          </div>
           <p className="mb-1 text-[13px] text-ink-2">
             Para receber as transferências dos proprietários e enviar os repasses
             aos condomínios.
           </p>
           {(contas ?? []).length === 0 ? (
             <div className="empty">
-              <span className="e-ico">B</span>
+              <span className="e-ico">
+                <Icone nome="bank" />
+              </span>
               <b>Sem contas</b>
               <p>Adicione a primeira conta bancária da plataforma.</p>
             </div>
           ) : (
             contas!.map((c) => (
               <div key={c.id} className="cfg-row">
-                <span className="row-ico g">B</span>
+                <span className="row-ico g">
+                  <Icone nome="bank2" />
+                </span>
                 <div className="min-w-0 flex-1">
                   <div className="cell-main">
                     {c.banco} · <span className="num">{c.numero_conta}</span>
@@ -169,14 +184,21 @@ export default async function ConfiguracaoConsola() {
       </div>
 
       <div className="card mt-4">
-        <h2 className="mb-2 text-base font-extrabold">Métodos manuais</h2>
+        <div className="mb-2 flex items-center gap-2.5">
+          <span className="card-ico">
+            <Icone nome="receipt" />
+          </span>
+          <h2 className="text-base font-extrabold">Métodos manuais</h2>
+        </div>
         <p className="mb-1 text-[13px] text-ink-2">
           Pagamentos confirmados pelo gestor depois de validar o comprovativo.
           Aparecem ao proprietário na hora de pagar.
         </p>
         {(metodos ?? []).map((m) => (
           <div key={m.id} className="cfg-row">
-            <span className="row-ico g">T</span>
+            <span className="row-ico g">
+              <Icone nome="bank2" />
+            </span>
             <div className="min-w-0 flex-1">
               <div className="cell-main">{m.nome}</div>
               <div className="cell-sub">
@@ -207,12 +229,18 @@ export default async function ConfiguracaoConsola() {
       </div>
 
       <div className="card mt-4 max-w-2xl">
-        <h2 className="mb-4 text-base font-extrabold">Taxa de serviço</h2>
+        <div className="mb-4 flex items-center gap-2.5">
+          <span className="card-ico">
+            <Icone nome="wallet" />
+          </span>
+          <h2 className="text-base font-extrabold">Taxa de serviço</h2>
+        </div>
         <FormTaxas
           servicoPct={Number(config?.taxa_servico_pct ?? 15)}
           associacao={Number(config?.taxa_associacao ?? 499)}
         />
         <div className="note mt-4">
+          <Icone nome="shield" sm />
           <span>
             A fatura do morador tem 3 linhas: taxa de condomínio (variável,
             repassada ao condomínio), taxa da associação (fixa, para o fundo de

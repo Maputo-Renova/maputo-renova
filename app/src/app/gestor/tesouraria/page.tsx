@@ -1,6 +1,7 @@
 
 import { connection } from "next/server";
 import { AppShell } from "@/components/AppShell";
+import { Icone, type NomeIcone } from "@/components/Icone";
 import { Kpi, MT } from "@/components/Kpi";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
@@ -9,10 +10,10 @@ import { mesDe } from "@/lib/mes";
 import { obterTaxas } from "@/lib/taxas";
 import { FormDespesa } from "./FormDespesa";
 
-const TIPO_MOV: Record<string, { rotulo: string; ico: string }> = {
-  credito_cobranca: { rotulo: "Cobrança confirmada", ico: "g" },
-  taxa_plataforma: { rotulo: "Taxa de serviço", ico: "a" },
-  repasse: { rotulo: "Repasse recebido", ico: "b" },
+const TIPO_MOV: Record<string, { rotulo: string; ico: string; icone: NomeIcone }> = {
+  credito_cobranca: { rotulo: "Cobrança confirmada", ico: "g", icone: "arrUp" },
+  taxa_plataforma: { rotulo: "Taxa de serviço", ico: "a", icone: "receipt" },
+  repasse: { rotulo: "Repasse recebido", ico: "b", icone: "bank" },
 };
 
 export default async function Tesouraria() {
@@ -75,13 +76,15 @@ export default async function Tesouraria() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Kpi rotulo="Saldo a repassar" valor={MT(saldo)} detalhe="repasse registado pela plataforma" />
+        <Kpi icone="wallet" rotulo="Saldo a repassar" valor={MT(saldo)} detalhe="repasse registado pela plataforma" />
         <Kpi
+          icone="arrUp"
           rotulo={`Entradas em ${mesNome}`}
           valor={MT(entradasMes)}
           detalhe={`${nEntradas} cobranças confirmadas`}
         />
         <Kpi
+          icone="arrDown"
           rotulo={`Despesas em ${mesNome}`}
           valor={MT(totalDespesas)}
           detalhe={`${despesasMes.length} despesas · todas com fatura anexada`}
@@ -89,7 +92,10 @@ export default async function Tesouraria() {
       </div>
 
       <div className="card mt-4">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
+        <div className="mb-2 flex flex-wrap items-center gap-2.5">
+          <span className="card-ico">
+            <Icone nome="shield" />
+          </span>
           <div>
             <h2 className="text-base font-extrabold">
               Taxa da associação · {mesNome}
@@ -119,6 +125,7 @@ export default async function Tesouraria() {
           </div>
         ) : null}
         <div className="note mt-3">
+          <Icone nome="shield" sm />
           <span>
             Só com <b>100% das flats em dia</b> o condomínio pode submeter
             projectos ao fundo da associação e votar na assembleia. Os valores já
@@ -129,7 +136,12 @@ export default async function Tesouraria() {
 
       <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
         <div className="card">
-          <h2 className="mb-2 text-base font-extrabold">Movimentos recentes</h2>
+          <div className="mb-2 flex items-center gap-2.5">
+            <span className="card-ico">
+              <Icone nome="ledger" />
+            </span>
+            <h2 className="text-base font-extrabold">Movimentos recentes</h2>
+          </div>
           {movs.length === 0 ? (
             <p className="py-3 text-sm text-ink-2">
               Sem movimentos — aparecem com a primeira cobrança confirmada.
@@ -137,11 +149,13 @@ export default async function Tesouraria() {
           ) : (
             <ul className="row-list">
               {movs.slice(0, 8).map((m, i) => {
-                const t = TIPO_MOV[m.tipo] ?? { rotulo: m.tipo, ico: "b" };
+                const t = TIPO_MOV[m.tipo] ?? { rotulo: m.tipo, ico: "b", icone: "bank" as NomeIcone };
                 const v = Number(m.valor);
                 return (
                   <li key={i}>
-                    <span className={`row-ico ${t.ico}`}>{v > 0 ? "+" : "−"}</span>
+                    <span className={`row-ico ${t.ico}`}>
+                      <Icone nome={t.icone} />
+                    </span>
                     <div className="min-w-0 flex-1">
                       <div className="cell-main">{t.rotulo}</div>
                       <div className="cell-sub">
@@ -163,7 +177,12 @@ export default async function Tesouraria() {
 
         <div className="grid gap-4">
           <div className="card">
-            <h2 className="mb-2 text-base font-extrabold">Despesas recentes</h2>
+            <div className="mb-2 flex items-center gap-2.5">
+              <span className="card-ico">
+                <Icone nome="receipt" />
+              </span>
+              <h2 className="text-base font-extrabold">Despesas recentes</h2>
+            </div>
             {(despesas ?? []).length === 0 ? (
               <p className="py-3 text-sm text-ink-2">
                 Ainda sem despesas registadas.
@@ -172,7 +191,9 @@ export default async function Tesouraria() {
               <ul className="row-list">
                 {despesas!.slice(0, 6).map((d) => (
                   <li key={d.id}>
-                    <span className="row-ico a">−</span>
+                    <span className="row-ico a">
+                      <Icone nome="receipt" />
+                    </span>
                     <div className="min-w-0 flex-1">
                       <div className="cell-main">{d.descricao ?? d.categoria}</div>
                       <div className="cell-sub">
@@ -188,7 +209,12 @@ export default async function Tesouraria() {
             )}
           </div>
           <div className="card">
-            <h2 className="mb-3 text-base font-extrabold">Nova despesa</h2>
+            <div className="mb-3 flex items-center gap-2.5">
+              <span className="card-ico">
+                <Icone nome="plus" />
+              </span>
+              <h2 className="text-base font-extrabold">Nova despesa</h2>
+            </div>
             <FormDespesa />
           </div>
         </div>

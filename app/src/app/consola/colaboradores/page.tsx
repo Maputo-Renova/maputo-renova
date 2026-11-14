@@ -2,6 +2,7 @@
 import { connection } from "next/server";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { Icone } from "@/components/Icone";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { NAV_CONSOLA } from "@/lib/navs";
@@ -156,7 +157,9 @@ export default async function Colaboradores({
               <ul className="row-list">
                 {convites!.map((c) => (
                   <li key={c.id}>
-                    <span className="row-ico b">✉</span>
+                    <span className="row-ico b">
+                      <Icone nome="mail" />
+                    </span>
                     <div className="min-w-0 flex-1">
                       <div className="cell-main">
                         {[c.nome, c.apelido].filter(Boolean).join(" ")} ·{" "}
@@ -177,6 +180,7 @@ export default async function Colaboradores({
           ) : null}
 
           <div className="note">
+            <Icone nome="shield" sm />
             <span>
               <b>Agente</b> faz os cadastros de condomínios e flats (sem finanças);{" "}
               <b>Administrador</b> tem acesso total à consola; <b>Gestor</b> gere

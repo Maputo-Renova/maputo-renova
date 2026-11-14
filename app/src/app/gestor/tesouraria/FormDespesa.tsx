@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Icone } from "@/components/Icone";
 import { criarDespesa, type EstadoAccao } from "../actions";
 
 export function FormDespesa() {
@@ -40,6 +41,7 @@ export function FormDespesa() {
       </div>
       <div className="flex items-center gap-3">
         <button className="btn btn-primary btn-sm" disabled={pendente}>
+          <Icone nome="check" sm />
           {pendente ? "A registar…" : "Registar despesa"}
         </button>
         {estado ? (

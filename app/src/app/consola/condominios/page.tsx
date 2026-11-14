@@ -2,6 +2,7 @@
 import { connection } from "next/server";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
+import { Icone } from "@/components/Icone";
 import { MT } from "@/components/Kpi";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
@@ -45,13 +46,16 @@ export default async function CondominiosConsola() {
           </p>
         </div>
         <Link href="/consola/condominios/novo" className="btn btn-primary">
-          + Novo condomínio
+          <Icone nome="plus" sm />
+          Novo condomínio
         </Link>
       </div>
       <div className="card">
         {lista.length === 0 ? (
           <div className="empty">
-            <span className="e-ico">∅</span>
+            <span className="e-ico">
+              <Icone nome="building" />
+            </span>
             <b>Ainda não há condomínios</b>
             <p>Crie o primeiro ou peça ao agente para o cadastrar.</p>
           </div>

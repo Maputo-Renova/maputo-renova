@@ -1,6 +1,7 @@
 
 import { connection } from "next/server";
 import { AppShell } from "@/components/AppShell";
+import { Icone } from "@/components/Icone";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { NAV_MORADOR } from "@/lib/navs";
@@ -30,7 +31,9 @@ export default async function AvisosMorador() {
       {(avisos ?? []).length === 0 ? (
         <div className="card">
           <div className="empty">
-            <span className="e-ico">!</span>
+            <span className="e-ico">
+              <Icone nome="bell" />
+            </span>
             <b>Sem avisos</b>
             <p>Os avisos da administração do condomínio aparecem aqui.</p>
           </div>
@@ -39,7 +42,9 @@ export default async function AvisosMorador() {
         <div className="grid max-w-180 gap-4">
           {avisos!.map((a) => (
             <div key={a.id} className="card flex gap-3.5">
-              <span className="row-ico g">!</span>
+              <span className="row-ico g">
+                <Icone nome="bell" />
+              </span>
               <div className="min-w-0 flex-1">
                 <div className="text-[15px] font-extrabold">{a.titulo}</div>
                 <p className="mt-1 text-sm text-ink-2">{a.corpo}</p>

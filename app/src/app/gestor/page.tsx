@@ -43,9 +43,9 @@ export default async function PainelGestor() {
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <Kpi rotulo="Cobrado este mês" valor={MT(cobrado)} detalhe={`${pagas.length} faturas pagas`} />
-        <Kpi rotulo="Por cobrar" valor={MT(porCobrar)} detalhe={`${(faturas ?? []).length - pagas.length} faturas em aberto`} />
-        <Kpi rotulo="Em atraso" valor={String(emAtraso)} detalhe="faturas em atraso" />
+        <Kpi icone="wallet" rotulo="Cobrado este mês" valor={MT(cobrado)} detalhe={`${pagas.length} faturas pagas`} />
+        <Kpi icone="receipt" rotulo="Por cobrar" valor={MT(porCobrar)} detalhe={`${(faturas ?? []).length - pagas.length} faturas em aberto`} />
+        <Kpi icone="alert" rotulo="Em atraso" valor={String(emAtraso)} detalhe="faturas em atraso" />
       </div>
       {(flats?.length ?? 0) === 0 ? (
         <div className="card mt-4 text-sm text-ink-2">

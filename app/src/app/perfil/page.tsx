@@ -2,6 +2,7 @@
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { Icone } from "@/components/Icone";
 import { obterPerfil } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { NAV_POR_PAPEL, SUB_POR_PAPEL } from "@/lib/navs";
@@ -39,7 +40,12 @@ export default async function Perfil() {
       </div>
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <div className="card">
-          <h2 className="mb-4 text-base font-extrabold">Perfil</h2>
+          <div className="mb-4 flex items-center gap-2.5">
+            <span className="card-ico">
+              <Icone nome="users" />
+            </span>
+            <h2 className="text-base font-extrabold">Perfil</h2>
+          </div>
           <FormNome
             nome={perfil.nome}
             apelido={perfil.apelido ?? ""}
@@ -48,7 +54,12 @@ export default async function Perfil() {
           />
         </div>
         <div className="card">
-          <h2 className="mb-4 text-base font-extrabold">Password</h2>
+          <div className="mb-4 flex items-center gap-2.5">
+            <span className="card-ico">
+              <Icone nome="key" />
+            </span>
+            <h2 className="text-base font-extrabold">Password</h2>
+          </div>
           <FormPassword email={user?.email ?? ""} />
         </div>
       </div>

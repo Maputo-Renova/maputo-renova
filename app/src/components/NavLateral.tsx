@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Icone, type NomeIcone } from "@/components/Icone";
 
-export type ItemNav = { href: string; rotulo: string };
+export type ItemNav = { href: string; rotulo: string; icone: NomeIcone };
 
 export function NavLateral({ itens }: { itens: ItemNav[] }) {
   const pathname = usePathname();
@@ -24,6 +25,7 @@ export function NavLateral({ itens }: { itens: ItemNav[] }) {
           className="nav-item"
           aria-current={i.href === activo ? "page" : undefined}
         >
+          <Icone nome={i.icone} />
           {i.rotulo}
         </Link>
       ))}
