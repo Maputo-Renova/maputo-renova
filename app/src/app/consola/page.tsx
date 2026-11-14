@@ -1,19 +1,13 @@
-export const instant = false;
 
+import { connection } from "next/server";
 import { AppShell } from "@/components/AppShell";
 import { Kpi } from "@/components/Kpi";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
-
-const NAV = [
-  { href: "/consola", rotulo: "Visão geral" },
-  { href: "/consola/condominios", rotulo: "Condomínios" },
-  { href: "/consola/colaboradores", rotulo: "Colaboradores" },
-  { href: "/consola/repasses", rotulo: "Repasses" },
-  { href: "/consola/configuracao", rotulo: "Configuração" },
-];
+import { NAV_CONSOLA } from "@/lib/navs";
 
 export default async function Consola() {
+  await connection();
   const perfil = await exigirPapel("super_admin");
   const supabase = await createClient();
 
@@ -28,7 +22,7 @@ export default async function Consola() {
   ]);
 
   return (
-    <AppShell perfil={perfil} sub="Super administração" itens={NAV}>
+    <AppShell perfil={perfil} sub="Super administração" itens={NAV_CONSOLA}>
       <div className="mb-5 mt-2">
         <h1 className="text-[26px] font-extrabold tracking-tight">Visão geral</h1>
         <p className="text-sm text-ink-2">Todas as organizações</p>

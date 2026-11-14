@@ -1,19 +1,13 @@
-export const instant = false;
 
+import { connection } from "next/server";
 import { AppShell } from "@/components/AppShell";
 import { MT } from "@/components/Kpi";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
-
-const NAV = [
-  { href: "/morador", rotulo: "A minha quota" },
-  { href: "/morador/flat", rotulo: "A minha flat" },
-  { href: "/morador/faturas", rotulo: "Faturas" },
-  { href: "/morador/suporte", rotulo: "Suporte" },
-  { href: "/morador/avisos", rotulo: "Avisos" },
-];
+import { NAV_MORADOR } from "@/lib/navs";
 
 export default async function PainelMorador() {
+  await connection();
   const perfil = await exigirPapel("proprietario");
   const supabase = await createClient();
 
@@ -41,7 +35,7 @@ export default async function PainelMorador() {
     <AppShell
       perfil={perfil}
       sub={flat ? `Flat ${flat.numero} · ${flat.referencia ?? ""}` : "Proprietário"}
-      itens={NAV}
+      itens={NAV_MORADOR}
     >
       <div className="mb-5 mt-2">
         <h1 className="text-[26px] font-extrabold tracking-tight">

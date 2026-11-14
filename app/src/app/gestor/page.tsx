@@ -1,19 +1,13 @@
-export const instant = false;
 
+import { connection } from "next/server";
 import { AppShell } from "@/components/AppShell";
 import { Kpi, MT } from "@/components/Kpi";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
-
-const NAV = [
-  { href: "/gestor", rotulo: "Painel" },
-  { href: "/gestor/pagamentos", rotulo: "Pagamentos" },
-  { href: "/gestor/tesouraria", rotulo: "Tesouraria" },
-  { href: "/gestor/suporte", rotulo: "Suporte" },
-  { href: "/gestor/avisos", rotulo: "Avisos" },
-];
+import { NAV_GESTOR } from "@/lib/navs";
 
 export default async function PainelGestor() {
+  await connection();
   const perfil = await exigirPapel("gestor");
   const supabase = await createClient();
 
@@ -39,7 +33,7 @@ export default async function PainelGestor() {
   const emAtraso = (faturas ?? []).filter((f) => f.estado === "em_atraso").length;
 
   return (
-    <AppShell perfil={perfil} sub={condominio?.nome ?? "Condomínio"} itens={NAV}>
+    <AppShell perfil={perfil} sub={condominio?.nome ?? "Condomínio"} itens={NAV_GESTOR}>
       <div className="mb-5 mt-2">
         <h1 className="text-[26px] font-extrabold tracking-tight">
           Olá, {perfil.nome.split(" ")[0]}
