@@ -73,7 +73,7 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 - [x] Convites por email: flat registada → proprietário; colaborador/gestor criado → convite de acesso
 - [x] Notificações: comprovativo novo → gestor · pagamento confirmado → morador · ticket novo → gestor · aviso → todos os proprietários
 - [x] Templates HTML com a marca (verde, cartão branco) gerados no servidor
-- [!] **Chave Resend por configurar** — o formulário seguro do Supabase está pausado; definir `RESEND_API_KEY` em Edge Functions → Secrets no dashboard. Até lá os envios ficam `pendente` (nada se perde)
+- [x] Chave Resend configurada pelo cliente nos secrets das Edge Functions; teste de ponta a ponta **entregue** (fila → Edge Function → Resend, estado `delivered`)
 - [!] Domínio `maputorenova.co.za` registado (cliente) → verificar no Resend e trocar o remetente de teste (`FROM_EMAIL`)
 - [!] Gateway de SMS (fornecedor em Moçambique; contrato em nome do cliente) → régua também por SMS
 - [x] Deploy automático a cada push (repositório público + ligação Git no plano gratuito)
@@ -177,5 +177,5 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 
 ### 14 Nov 2026 · Fase 2 — Emails e régua de cobrança
 **Feito:** fila de envios na base de dados com dedupe; Edge Function `processar-envios` (Resend) protegida por segredo no Vault e verificada (403 sem segredo, 503 sem chave); régua D-5/D0/D+3/D+7 agendada; gatilhos de email para convites (flat e acesso), comprovativos, pagamentos confirmados, tickets e avisos; templates HTML com a marca; envio de teste em fila.
-**Pendente:** `RESEND_API_KEY` nos secrets das Edge Functions (bloqueado: o formulário seguro do Supabase estava pausado — definir no dashboard); domínio próprio no Resend quando `maputorenova.co.za` existir; SMS com contrato do operador.
+**Pendente:** domínio próprio no Resend quando `maputorenova.co.za` existir (trocar `FROM_EMAIL`); SMS com contrato do operador. A chave Resend foi configurada pelo cliente no dashboard e o teste chegou com estado `delivered`.
 **Desafios e soluções:** a criação automática da chave Resend foi (correctamente) travada pelo classificador de permissões — a chave passa a ser criada pelo cliente no dashboard do Resend e colada só no Supabase; o segredo do processador ia parar ao repositório público na migração — movido para o Vault do Supabase com leitura via função restrita ao service_role.
