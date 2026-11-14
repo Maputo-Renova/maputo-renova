@@ -28,9 +28,10 @@ export default async function proxy(request: NextRequest) {
   );
 
   // Importante: manter entre o createServerClient e o return — renova a sessão.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims valida o JWT (ES256) localmente via JWKS em cache: sem ida à
+  // rede por navegação; só vai à rede para renovar um token expirado.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const { pathname } = request.nextUrl;
   const ePublica = ROTAS_PUBLICAS.some((r) => pathname.startsWith(r));
