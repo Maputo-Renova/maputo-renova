@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/perfil";
+import { validarComprovativo } from "@/lib/uploads";
 
 export type EstadoAccao = { ok: boolean; mensagem: string } | null;
 
@@ -24,6 +25,8 @@ export async function criarDespesa(
   const ficheiro = fd.get("comprovativo");
   if (!(ficheiro instanceof File) || ficheiro.size === 0)
     return { ok: false, mensagem: "A fatura ou recibo anexado é obrigatório." };
+  const invalido = validarComprovativo(ficheiro);
+  if (invalido) return { ok: false, mensagem: invalido };
 
   const ext = (ficheiro.name.split(".").pop() || "pdf").toLowerCase();
   const path = `${perfil.id}/despesa-${Date.now()}.${ext}`;

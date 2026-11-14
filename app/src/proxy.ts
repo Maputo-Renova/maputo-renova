@@ -1,7 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const ROTAS_PUBLICAS = ["/entrar", "/recuperar", "/convite", "/auth"];
+const ROTAS_PUBLICAS = [
+  "/entrar",
+  "/recuperar",
+  "/convite",
+  "/auth",
+  "/termos",
+  "/privacidade",
+];
 
 export default async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

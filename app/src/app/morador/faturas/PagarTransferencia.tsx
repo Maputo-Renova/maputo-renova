@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { validarComprovativo } from "@/lib/uploads";
 
 type Conta = { banco: string; titular: string; numero_conta: string; nib: string | null } | null;
 
@@ -34,8 +35,9 @@ export function PagarTransferencia({
       setErro("Anexe o comprovativo da transferência (PDF ou foto).");
       return;
     }
-    if (ficheiro.size > 10 * 1024 * 1024) {
-      setErro("O ficheiro não pode ter mais de 10 MB.");
+    const invalido = validarComprovativo(ficheiro);
+    if (invalido) {
+      setErro(invalido);
       return;
     }
     setAEnviar(true);

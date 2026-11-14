@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { exigirPapel } from "@/lib/perfil";
+import { validarComprovativo } from "@/lib/uploads";
 
 export type EstadoAccao = { ok: boolean; mensagem: string } | null;
 
@@ -168,6 +169,8 @@ export async function registarRepasse(
   let comprovativoPath: string | null = null;
   const ficheiro = fd.get("comprovativo");
   if (ficheiro instanceof File && ficheiro.size > 0) {
+    const invalido = validarComprovativo(ficheiro);
+    if (invalido) return { ok: false, mensagem: invalido };
     const ext = (ficheiro.name.split(".").pop() || "pdf").toLowerCase();
     comprovativoPath = `${eu.id}/repasse-${condominioId}-${Date.now()}.${ext}`;
     const { error: errUp } = await supabase.storage

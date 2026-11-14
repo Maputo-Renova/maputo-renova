@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NAV_POR_PAPEL, SUB_POR_PAPEL } from "@/lib/navs";
 import { FormNome } from "./FormNome";
 import { FormPassword } from "./FormPassword";
+import { FormMfa } from "./FormMfa";
 
 const EMAIL_LOCK: Record<string, string> = {
   gestor: "O email está bloqueado. Só a consola pode alterá-lo e reenviar o acesso.",
@@ -53,14 +54,25 @@ export default async function Perfil() {
             mensagemEmail={EMAIL_LOCK[perfil.papel]}
           />
         </div>
-        <div className="card">
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="card-ico">
-              <Icone nome="key" />
-            </span>
-            <h2 className="text-base font-extrabold">Password</h2>
+        <div className="grid gap-4">
+          <div className="card">
+            <div className="mb-4 flex items-center gap-2.5">
+              <span className="card-ico">
+                <Icone nome="key" />
+              </span>
+              <h2 className="text-base font-extrabold">Password</h2>
+            </div>
+            <FormPassword email={user?.email ?? ""} />
           </div>
-          <FormPassword email={user?.email ?? ""} />
+          <div className="card">
+            <div className="mb-4 flex items-center gap-2.5">
+              <span className="card-ico">
+                <Icone nome="shield" />
+              </span>
+              <h2 className="text-base font-extrabold">Verificação em dois passos</h2>
+            </div>
+            <FormMfa />
+          </div>
         </div>
       </div>
     </AppShell>

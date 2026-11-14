@@ -114,15 +114,17 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 - [x] Alterar password exige a password actual; emails bloqueados (só gestor/consola alteram, conforme o papel)
 
 **Por fazer (gate de lançamento — nenhuma vai a piloto sem isto)**
-- [ ] Auditoria automática por triggers nas acções sensíveis (aprovações, taxas, contas, repasses, suspensões) → tabela `auditoria` (hoje existe mas não é alimentada)
-- [ ] Revisão formal de RLS: suite de testes SQL que prova, papel a papel, o que cada um NÃO consegue ler/escrever
-- [ ] `get_advisors` (security + performance) limpo antes de cada release
-- [ ] Backups: confirmar PITR/retenção no Supabase e testar um restauro
-- [ ] Protecção de abuso: rate limiting no Auth (Supabase) e verificação de ficheiros carregados (tipo/tamanho)
-- [ ] MFA obrigatório para contas da consola (super_admin)
-- [ ] Cabeçalhos de segurança na app (CSP, HSTS, nosniff, frame-deny) via `next.config.ts`
-- [ ] Política de privacidade e termos finais (dados KYC: BI/NUIT/morada — minimização, retenção e acesso registado)
-- [ ] Dependabot/renovate no repositório + `npm audit` na CI
+- [x] Auditoria automática por triggers: aprovações/suspensões de perfis, taxas, contas, métodos, repasses, pagamentos confirmados/rejeitados, convites e despesas → tabela `auditoria`
+- [x] Suite de testes de RLS (`supabase/tests/rls_teste.sql`, transaccional com rollback): anónimo, morador, gestor, gestor pendente e consola — **a passar por inteiro**
+- [x] `get_advisors` security corrido e tratado: funções de trigger e de cron deixaram de ser invocáveis pela API; helpers de RLS mantêm execução por serem avaliados nas políticas (só devolvem dados do próprio — risco aceite)
+- [x] Verificação de ficheiros carregados: 10 MB, PDF/JPEG/PNG/WebP — imposta no bucket (Storage), nos server actions e no cliente
+- [x] MFA (TOTP): activação no perfil com QR, código pedido no login e **imposto na base de dados** (política restritiva: sessão sem código vê zero dados) — testado de ponta a ponta
+- [x] Cabeçalhos de segurança na app (CSP, HSTS, nosniff, frame-ancestors none, Referrer-Policy, Permissions-Policy) — verificados na resposta
+- [x] Termos e Condições + Política de Privacidade publicados (/termos, /privacidade) — *versão de trabalho, sujeita a revisão jurídica*
+- [x] Dependabot semanal no repositório (`.github/dependabot.yml`)
+- [!] Protecção contra passwords vazadas (HaveIBeenPwned): toggle no dashboard do Supabase → Auth (cliente)
+- [!] Backups/PITR: exige Supabase Pro — assumir no go-live (cliente)
+- [ ] `npm audit` na CI (entra com a Fase 5)
 - [ ] Remover contas demo e dados de teste antes do go-live
 
 ## Fase 6 — Lançamento piloto
@@ -179,3 +181,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 **Feito:** fila de envios na base de dados com dedupe; Edge Function `processar-envios` (Resend) protegida por segredo no Vault e verificada (403 sem segredo, 503 sem chave); régua D-5/D0/D+3/D+7 agendada; gatilhos de email para convites (flat e acesso), comprovativos, pagamentos confirmados, tickets e avisos; templates HTML com a marca; envio de teste em fila.
 **Pendente:** domínio próprio no Resend quando `maputorenova.co.za` existir (trocar `FROM_EMAIL`); SMS com contrato do operador. A chave Resend foi configurada pelo cliente no dashboard e o teste chegou com estado `delivered`.
 **Desafios e soluções:** a criação automática da chave Resend foi (correctamente) travada pelo classificador de permissões — a chave passa a ser criada pelo cliente no dashboard do Resend e colada só no Supabase; o segredo do processador ia parar ao repositório público na migração — movido para o Vault do Supabase com leitura via função restrita ao service_role.
+
+### 14 Nov 2026 · Fase S — Segurança e endurecimento
+**Feito:** auditoria automática por triggers em todas as acções sensíveis; suite de testes de RLS por papel (anónimo, morador, gestor, gestor pendente, consola) a passar com rollback; advisors de segurança tratados (funções de trigger/cron retiradas da API); MFA TOTP completo — activação com QR no perfil, código no login e política restritiva na base de dados (sessão sem segundo factor vê zero dados), testado com códigos TOTP reais; limites de upload no bucket, servidor e cliente; cabeçalhos CSP/HSTS/nosniff/frame-ancestors; Termos e Privacidade publicados; Dependabot.
+**Pendente:** toggle de passwords vazadas no dashboard (cliente); backups PITR exigem Supabase Pro no go-live; npm audit entra com a CI (Fase 5); remover contas demo antes do lançamento.
+**Desafios e soluções:** a suite de RLS encontrou um defeito real logo à primeira — pedidos anónimos rebentavam com "permission denied" nos helpers em vez de devolver vazio (corrigido com grant inofensivo, migração 00021); os advisors apanharam as funções novas expostas na API (revogadas na 00022); o teste de MFA parou a meio com o factor activo e a conta demo quase ficou trancada — factor removido por SQL e o teste refeito com o proxy corrigido, desta vez com limpeza garantida no fim.
