@@ -22,7 +22,7 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 | 1 · Núcleo em produção | ✅ Concluída (deploy final em curso) |
 | 2 · Comunicações e cobrança automática | ⏳ Próxima |
 | 3 · Pagamentos digitais (M-Pesa/eMola) | 🔒 Bloqueada por contratos |
-| 4 · Associação e projectos | ✅ Concluída (falta só o relatório exportável) |
+| 4 · Associação e projectos | ✅ Concluída a 100% |
 | 5 · Qualidade e CI | ✅ Concluída (CI e E2E verdes) |
 | S · Segurança e endurecimento | 🔁 Contínua (base feita) |
 | 6 · Lançamento piloto | ⏳ Por fazer |
@@ -94,7 +94,7 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 - [x] Votação em assembleia: um voto por flat (`fn_votar_projecto`), contadores no projecto, voto visível ao próprio
 - [x] Elegibilidade imposta **na base de dados**: submeter ao fundo da associação e votar exigem 100% das flats em dia (trigger + função); valores pagos transitam sempre
 - [x] Testes: ciclo completo em browser (bloqueio por elegibilidade, submissão, aprovação, actualização, acompanhamento) + suite SQL (em dia a 100%, voto, voto duplicado recusado)
-- [ ] Relatório mensal exportável na consola (o botão "Exportar relatório" do protótipo)
+- [x] Relatório mensal exportável: botão "Exportar relatório" na Visão geral → página A4 imprimível (/consola/relatorio?mes=) com totais da plataforma, tabela por condomínio (cobrança, atraso, fundo, repasses, elegibilidade) e notas metodológicas
 
 ## Fase 5 — Qualidade e CI
 
@@ -195,3 +195,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 **Feito (Fase 4):** `associacao_mensal` preenchida por triggers; elegibilidade (100% em dia) imposta na base de dados para submissão e voto; Projectos de volta nos três perfis (submissão do gestor com três financiamentos, validação na Visão geral da consola, actualizações de progresso/gasto, acompanhamento e votação do morador com um voto por flat); emails ao gestor na aprovação/rejeição; auditoria e políticas de MFA nas tabelas novas; ciclo completo testado em browser e na suite SQL.
 **Pendente:** relatório mensal exportável (consola); staging com branches do Supabase (opcional, plano Pro). O workflow E2E ficou **verde** com a correcção da CSP — a CI completa (verificação + pilha local + browser + MFA) passa de ponta a ponta.
 **Desafios e soluções:** a CI apanhou dois defeitos reais — o tipo gerado `LayoutProps` não existe antes do build (tipagem explícita) e a migração 00002 não era reproduzível numa base nova (revoke condicional); a CSP fixava o URL de produção e bloqueava o login contra o Supabase local (passou a derivar do ambiente); o reset automático de formulários do React 19 após acções falhadas fez o teste de projectos submeter um formulário vazio (recarregar entre submissões) e o select controlado perdia a escolha do Playwright (passou a não-controlado).
+
+### 15 Nov 2026 · Fase 4 — Relatório mensal exportável
+**Feito:** página /consola/relatorio (mês seleccionável) com cabeçalho da marca, totais (cobranças, serviço, fundo, repasses), tabela por condomínio com pill de elegibilidade e linha de totais, notas metodológicas e botão Imprimir/Guardar PDF; estilos de impressão verificados (botões escondidos em modo print). Fase 4 fechada a 100%.
+**Pendente:** nada desta etapa.
+**Desafios e soluções:** nenhum relevante — reutilizou o sistema visual e as consultas existentes.

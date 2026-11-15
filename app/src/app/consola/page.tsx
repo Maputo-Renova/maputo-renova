@@ -123,7 +123,16 @@ export default async function Consola({
             Todas as organizações · {mes.rotulo}
           </p>
         </div>
-        <MonthPicker base="/consola" {...mes} />
+        <div className="flex flex-wrap items-center gap-2.5">
+          <MonthPicker base="/consola" {...mes} />
+          <Link
+            href={`/consola/relatorio?mes=${mes.iso.slice(0, 7)}`}
+            className="btn btn-dark"
+          >
+            <Icone nome="file" sm />
+            Exportar relatório
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
