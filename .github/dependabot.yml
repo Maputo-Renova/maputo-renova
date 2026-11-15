@@ -7,6 +7,19 @@ updates:
       day: monday
     open-pull-requests-limit: 5
     groups:
+      # Minor e patch agrupados num só PR (seguros de validar em conjunto)
       dependencias:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
+    # Majors chegam como PRs individuais, avaliados um a um.
+    # Estes ficam presos à compatibilidade do Next 16 e só sobem com ele:
+    ignore:
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
