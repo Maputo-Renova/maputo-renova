@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     "Gestão de condomínios em Maputo: quotas por M-Pesa, eMola e transferência bancária, avisos automáticos e contas à vista de todos.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-MZ" className={`${manrope.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>

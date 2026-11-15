@@ -22,8 +22,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 | 1 · Núcleo em produção | ✅ Concluída (deploy final em curso) |
 | 2 · Comunicações e cobrança automática | ⏳ Próxima |
 | 3 · Pagamentos digitais (M-Pesa/eMola) | 🔒 Bloqueada por contratos |
-| 4 · Associação e projectos | ⏳ Por fazer |
-| 5 · Qualidade e CI | ⏳ Por fazer |
+| 4 · Associação e projectos | ✅ Concluída a 100% |
+| 5 · Qualidade e CI | ✅ Concluída (CI e E2E verdes) |
 | S · Segurança e endurecimento | 🔁 Contínua (base feita) |
 | 6 · Lançamento piloto | ⏳ Por fazer |
 | 7 · Entrega ao cliente | ⏳ No fim |
@@ -89,18 +89,21 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 
 ## Fase 4 — Associação e projectos
 
-- [ ] Fatura consolidada mensal da associação visível na consola (tabela `associacao_mensal` já existe e liquida-se pelos pagamentos)
-- [ ] Reintroduzir Projectos (esquema `projectos`/`votos` já migrado; UI removida a pedido do cliente "por enquanto"): gestor submete → consola valida → assembleia vota → acompanhamento com actualizações
-- [ ] Elegibilidade aplicada: só condomínios "em dia" (100%) submetem e votam; valores pagos transitam sempre
-- [ ] Relatório mensal exportável na consola (o botão "Exportar relatório" do protótipo)
+- [x] Fatura consolidada da associação preenchida automaticamente (`associacao_mensal` por trigger das faturas) e visível na Tesouraria do gestor com barra de elegibilidade
+- [x] Projectos reintroduzidos: gestor submete (fundo / quota extraordinária / fundo da associação) → consola valida na Visão geral → gestor publica actualizações de progresso e gasto → morador acompanha
+- [x] Votação em assembleia: um voto por flat (`fn_votar_projecto`), contadores no projecto, voto visível ao próprio
+- [x] Elegibilidade imposta **na base de dados**: submeter ao fundo da associação e votar exigem 100% das flats em dia (trigger + função); valores pagos transitam sempre
+- [x] Testes: ciclo completo em browser (bloqueio por elegibilidade, submissão, aprovação, actualização, acompanhamento) + suite SQL (em dia a 100%, voto, voto duplicado recusado)
+- [x] Relatório mensal exportável: botão "Exportar relatório" na Visão geral → página A4 imprimível (/consola/relatorio?mes=) com totais da plataforma, tabela por condomínio (cobrança, atraso, fundo, repasses, elegibilidade) e notas metodológicas
 
 ## Fase 5 — Qualidade e CI
 
-- [ ] GitHub Actions: typecheck + lint + build em cada push/PR
-- [ ] Testes E2E Playwright automatizados em CI (os guiões já usados manualmente: ciclo de pagamento, aprovação de gestor, tickets, despesas) contra uma base de dados de teste
-- [ ] Ambiente de staging (branch do Supabase + preview da Vercel) para validar migrações antes de produção
-- [ ] Monitorização: alertas de erro de runtime (Vercel), `get_advisors` do Supabase na rotina de release
-- [ ] `docs/PRODUCT.md` actualizado como especificação viva a cada fase
+- [x] GitHub Actions "CI": `npm audit` (nível alto) + typecheck + lint + build em cada push/PR — **verde**
+- [x] GitHub Actions "E2E": pilha Supabase local descartável (migrações + seed), suite de RLS via psql, app compilada e testada em browser real (pagamento com comprovativo, aprovação de gestor, tickets, avisos, despesas, perfil e ciclo MFA com TOTP) — **verde**
+- [x] Migrações comprovadamente reproduzíveis do zero (a CI reconstrói a base de dados a cada execução)
+- [x] `docs/PRODUCT.md` aponta para o plano vivo com resumo do estado
+- [ ] Ambiente de staging (branches do Supabase, plano Pro) para validar migrações antes de produção — opcional, quando se justificar
+- [ ] Monitorização: alertas de erro de runtime (Vercel) e `get_advisors` na rotina de release
 
 ## Fase S — Segurança e endurecimento 🔁 (contínua; requisito central)
 
@@ -186,3 +189,14 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 **Feito:** auditoria automática por triggers em todas as acções sensíveis; suite de testes de RLS por papel (anónimo, morador, gestor, gestor pendente, consola) a passar com rollback; advisors de segurança tratados (funções de trigger/cron retiradas da API); MFA TOTP completo — activação com QR no perfil, código no login e política restritiva na base de dados (sessão sem segundo factor vê zero dados), testado com códigos TOTP reais; limites de upload no bucket, servidor e cliente; cabeçalhos CSP/HSTS/nosniff/frame-ancestors; Termos e Privacidade publicados; Dependabot.
 **Pendente:** toggle de passwords vazadas no dashboard (cliente); backups PITR exigem Supabase Pro no go-live; npm audit entra com a CI (Fase 5); remover contas demo antes do lançamento.
 **Desafios e soluções:** a suite de RLS encontrou um defeito real logo à primeira — pedidos anónimos rebentavam com "permission denied" nos helpers em vez de devolver vazio (corrigido com grant inofensivo, migração 00021); os advisors apanharam as funções novas expostas na API (revogadas na 00022); o teste de MFA parou a meio com o factor activo e a conta demo quase ficou trancada — factor removido por SQL e o teste refeito com o proxy corrigido, desta vez com limpeza garantida no fim.
+
+### 15 Nov 2026 · Fase 5 — CI (em estabilização) e Fase 4 — Associação e projectos
+**Feito (Fase 5):** workflows de CI (audit/typecheck/lint/build) e E2E (pilha Supabase local com migrações + seed, suite de RLS via psql, app compilada e testada em browser real com ciclo MFA); o gate de verificação já está verde.
+**Feito (Fase 4):** `associacao_mensal` preenchida por triggers; elegibilidade (100% em dia) imposta na base de dados para submissão e voto; Projectos de volta nos três perfis (submissão do gestor com três financiamentos, validação na Visão geral da consola, actualizações de progresso/gasto, acompanhamento e votação do morador com um voto por flat); emails ao gestor na aprovação/rejeição; auditoria e políticas de MFA nas tabelas novas; ciclo completo testado em browser e na suite SQL.
+**Pendente:** relatório mensal exportável (consola); staging com branches do Supabase (opcional, plano Pro). O workflow E2E ficou **verde** com a correcção da CSP — a CI completa (verificação + pilha local + browser + MFA) passa de ponta a ponta.
+**Desafios e soluções:** a CI apanhou dois defeitos reais — o tipo gerado `LayoutProps` não existe antes do build (tipagem explícita) e a migração 00002 não era reproduzível numa base nova (revoke condicional); a CSP fixava o URL de produção e bloqueava o login contra o Supabase local (passou a derivar do ambiente); o reset automático de formulários do React 19 após acções falhadas fez o teste de projectos submeter um formulário vazio (recarregar entre submissões) e o select controlado perdia a escolha do Playwright (passou a não-controlado).
+
+### 15 Nov 2026 · Fase 4 — Relatório mensal exportável
+**Feito:** página /consola/relatorio (mês seleccionável) com cabeçalho da marca, totais (cobranças, serviço, fundo, repasses), tabela por condomínio com pill de elegibilidade e linha de totais, notas metodológicas e botão Imprimir/Guardar PDF; estilos de impressão verificados (botões escondidos em modo print). Fase 4 fechada a 100%.
+**Pendente:** nada desta etapa.
+**Desafios e soluções:** nenhum relevante — reutilizou o sistema visual e as consultas existentes.

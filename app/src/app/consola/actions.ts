@@ -33,6 +33,30 @@ export async function rejeitarGestor(fd: FormData) {
   revalidatePath("/consola");
 }
 
+/** Aprovar um projecto pendente (financiamento 'associacao' segue para votação). */
+export async function aprovarProjecto(fd: FormData) {
+  const eu = await exigirPapel("super_admin");
+  const supabase = await createClient();
+  await supabase
+    .from("projectos")
+    .update({ estado: "aprovado", aprovado_por: eu.id, aprovado_em: new Date().toISOString() })
+    .eq("id", String(fd.get("projecto_id")))
+    .eq("estado", "pendente");
+  revalidatePath("/consola");
+}
+
+/** Rejeitar um projecto pendente. */
+export async function rejeitarProjecto(fd: FormData) {
+  await exigirPapel("super_admin");
+  const supabase = await createClient();
+  await supabase
+    .from("projectos")
+    .update({ estado: "rejeitado" })
+    .eq("id", String(fd.get("projecto_id")))
+    .eq("estado", "pendente");
+  revalidatePath("/consola");
+}
+
 /** Suspender um colaborador/gestor/administrador (nunca o próprio). */
 export async function suspenderPerfil(fd: FormData) {
   const eu = await exigirPapel("super_admin");

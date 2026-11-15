@@ -22,7 +22,7 @@ export function FormNovoColaborador({
         <select
           id="cl-funcao"
           name="funcao"
-          value={funcao}
+          defaultValue="Agente"
           onChange={(e) => setFuncao(e.target.value)}
         >
           <option value="Agente">Agente — faz os cadastros de condomínios e flats</option>

@@ -6,6 +6,32 @@ import { exigirPapel } from "@/lib/perfil";
 
 export type EstadoAccao = { ok: boolean; mensagem: string } | null;
 
+/** Votar num projecto do fundo da associação (um voto por flat). */
+export async function votarProjecto(
+  _prev: EstadoAccao,
+  fd: FormData,
+): Promise<EstadoAccao> {
+  await exigirPapel("proprietario");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("fn_votar_projecto", {
+    p_projecto: String(fd.get("projecto_id")),
+    p_favor: String(fd.get("favor")) === "true",
+  });
+  if (error) {
+    const m = error.message;
+    return {
+      ok: false,
+      mensagem: m.includes("já votou")
+        ? "A sua flat já votou neste projecto."
+        : m.includes("em dia")
+          ? "O condomínio precisa de estar 100% em dia com a taxa da associação para votar."
+          : "Não foi possível registar o voto.",
+    };
+  }
+  revalidatePath("/morador/projectos");
+  return { ok: true, mensagem: "Voto registado. Obrigado!" };
+}
+
 /** Novo pedido/reclamação do proprietário para o gestor do condomínio. */
 export async function criarTicket(
   _prev: EstadoAccao,

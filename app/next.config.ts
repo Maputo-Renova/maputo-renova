@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
-const SUPABASE = "https://phgoebpmijqdblllqpft.supabase.co";
+const SUPABASE =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://phgoebpmijqdblllqpft.supabase.co";
 
 const CSP = [
   "default-src 'self'",
@@ -8,7 +9,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  `connect-src 'self' ${SUPABASE} ${SUPABASE.replace("https", "wss")}`,
+  `connect-src 'self' ${SUPABASE} ${SUPABASE.replace(/^http/, "ws")}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

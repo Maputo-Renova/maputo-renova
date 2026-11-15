@@ -151,6 +151,13 @@ body {
   background: var(--red-100);
   color: var(--red-700);
 }
+.btn-dark {
+  background: var(--ink);
+  color: #fff;
+}
+.btn-dark:hover {
+  background: #000;
+}
 
 /* Tabelas (sistema do protótipo) */
 .tbl { width: 100%; border-collapse: collapse; }
