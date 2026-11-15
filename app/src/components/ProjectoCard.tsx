@@ -92,10 +92,15 @@ export function ProjectoCard({
           <div className="mb-1.5 text-[13px] font-bold">Financiamento</div>
           <div className="cell-sub">{textoFinanciamento(p)}</div>
           {p.financiamento === "associacao" && p.estado !== "pendente" ? (
-            <div className="cell-sub num mt-1.5">
-              Votos: <b className="text-green-700">{p.votos_favor} a favor</b> ·{" "}
-              <b className="text-red-700">{p.votos_contra} contra</b>
-              {totalVotos === 0 ? " · ainda sem votos" : ""}
+            <div className="cell-sub mt-1.5">
+              {totalVotos > 0 ? (
+                <span className="num">
+                  Assembleia: <b className="text-green-700">{p.votos_favor} a favor</b> ·{" "}
+                  <b className="text-red-700">{p.votos_contra} contra</b>
+                </span>
+              ) : (
+                "Aguarda a assembleia da associação"
+              )}
             </div>
           ) : null}
         </div>

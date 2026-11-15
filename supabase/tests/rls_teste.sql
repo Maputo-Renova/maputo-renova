@@ -150,23 +150,22 @@ begin
             current_date + 90, 'associacao', 'aprovado')
     returning id into v_proj;
 
-    -- morador vota a favor
+    -- a votação decorre em assembleia presencial: a via de voto individual
+    -- está FECHADA — um proprietário não consegue invocar fn_votar_projecto
     perform set_config('request.jwt.claims',
       json_build_object('sub', v_morador, 'role', 'authenticated')::text, true);
     set local role authenticated;
-    perform public.fn_votar_projecto(v_proj, true);
-
-    -- segundo voto da mesma flat é recusado
     begin
-      perform public.fn_votar_projecto(v_proj, false);
-      raise exception 'voto duplicado foi aceite';
-    exception when raise_exception then
-      if sqlerrm not like '%já votou%' then raise; end if;
+      perform public.fn_votar_projecto(v_proj, true);
+      raise exception 'voto individual foi aceite (devia estar desactivado)';
+    exception when insufficient_privilege then null; -- esperado
     end;
     reset role;
 
+    -- a consola regista o resultado agregado da assembleia
+    update public.projectos set votos_favor = 18, votos_contra = 4 where id = v_proj;
     select votos_favor into n from public.projectos where id = v_proj;
-    assert n = 1, format('votos_favor = %s (devia ser 1)', n);
+    assert n = 18, format('votos_favor = %s (devia ser 18)', n);
   end;
 
   raise notice 'RLS OK — todos os testes passaram';

@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NAV_CONSOLA } from "@/lib/navs";
 import { mesDe } from "@/lib/mes";
 import { aprovarGestor, rejeitarGestor } from "../../actions";
+import { FormAssembleia } from "./FormAssembleia";
 
 const METODO: Record<string, string> = {
   transferencia: "Transferência",
@@ -437,42 +438,64 @@ export default async function CondominioDetalhe({
             <h2 className="text-base font-extrabold">Projectos</h2>
           </div>
           <ul className="row-list">
-            {projectos!.map((p) => (
-              <li key={p.id}>
-                <span className="row-ico b">
-                  <Icone nome="obra" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="cell-main">{p.nome}</div>
-                  <div className="cell-sub">
-                    {p.categoria} · orçamento <b className="num">{MT(Number(p.orcamento))}</b>
-                    {p.financiamento === "associacao"
-                      ? ` · votos ${p.votos_favor}/${p.votos_contra}`
-                      : ""}
+            {projectos!.map((p) => {
+              const aguardaAssembleia =
+                p.financiamento === "associacao" &&
+                p.estado === "aprovado" &&
+                p.votos_favor + p.votos_contra === 0;
+              return (
+                <li key={p.id} className="!block">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="row-ico b">
+                      <Icone nome="obra" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="cell-main">{p.nome}</div>
+                      <div className="cell-sub">
+                        {p.categoria} · orçamento{" "}
+                        <b className="num">{MT(Number(p.orcamento))}</b>
+                        {p.financiamento === "associacao" &&
+                        p.votos_favor + p.votos_contra > 0
+                          ? ` · assembleia: ${p.votos_favor} a favor, ${p.votos_contra} contra`
+                          : ""}
+                      </div>
+                    </div>
+                    <span className="num cell-sub">{p.progresso}%</span>
+                    <span
+                      className={
+                        p.estado === "concluido"
+                          ? "pill pill-pago"
+                          : p.estado === "aprovado"
+                            ? "pill pill-confirmar"
+                            : p.estado === "rejeitado"
+                              ? "pill pill-atraso"
+                              : "pill pill-pendente"
+                      }
+                    >
+                      {p.estado === "concluido"
+                        ? "Concluído"
+                        : aguardaAssembleia
+                          ? "Em assembleia"
+                          : p.estado === "aprovado"
+                            ? "Em curso"
+                            : p.estado === "rejeitado"
+                              ? "Rejeitado"
+                              : "Por aprovar"}
+                    </span>
                   </div>
-                </div>
-                <span className="num cell-sub">{p.progresso}%</span>
-                <span
-                  className={
-                    p.estado === "concluido"
-                      ? "pill pill-pago"
-                      : p.estado === "aprovado"
-                        ? "pill pill-confirmar"
-                        : p.estado === "rejeitado"
-                          ? "pill pill-atraso"
-                          : "pill pill-pendente"
-                  }
-                >
-                  {p.estado === "concluido"
-                    ? "Concluído"
-                    : p.estado === "aprovado"
-                      ? "Em curso"
-                      : p.estado === "rejeitado"
-                        ? "Rejeitado"
-                        : "Por aprovar"}
-                </span>
-              </li>
-            ))}
+                  {aguardaAssembleia ? (
+                    <details className="mt-2 pl-12">
+                      <summary className="cursor-pointer text-[13px] font-bold text-green-700">
+                        Registar resultado da assembleia
+                      </summary>
+                      <div className="mt-3">
+                        <FormAssembleia projectoId={p.id} />
+                      </div>
+                    </details>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}

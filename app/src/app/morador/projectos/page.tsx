@@ -7,7 +7,6 @@ import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { NAV_MORADOR } from "@/lib/navs";
 import { mesDe } from "@/lib/mes";
-import { FormVoto } from "./FormVoto";
 
 export default async function ProjectosMorador() {
   await connection();
@@ -18,7 +17,6 @@ export default async function ProjectosMorador() {
   const [
     { data: projectos },
     { data: updates },
-    { data: votos },
     { data: condo },
     { data: assoc },
   ] = await Promise.all([
@@ -31,7 +29,6 @@ export default async function ProjectosMorador() {
       .from("projecto_updates")
       .select("projecto_id, texto, created_at")
       .order("created_at", { ascending: false }),
-    supabase.from("votos_projecto").select("projecto_id, favor"),
     supabase.from("condominios").select("nome").limit(1).maybeSingle(),
     supabase
       .from("associacao_mensal")
@@ -47,7 +44,6 @@ export default async function ProjectosMorador() {
     arr.push(u);
     updatesPor.set(u.projecto_id, arr);
   }
-  const meuVoto = new Map((votos ?? []).map((v) => [v.projecto_id, v.favor]));
   const emDia = !!assoc && assoc.flats_total > 0 && assoc.flats_pagas === assoc.flats_total;
 
   return (
@@ -77,27 +73,19 @@ export default async function ProjectosMorador() {
       ) : (
         <div className="grid max-w-190 gap-4">
           {lista.map((p) => {
-            const voto = meuVoto.get(p.id);
-            const podeVotar =
+            const emAssembleia =
               p.financiamento === "associacao" &&
               p.estado === "aprovado" &&
-              voto === undefined;
+              p.votos_favor + p.votos_contra === 0;
             return (
               <ProjectoCard key={p.id} p={p} updates={updatesPor.get(p.id) ?? []}>
-                {voto !== undefined ? (
+                {emAssembleia ? (
                   <p className="mt-3 text-[13px] font-semibold text-ink-2">
-                    A sua flat votou{" "}
-                    <b className={voto ? "text-green-700" : "text-red-700"}>
-                      {voto ? "a favor" : "contra"}
-                    </b>
-                    .
-                  </p>
-                ) : podeVotar && emDia ? (
-                  <FormVoto projectoId={p.id} />
-                ) : podeVotar && !emDia ? (
-                  <p className="mt-3 text-[13px] font-semibold text-ink-3">
-                    A votação abre quando o condomínio estiver 100% em dia com a
-                    taxa da associação deste mês.
+                    A decisão é tomada em <b>assembleia da associação de
+                    condomínios</b>
+                    {emDia
+                      ? " — o condomínio está em dia e participa."
+                      : " — o condomínio participa quando estiver 100% em dia com a taxa da associação."}
                   </p>
                 ) : null}
               </ProjectoCard>

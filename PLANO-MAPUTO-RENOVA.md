@@ -91,7 +91,7 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 
 - [x] Fatura consolidada da associação preenchida automaticamente (`associacao_mensal` por trigger das faturas) e visível na Tesouraria do gestor com barra de elegibilidade
 - [x] Projectos reintroduzidos: gestor submete (fundo / quota extraordinária / fundo da associação) → consola valida na Visão geral → gestor publica actualizações de progresso e gasto → morador acompanha
-- [x] Votação em assembleia: um voto por flat (`fn_votar_projecto`), contadores no projecto, voto visível ao próprio
+- [x] Assembleia da associação: a votação decorre **presencialmente** (decisão de Nov 2026); a consola regista o resultado agregado (votos a favor/contra e decisão) no detalhe do condomínio, e o morador vê o estado "aguarda assembleia" e o resultado — a via de voto individual na app foi fechada na base de dados (esquema preservado caso a governação volte a mudar)
 - [x] Elegibilidade imposta **na base de dados**: submeter ao fundo da associação e votar exigem 100% das flats em dia (trigger + função); valores pagos transitam sempre
 - [x] Testes: ciclo completo em browser (bloqueio por elegibilidade, submissão, aprovação, actualização, acompanhamento) + suite SQL (em dia a 100%, voto, voto duplicado recusado)
 - [x] Relatório mensal exportável: botão "Exportar relatório" na Visão geral → página A4 imprimível (/consola/relatorio?mes=) com totais da plataforma, tabela por condomínio (cobrança, atraso, fundo, repasses, elegibilidade) e notas metodológicas
@@ -160,6 +160,7 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 | Nov 2026 | Lembretes **automáticos** (sem botão); métodos de pagamento dentro de Configuração |
 | Nov 2026 | O protótipo aprovado é o contrato de UI — a app segue-o à letra |
 | Nov 2026 | Funções Vercel fixadas em `dub1` (latência); middleware valida JWT localmente |
+| Nov 2026 | **Votação fora do dashboard**: as votações dos projectos do fundo decorrem em assembleias presenciais da associação; o dashboard mostra a adimplência/elegibilidade aos administradores e a consola regista o resultado agregado |
 
 ---
 
@@ -200,3 +201,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 **Feito:** página /consola/relatorio (mês seleccionável) com cabeçalho da marca, totais (cobranças, serviço, fundo, repasses), tabela por condomínio com pill de elegibilidade e linha de totais, notas metodológicas e botão Imprimir/Guardar PDF; estilos de impressão verificados (botões escondidos em modo print). Fase 4 fechada a 100%.
 **Pendente:** nada desta etapa.
 **Desafios e soluções:** nenhum relevante — reutilizou o sistema visual e as consultas existentes.
+
+### 15 Nov 2026 · Governação da votação (ajuste à Fase 4)
+**Feito:** por decisão do cliente, a votação deixou de ser feita na app — decorre em assembleias presenciais da associação. A consola ganhou "Registar resultado da assembleia" (votos a favor/contra + decisão) nos projectos do fundo validados; o morador passou a ver "aguarda assembleia" e o resultado agregado; a função de voto individual foi revogada na base de dados (migração 00024) e a suite de RLS prova que um proprietário já não a consegue invocar. A elegibilidade (100% em dia) mantém-se intacta — continua a condicionar a submissão ao fundo na base de dados e é exactamente a informação que o dashboard dá à assembleia (ranking, pills, relatório).
+**Pendente:** nada.
+**Desafios e soluções:** mudança chegou depois da votação in-app estar construída — optou-se por fechar a via (revoke + comentários no esquema) em vez de apagar tabelas, preservando a opção de reverter sem migração destrutiva.

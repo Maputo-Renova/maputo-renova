@@ -45,6 +45,46 @@ export async function aprovarProjecto(fd: FormData) {
   revalidatePath("/consola");
 }
 
+/** Registar o resultado da assembleia da associação num projecto validado. */
+export async function registarAssembleia(
+  _prev: EstadoAccao,
+  fd: FormData,
+): Promise<EstadoAccao> {
+  await exigirPapel("super_admin");
+  const supabase = await createClient();
+
+  const favor = Number(fd.get("votos_favor"));
+  const contra = Number(fd.get("votos_contra"));
+  const decisao = String(fd.get("decisao"));
+  if (!Number.isInteger(favor) || favor < 0 || !Number.isInteger(contra) || contra < 0)
+    return { ok: false, mensagem: "Indique os votos a favor e contra (números inteiros)." };
+  if (favor + contra === 0)
+    return { ok: false, mensagem: "Registe pelo menos um voto." };
+  if (!["aprovado", "rejeitado"].includes(decisao))
+    return { ok: false, mensagem: "Escolha a decisão da assembleia." };
+
+  const { error, data } = await supabase
+    .from("projectos")
+    .update({
+      votos_favor: favor,
+      votos_contra: contra,
+      estado: decisao === "rejeitado" ? "rejeitado" : "aprovado",
+    })
+    .eq("id", String(fd.get("projecto_id")))
+    .eq("estado", "aprovado")
+    .eq("financiamento", "associacao")
+    .select("nome")
+    .maybeSingle();
+  if (error || !data)
+    return { ok: false, mensagem: "Não foi possível registar o resultado." };
+
+  revalidatePath("/consola");
+  return {
+    ok: true,
+    mensagem: `Assembleia registada: "${data.nome}" ${decisao === "rejeitado" ? "chumbado" : "aprovado"} (${favor} a favor, ${contra} contra).`,
+  };
+}
+
 /** Rejeitar um projecto pendente. */
 export async function rejeitarProjecto(fd: FormData) {
   await exigirPapel("super_admin");
