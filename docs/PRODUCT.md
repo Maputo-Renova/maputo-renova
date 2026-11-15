@@ -92,3 +92,17 @@ Next.js (App Router) + Vercel · Supabase (Postgres, Auth, RLS, Storage, Edge Fu
 - **Fase 3 — Consola completa + eMola:** finanças globais, relatórios exportáveis, eMola.
 
 **Fora do MVP:** reserva de espaços comuns, chat, ocorrências/manutenção, votações, app nativa.
+
+## Estado da implementação (Nov 2026)
+
+O plano operacional vivo, com o estado de cada etapa e o diário de bordo,
+está em **PLANO-MAPUTO-RENOVA.md** na raiz do repositório — este documento
+guarda a visão de produto; aquele guarda a execução.
+
+Resumo do que já está em produção (https://maputo-renova.vercel.app):
+cadastro com anti-duplicação e convites por email, faturação automática
+mensal (pg_cron), pagamento por transferência com comprovativo e fila de
+confirmação do gestor, consola completa fiel ao protótipo, tesouraria,
+suporte e avisos, régua de cobrança por email (Resend), auditoria
+automática, MFA imposto na base de dados e CI com testes E2E contra uma
+pilha Supabase local descartável.
