@@ -28,9 +28,10 @@ jobs:
       - name: Obter credenciais locais
         id: creds
         run: |
-          eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY)=')"
+          eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=')"
           echo "url=$API_URL" >> "$GITHUB_OUTPUT"
           echo "anon=$ANON_KEY" >> "$GITHUB_OUTPUT"
+          echo "service=$SERVICE_ROLE_KEY" >> "$GITHUB_OUTPUT"
 
       - name: Suite de testes de RLS (papel a papel)
         run: |
@@ -52,11 +53,35 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ steps.creds.outputs.anon }}
         run: npm run build
 
+      - name: Arrancar simuladores e payment-worker (pagamentos móveis)
+        working-directory: payment-worker
+        env:
+          WORKER_SECRET: segredo-e2e-suficientemente-longo
+          SUPABASE_URL: ${{ steps.creds.outputs.url }}
+          SUPABASE_SERVICE_KEY: ${{ steps.creds.outputs.service }}
+        run: |
+          DELAY_MS=0 PORT=8089 node mock/emola-mock.mjs &
+          DELAY_MS=0 PORT=8090 node mock/mpesa-mock.mjs &
+          PORT=8080 \
+            EMOLA_ENDPOINT=http://localhost:8089/BCCSGateway/BCCSGateway \
+            EMOLA_USERNAME=test EMOLA_PASSWORD=test EMOLA_KEY=testkey EMOLA_PARTNER_CODE=00000 \
+            MPESA_BASE_URL=http://localhost:8090 \
+            MPESA_API_KEY=chave-e2e-apenas-para-o-mock \
+            MPESA_SERVICE_PROVIDER_CODE=171717 \
+            node src/servidor.mjs &
+          for i in $(seq 1 20); do
+            curl -sf -o /dev/null http://localhost:8080/saude && exit 0
+            sleep 1
+          done
+          echo "o payment-worker não arrancou" && exit 1
+
       - name: Arrancar a app
         working-directory: app
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ steps.creds.outputs.url }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ steps.creds.outputs.anon }}
+          PAYMENT_WORKER_URL: http://localhost:8080
+          PAYMENT_WORKER_SECRET: segredo-e2e-suficientemente-longo
         run: |
           npm start &
           for i in $(seq 1 60); do
@@ -71,4 +96,5 @@ jobs:
           BASE: http://localhost:3000
           SUPABASE_URL: ${{ steps.creds.outputs.url }}
           SUPABASE_ANON_KEY: ${{ steps.creds.outputs.anon }}
+          PAYMENT_WORKER_URL: http://localhost:8080
         run: node tests/e2e.mjs

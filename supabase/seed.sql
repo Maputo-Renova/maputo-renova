@@ -96,6 +96,14 @@ begin
   -- Faturas do mês corrente
   perform public.fn_gerar_faturas(date_trunc('month', now())::date);
 
+  -- Fatura do mês anterior da flat 302, ainda por pagar: usada no E2E do
+  -- pagamento móvel (M-Pesa contra o simulador local)
+  insert into public.faturas (flat_id, condominio_id, mes_referencia, valor_quota,
+    vencimento, taxa_associacao)
+  values (v_flat302, v_jda, (date_trunc('month', now()) - interval '1 month')::date,
+    1500, (date_trunc('month', now()) - interval '1 month')::date + 4,
+    (select taxa_associacao from public.config_plataforma limit 1));
+
   -- Uma cobrança já confirmada (simula M-Pesa) para haver movimentos
   select id into v_fat101 from public.faturas
   where flat_id = v_flat101 and mes_referencia = date_trunc('month', now())::date;

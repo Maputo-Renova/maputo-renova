@@ -168,6 +168,72 @@ begin
     assert n = 18, format('votos_favor = %s (devia ser 18)', n);
   end;
 
+  ---------------------------------------------------------------------------
+  -- FASE 3: pagamentos móveis — fn_registar_pagamento_movel é exclusiva do
+  -- worker (service role) e idempotente; a tabela de transacções é invisível
+  -- para os papéis da app
+  ---------------------------------------------------------------------------
+  -- morador não lê nem invoca nada do circuito móvel
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_morador, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  begin
+    select count(*) into n from public.transaccoes_moveis;
+    raise exception 'authenticated conseguiu ler transaccoes_moveis';
+  exception when insufficient_privilege then null; -- esperado
+  end;
+  begin
+    perform public.fn_registar_pagamento_movel('XPTO');
+    raise exception 'fn_registar_pagamento_movel aceite por authenticated';
+  exception when insufficient_privilege then null; -- esperado
+  end;
+  reset role;
+
+  -- como o worker (service role): SUCCESS -> pagamento confirmado + fatura
+  -- paga + movimento, com idempotência pela transacção do operador
+  declare
+    v_fat_movel uuid;
+    v_pag1 uuid;
+    v_pag2 uuid;
+    v_estado text;
+  begin
+    select id into v_fat_movel from public.faturas limit 1;
+    update public.faturas set estado = 'pendente' where id = v_fat_movel;
+
+    insert into public.transaccoes_moveis
+      (trans_id, provedor, tipo, referencia, fatura_id, msisdn, valor, estado, id_operador)
+    select 'RLSTESTE00000001', 'mpesa', 'C2B', referencia, id, '848880000',
+           2224, 'SUCCESS', 'RLS-OP-1'
+    from public.faturas where id = v_fat_movel;
+
+    select public.fn_registar_pagamento_movel('RLSTESTE00000001') into v_pag1;
+    select estado::text into v_estado from public.faturas where id = v_fat_movel;
+    assert v_estado = 'paga', format('fatura ficou %s (devia ser paga)', v_estado);
+    assert exists (select 1 from public.pagamentos
+                   where id = v_pag1 and estado = 'confirmado' and metodo = 'mpesa'),
+      'pagamento móvel não ficou confirmado';
+    assert exists (select 1 from public.movimentos where pagamento_id = v_pag1),
+      'pagamento móvel sem movimento de tesouraria';
+
+    -- repetir a mesma transacção devolve o mesmo pagamento (nunca duplica)
+    select public.fn_registar_pagamento_movel('RLSTESTE00000001') into v_pag2;
+    assert v_pag1 = v_pag2, 'fn_registar_pagamento_movel duplicou o pagamento';
+    select count(*) into n from public.pagamentos where transacao_operador_id = 'RLS-OP-1';
+    assert n = 1, format('%s pagamentos para a mesma transacção do operador', n);
+
+    -- uma transacção que não é SUCCESS é recusada
+    insert into public.transaccoes_moveis
+      (trans_id, provedor, tipo, referencia, fatura_id, msisdn, valor, estado)
+    select 'RLSTESTE00000002', 'emola', 'C2B', referencia, id, '871231111', 2224, 'FAILED'
+    from public.faturas where id = v_fat_movel;
+    begin
+      perform public.fn_registar_pagamento_movel('RLSTESTE00000002');
+      raise exception 'registo aceitou uma transacção FAILED';
+    exception when others then
+      if sqlerrm like '%registo aceitou%' then raise; end if; -- esperado
+    end;
+  end;
+
   raise notice 'RLS OK — todos os testes passaram';
 end;
 $teste$;

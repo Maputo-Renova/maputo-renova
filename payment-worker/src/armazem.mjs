@@ -5,7 +5,12 @@
 
 export function armazemMemoria() {
   const porTransId = new Map();
+  const registados = [];
   return {
+    registados, // visível nos testes: transIds entregues à app
+    async registarPagamento(transId) {
+      registados.push(transId);
+    },
     async criar(tx) {
       const linha = { tentativas: 0, created_at: new Date().toISOString(), ...tx };
       porTransId.set(tx.trans_id, linha);
@@ -42,7 +47,18 @@ export function armazemSupabase({ url, serviceKey }) {
     const linhas = await res.json();
     return Array.isArray(linhas) ? (linhas[0] ?? null) : linhas;
   };
+  const rpc = `${url.replace(/\/$/, "")}/rest/v1/rpc/fn_registar_pagamento_movel`;
   return {
+    /** SUCCESS → fatura paga + movimentos na app (função idempotente no Postgres). */
+    async registarPagamento(transId) {
+      const res = await fetch(rpc, {
+        method: "POST",
+        headers: cab,
+        body: JSON.stringify({ p_trans_id: transId }),
+      });
+      if (!res.ok)
+        throw new Error(`fn_registar_pagamento_movel ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    },
     async criar(tx) {
       return um(await fetch(base, { method: "POST", headers: cab, body: JSON.stringify(tx) }));
     },

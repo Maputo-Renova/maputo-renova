@@ -46,9 +46,25 @@ function mapearMpesa(r) {
 export function criarWorker({ armazem, emola, mpesa, segredo, textoLoja = "Maputo Renova" }) {
   if (!segredo || segredo.length < 16) throw new Error("WORKER_SECRET em falta ou demasiado curto");
 
+  // SUCCESS com fatura associada → regista o pagamento na app (fatura paga +
+  // movimentos). A função no Postgres é idempotente; se a entrega falhar, a
+  // transacção fica SUCCESS no armazém e a reconciliação diária apanha-a.
+  async function entregarAApp(linha) {
+    if (linha?.estado !== "SUCCESS" || !linha?.fatura_id || !armazem.registarPagamento) return;
+    try {
+      await armazem.registarPagamento(linha.trans_id);
+    } catch (e) {
+      console.error(`registo na app falhou (${linha.trans_id}):`, e.message);
+      await armazem
+        .actualizar(linha.trans_id, { mensagem: `SUCCESS; registo na app pendente: ${e.message}`.slice(0, 500) })
+        .catch(() => {});
+    }
+  }
+
   async function cobrar(linha) {
     const { trans_id, provedor, msisdn, valor, referencia } = linha;
     try {
+      let actualizada;
       if (provedor === "emola") {
         const r = await emola.c2b({
           msisdn,
@@ -57,14 +73,18 @@ export function criarWorker({ armazem, emola, mpesa, segredo, textoLoja = "Maput
           refNo: referencia,
           texto: `Quota ${referencia} - ${textoLoja}`,
         });
-        await armazem.actualizar(trans_id, { ...mapearEmola(r), resposta_bruta: r.raw?.slice(0, 4000) });
+        actualizada = await armazem.actualizar(trans_id, {
+          ...mapearEmola(r),
+          resposta_bruta: r.raw?.slice(0, 4000),
+        });
       } else {
         const r = await mpesa.c2b({ msisdn, valor, referencia, refTerceiro: trans_id });
-        await armazem.actualizar(trans_id, {
+        actualizada = await armazem.actualizar(trans_id, {
           ...mapearMpesa(r),
           resposta_bruta: JSON.stringify(r.raw ?? null).slice(0, 4000),
         });
       }
+      await entregarAApp(actualizada);
     } catch (e) {
       // erro de rede/timeout: estado desconhecido — o job de reconciliação resolve
       await armazem.actualizar(trans_id, { estado: "UNKNOWN", codigo: "ERRO-REDE", mensagem: e.message });
@@ -97,6 +117,7 @@ export function criarWorker({ armazem, emola, mpesa, segredo, textoLoja = "Maput
             tentativas: (t.tentativas ?? 0) + 1,
             consultado_em: new Date().toISOString(),
           });
+          await entregarAApp(linha);
           resultados.push({ trans_id: t.trans_id, estado: linha.estado });
         } else {
           await armazem.actualizar(t.trans_id, {

@@ -79,6 +79,21 @@ try {
   await m.goto(`${BASE}/morador/faturas`);
   await m.waitForSelector("button:has-text('Pagar por transferência')");
   ok("morador: fatura pendente com botão de pagamento");
+
+  // ── Morador: pagar por M-Pesa (payment-worker + simulador do gateway) ────
+  if (process.env.PAYMENT_WORKER_URL) {
+    await m.waitForSelector("button:has-text('Pagar por M-Pesa')");
+    await m.click("button:has-text('Pagar por M-Pesa')");
+    // número de teste do simulador: termina em 0000 → sucesso após o "PIN"
+    await m.fill("input[name='msisdn']", "84 888 0000");
+    await m.click("button:has-text('Enviar pedido ao telemóvel')");
+    await m.waitForSelector("text=A aguardar confirmação", { timeout: 30000 });
+    // o worker cobra no gateway simulado, regista na app e a página refresca
+    await m.waitForSelector(".pill:has-text('Paga')", { timeout: 90000 });
+    ok("morador: fatura paga por M-Pesa (cobrança, registo e fatura Paga)");
+  } else {
+    console.log("· pagamento móvel saltado (PAYMENT_WORKER_URL não definido)");
+  }
   const pdf = path.join(os.tmpdir(), "comprovativo-e2e.pdf");
   fs.writeFileSync(pdf, "%PDF-1.4 comprovativo de teste");
   await m.click("button:has-text('Pagar por transferência')");
@@ -96,7 +111,11 @@ try {
   ok("gestor: transferência confirmada");
   await m.goto(`${BASE}/morador/faturas`);
   await m.waitForSelector(".pill:has-text('Paga')", { timeout: 30000 });
-  ok("morador: fatura marcada Paga");
+  await m.waitForSelector(".pill:has-text('Pendente'), .pill:has-text('Em atraso'), .pill:has-text('A confirmar')", {
+    state: "detached",
+    timeout: 30000,
+  });
+  ok("morador: todas as faturas marcadas Paga");
 
   // ── Gestor: tesouraria com movimentos + nova despesa ────────────────────
   await g.goto(`${BASE}/gestor/tesouraria`);

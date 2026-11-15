@@ -69,10 +69,13 @@ export class ClienteMpesa {
   }
 
   cabecalhos() {
+    // sem publicKey (mocks/agregadores) envia a API key em claro; o gateway
+    // real exige o token cifrado com a Public Key do portal de developer
+    const token = this.cfg.publicKey ? gerarToken(this.cfg.apiKey, this.cfg.publicKey) : this.cfg.apiKey;
     return {
       "Content-Type": "application/json",
       Origin: this.cfg.origem,
-      Authorization: `Bearer ${gerarToken(this.cfg.apiKey, this.cfg.publicKey)}`,
+      Authorization: `Bearer ${token}`,
     };
   }
 

@@ -11,6 +11,7 @@ import { criarMockMpesa } from "../mock/mpesa-mock.mjs";
 
 const SEGREDO = "segredo-de-teste-suficientemente-longo";
 let mockE, mockM, worker, base;
+const armazem = armazemMemoria();
 
 const { publicKey } = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
 
@@ -30,7 +31,7 @@ before(async () => {
   await new Promise((r) => mockE.listen(0, r));
   await new Promise((r) => mockM.listen(0, r));
   worker = criarWorker({
-    armazem: armazemMemoria(),
+    armazem,
     segredo: SEGREDO,
     emola: new ClienteEmola({
       endpoint: `http://127.0.0.1:${mockE.address().port}/BCCSGateway/BCCSGateway`,
@@ -73,11 +74,17 @@ test("validação de entrada: provedor, msisdn e valor", async () => {
   assert.equal((await pedir({ provedor: "mpesa", msisdn: "848880000", valor: -5, referencia: "F" })).status, 400);
 });
 
-test("pagamento M-Pesa com sucesso: 202 → SUCCESS com id do operador", async () => {
+test("pagamento M-Pesa com sucesso: 202 → SUCCESS, id do operador e registo na app", async () => {
   const res = await fetch(`${base}/pagamentos`, {
     method: "POST",
     headers: { "x-worker-secret": SEGREDO, "Content-Type": "application/json" },
-    body: JSON.stringify({ provedor: "mpesa", msisdn: "848880000", valor: 2500, referencia: "FAT-2026-01" }),
+    body: JSON.stringify({
+      provedor: "mpesa",
+      msisdn: "848880000",
+      valor: 2500,
+      referencia: "FAT-2026-01",
+      fatura_id: "11111111-1111-1111-1111-111111111111",
+    }),
   });
   assert.equal(res.status, 202);
   const { trans_id } = await res.json();
@@ -85,6 +92,32 @@ test("pagamento M-Pesa com sucesso: 202 → SUCCESS com id do operador", async (
   assert.equal(fim.estado, "SUCCESS");
   assert.equal(fim.codigo, "INS-0");
   assert.ok(fim.id_operador);
+  assert.ok(armazem.registados.includes(trans_id), "SUCCESS com fatura foi entregue à app");
+});
+
+test("falha não é entregue à app; sucesso sem fatura também não", async () => {
+  const antes = armazem.registados.length;
+  const r1 = await fetch(`${base}/pagamentos`, {
+    method: "POST",
+    headers: { "x-worker-secret": SEGREDO, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      provedor: "mpesa",
+      msisdn: "848882006", // saldo insuficiente
+      valor: 100,
+      referencia: "FAT-2026-05",
+      fatura_id: "22222222-2222-2222-2222-222222222222",
+    }),
+  });
+  const t1 = await r1.json();
+  await esperarEstadoFinal(t1.trans_id);
+  const r2 = await fetch(`${base}/pagamentos`, {
+    method: "POST",
+    headers: { "x-worker-secret": SEGREDO, "Content-Type": "application/json" },
+    body: JSON.stringify({ provedor: "mpesa", msisdn: "848880000", valor: 100, referencia: "AVULSO-01" }),
+  });
+  const t2 = await r2.json();
+  await esperarEstadoFinal(t2.trans_id);
+  assert.equal(armazem.registados.length, antes, "nada entregue à app");
 });
 
 test("pagamento eMola sem PIN: termina FAILED EMOLA-11 (pode tentar de novo)", async () => {
@@ -103,11 +136,18 @@ test("eMola gateway timeout → UNKNOWN; /reconciliar resolve para SUCCESS", asy
   const res = await fetch(`${base}/pagamentos`, {
     method: "POST",
     headers: { "x-worker-secret": SEGREDO, "Content-Type": "application/json" },
-    body: JSON.stringify({ provedor: "emola", msisdn: "871232222", valor: 1800, referencia: "FAT-2026-03" }),
+    body: JSON.stringify({
+      provedor: "emola",
+      msisdn: "871232222",
+      valor: 1800,
+      referencia: "FAT-2026-03",
+      fatura_id: "33333333-3333-3333-3333-333333333333",
+    }),
   });
   const { trans_id } = await res.json();
   const incerto = await esperarEstadoFinal(trans_id);
   assert.equal(incerto.estado, "UNKNOWN", "timeout nunca é decidido às cegas");
+  assert.ok(!armazem.registados.includes(trans_id), "UNKNOWN não é entregue à app");
 
   const rec = await fetch(`${base}/reconciliar`, {
     method: "POST",
@@ -117,6 +157,7 @@ test("eMola gateway timeout → UNKNOWN; /reconciliar resolve para SUCCESS", asy
   const depois = await fetch(`${base}/pagamentos/${trans_id}`, { headers: { "x-worker-secret": SEGREDO } });
   const t = await depois.json();
   assert.equal(t.estado, "SUCCESS", "a reconciliação confirmou a transacção no gateway");
+  assert.ok(armazem.registados.includes(trans_id), "reconciliada com sucesso foi entregue à app");
 });
 
 test("transacção desconhecida → 404", async () => {

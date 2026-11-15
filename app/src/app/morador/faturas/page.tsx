@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NAV_MORADOR } from "@/lib/navs";
 import { obterTaxas, decomporFatura } from "@/lib/taxas";
 import { PagarTransferencia } from "./PagarTransferencia";
+import { PagarMovel } from "./PagarMovel";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
@@ -30,7 +31,13 @@ export default async function Faturas() {
 
   const taxas = await obterTaxas(supabase);
 
-  const [{ data: faturas }, { data: pagamentos }, { data: conta }] = await Promise.all([
+  // métodos móveis: só aparecem quando o payment-worker está configurado e
+  // o método está activo na consola (taxas_metodos)
+  const workerConfigurado = Boolean(
+    process.env.PAYMENT_WORKER_URL && process.env.PAYMENT_WORKER_SECRET,
+  );
+
+  const [{ data: faturas }, { data: pagamentos }, { data: conta }, { data: metodosDigitais }] = await Promise.all([
     flat
       ? supabase
           .from("faturas")
@@ -44,7 +51,17 @@ export default async function Faturas() {
       .select("banco, titular, numero_conta, nib")
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("taxas_metodos")
+      .select("metodo, activo")
+      .in("metodo", ["mpesa", "emola"]),
   ]);
+
+  const metodosMoveis = workerConfigurado
+    ? ((metodosDigitais ?? [])
+        .filter((m) => m.activo)
+        .map((m) => m.metodo) as ("mpesa" | "emola")[])
+    : [];
 
   const pendentesPorFatura = new Set(
     (pagamentos ?? []).filter((p) => p.estado === "a_confirmar").map((p) => p.fatura_id),
@@ -97,17 +114,26 @@ export default async function Faturas() {
                 ) : null}
                 {pagavel ? (
                   <div className="mt-3">
-                    <PagarTransferencia
-                      faturaId={f.id}
-                      referencia={f.referencia}
-                      total={d.total}
-                      servico={d.servico}
-                      associacao={d.associacao}
-                      conta={conta ?? null}
-                    />
-                    <p className="mt-2 text-[12px] font-semibold text-ink-3">
-                      M-Pesa e eMola em activação com as operadoras — por agora, transferência bancária com comprovativo.
-                    </p>
+                    <div className="flex flex-wrap items-start gap-2.5">
+                      <PagarMovel
+                        faturaId={f.id}
+                        metodos={metodosMoveis}
+                        totalRotulo={MT(d.total)}
+                      />
+                      <PagarTransferencia
+                        faturaId={f.id}
+                        referencia={f.referencia}
+                        total={d.total}
+                        servico={d.servico}
+                        associacao={d.associacao}
+                        conta={conta ?? null}
+                      />
+                    </div>
+                    {metodosMoveis.length === 0 ? (
+                      <p className="mt-2 text-[12px] font-semibold text-ink-3">
+                        M-Pesa e eMola em activação com as operadoras — por agora, transferência bancária com comprovativo.
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
