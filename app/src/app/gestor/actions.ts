@@ -73,6 +73,93 @@ export async function enviarAviso(
   return { ok: true, mensagem: "Aviso publicado — visível a todos os proprietários." };
 }
 
+/** Novo projecto — nasce 'pendente' e segue para validação da consola. */
+export async function criarProjecto(
+  _prev: EstadoAccao,
+  fd: FormData,
+): Promise<EstadoAccao> {
+  const perfil = await exigirPapel("gestor");
+  const supabase = await createClient();
+
+  const nome = String(fd.get("nome") ?? "").trim();
+  const descricao = String(fd.get("descricao") ?? "").trim();
+  const orcamento = Number(String(fd.get("orcamento") ?? "").replace(/\s/g, "").replace(",", "."));
+  const dataPrevista = String(fd.get("data_prevista") ?? "");
+  const financiamento = String(fd.get("financiamento") ?? "fundo");
+  const quotaExtra = Number(String(fd.get("quota_extra") ?? "").replace(",", "."));
+
+  if (!nome) return { ok: false, mensagem: "Dê um nome ao projecto." };
+  if (!Number.isFinite(orcamento) || orcamento <= 0)
+    return { ok: false, mensagem: "Indique o orçamento previsto." };
+  if (!dataPrevista) return { ok: false, mensagem: "Indique a conclusão prevista." };
+  if (financiamento === "quota_extraordinaria" && (!Number.isFinite(quotaExtra) || quotaExtra <= 0))
+    return { ok: false, mensagem: "Indique o valor da quota extraordinária por flat." };
+
+  const { error } = await supabase.from("projectos").insert({
+    condominio_id: perfil.condominio_id,
+    nome,
+    categoria: String(fd.get("categoria") ?? "Reparação"),
+    descricao: descricao || null,
+    orcamento,
+    data_prevista: dataPrevista,
+    financiamento,
+    quota_extra: financiamento === "quota_extraordinaria" ? quotaExtra : null,
+    criado_por: perfil.id,
+  });
+  if (error) {
+    return {
+      ok: false,
+      mensagem: error.message.includes("100%")
+        ? "Para submeter ao fundo da associação, o condomínio precisa de estar 100% em dia com a taxa da associação deste mês."
+        : "Não foi possível submeter o projecto.",
+    };
+  }
+  revalidatePath("/gestor/projectos");
+  return { ok: true, mensagem: `"${nome}" enviado à consola para validação.` };
+}
+
+/** Publicar uma actualização de progresso (texto + execução + gasto). */
+export async function actualizarProjecto(
+  _prev: EstadoAccao,
+  fd: FormData,
+): Promise<EstadoAccao> {
+  const perfil = await exigirPapel("gestor");
+  const supabase = await createClient();
+
+  const projectoId = String(fd.get("projecto_id"));
+  const texto = String(fd.get("texto") ?? "").trim();
+  const progresso = Math.min(100, Math.max(0, Number(fd.get("progresso") ?? 0)));
+  const gasto = Number(String(fd.get("gasto") ?? "0").replace(/\s/g, "").replace(",", "."));
+  if (!texto) return { ok: false, mensagem: "Descreva o que avançou." };
+
+  const { error: e1 } = await supabase.from("projecto_updates").insert({
+    projecto_id: projectoId,
+    texto,
+    progresso,
+    autor: perfil.id,
+  });
+  if (e1) return { ok: false, mensagem: "Não foi possível publicar." };
+  await supabase
+    .from("projectos")
+    .update({ progresso, gasto: Number.isFinite(gasto) && gasto >= 0 ? gasto : 0 })
+    .eq("id", projectoId);
+
+  revalidatePath("/gestor/projectos");
+  return { ok: true, mensagem: "Actualização publicada." };
+}
+
+/** Marcar um projecto como concluído. */
+export async function concluirProjecto(fd: FormData) {
+  await exigirPapel("gestor");
+  const supabase = await createClient();
+  await supabase
+    .from("projectos")
+    .update({ estado: "concluido", progresso: 100 })
+    .eq("id", String(fd.get("projecto_id")))
+    .eq("estado", "aprovado");
+  revalidatePath("/gestor/projectos");
+}
+
 /** Mudar o estado de um ticket de suporte. */
 export async function marcarTicket(fd: FormData) {
   await exigirPapel("gestor");

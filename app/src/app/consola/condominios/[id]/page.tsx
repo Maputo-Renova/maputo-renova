@@ -104,6 +104,13 @@ export default async function CondominioDetalhe({
       .limit(5),
   ]);
 
+  const { data: projectos } = await supabase
+    .from("projectos")
+    .select("id, nome, categoria, orcamento, financiamento, estado, progresso, votos_favor, votos_contra")
+    .eq("condominio_id", id)
+    .order("created_at", { ascending: false })
+    .limit(8);
+
   const lista = flats ?? [];
   const fts = faturas ?? [];
   const pagas = fts.filter((f) => f.estado === "paga");
@@ -420,6 +427,55 @@ export default async function CondominioDetalhe({
           </div>
         </div>
       </div>
+
+      {(projectos ?? []).length > 0 ? (
+        <div className="card mt-4">
+          <div className="mb-2 flex items-center gap-2.5">
+            <span className="card-ico">
+              <Icone nome="obra" />
+            </span>
+            <h2 className="text-base font-extrabold">Projectos</h2>
+          </div>
+          <ul className="row-list">
+            {projectos!.map((p) => (
+              <li key={p.id}>
+                <span className="row-ico b">
+                  <Icone nome="obra" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="cell-main">{p.nome}</div>
+                  <div className="cell-sub">
+                    {p.categoria} · orçamento <b className="num">{MT(Number(p.orcamento))}</b>
+                    {p.financiamento === "associacao"
+                      ? ` · votos ${p.votos_favor}/${p.votos_contra}`
+                      : ""}
+                  </div>
+                </div>
+                <span className="num cell-sub">{p.progresso}%</span>
+                <span
+                  className={
+                    p.estado === "concluido"
+                      ? "pill pill-pago"
+                      : p.estado === "aprovado"
+                        ? "pill pill-confirmar"
+                        : p.estado === "rejeitado"
+                          ? "pill pill-atraso"
+                          : "pill pill-pendente"
+                  }
+                >
+                  {p.estado === "concluido"
+                    ? "Concluído"
+                    : p.estado === "aprovado"
+                      ? "Em curso"
+                      : p.estado === "rejeitado"
+                        ? "Rejeitado"
+                        : "Por aprovar"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="card mt-4">
         <div className="mb-2 flex items-center gap-2.5">

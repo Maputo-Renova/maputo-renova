@@ -131,6 +131,44 @@ begin
   assert n >= 1, 'consola não vê movimentos';
   reset role;
 
+  ---------------------------------------------------------------------------
+  -- FASE 4: elegibilidade e votação (tudo revertido no rollback)
+  ---------------------------------------------------------------------------
+  -- antes de 100% pago, o condomínio não está em dia
+  assert not public.fn_condominio_em_dia(v_jda), 'JDA em dia antes de 100% pago';
+
+  update public.faturas set estado = 'paga'
+  where condominio_id = v_jda and estado <> 'paga';
+  assert public.fn_condominio_em_dia(v_jda), 'JDA devia estar em dia a 100%';
+
+  -- projecto do fundo da associação, já aprovado pela consola
+  declare v_proj uuid;
+  begin
+    insert into public.projectos (condominio_id, nome, categoria, orcamento,
+                                  data_prevista, financiamento, estado)
+    values (v_jda, 'Teste votação', 'Melhoria', 50000,
+            current_date + 90, 'associacao', 'aprovado')
+    returning id into v_proj;
+
+    -- morador vota a favor
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_morador, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    perform public.fn_votar_projecto(v_proj, true);
+
+    -- segundo voto da mesma flat é recusado
+    begin
+      perform public.fn_votar_projecto(v_proj, false);
+      raise exception 'voto duplicado foi aceite';
+    exception when raise_exception then
+      if sqlerrm not like '%já votou%' then raise; end if;
+    end;
+    reset role;
+
+    select votos_favor into n from public.projectos where id = v_proj;
+    assert n = 1, format('votos_favor = %s (devia ser 1)', n);
+  end;
+
   raise notice 'RLS OK — todos os testes passaram';
 end;
 $teste$;

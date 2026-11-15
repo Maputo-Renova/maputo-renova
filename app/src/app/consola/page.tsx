@@ -10,7 +10,13 @@ import { createClient } from "@/lib/supabase/server";
 import { NAV_CONSOLA } from "@/lib/navs";
 import { mesDe } from "@/lib/mes";
 import { obterTaxas } from "@/lib/taxas";
-import { aprovarGestor, rejeitarGestor } from "./actions";
+import {
+  aprovarGestor,
+  rejeitarGestor,
+  aprovarProjecto,
+  rejeitarProjecto,
+} from "./actions";
+import { textoFinanciamento, type Projecto } from "@/components/ProjectoCard";
 
 export default async function Consola({
   searchParams,
@@ -30,6 +36,7 @@ export default async function Consola({
     { data: pendentes },
     { data: movimentos },
     { data: auditoria },
+    { data: projPendentes },
     taxas,
   ] = await Promise.all([
     supabase
@@ -52,6 +59,11 @@ export default async function Consola({
       .select("acao, entidade, created_at")
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase
+      .from("projectos")
+      .select("*")
+      .eq("estado", "pendente")
+      .order("created_at"),
     obterTaxas(supabase),
   ]);
 
@@ -188,6 +200,58 @@ export default async function Consola({
                     </form>
                     <form action={aprovarGestor}>
                       <input type="hidden" name="perfil_id" value={g.id} />
+                      <button className="btn btn-primary btn-sm">
+                        <Icone nome="check" sm />
+                        Aprovar
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
+
+      {((projPendentes ?? []) as Projecto[]).length > 0 ? (
+        <div className="card mt-4">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span className="card-ico">
+              <Icone nome="obra" />
+            </span>
+            <h2 className="text-base font-extrabold">Projectos por aprovar</h2>
+            <span className="pill pill-pendente ml-auto">
+              {projPendentes!.length} pendente{projPendentes!.length > 1 ? "s" : ""}
+            </span>
+          </div>
+          <ul className="row-list">
+            {(projPendentes as Projecto[]).map((p) => {
+              const condoProj = condoDe(
+                (p as Projecto & { condominio_id: string }).condominio_id,
+              );
+              return (
+                <li key={p.id}>
+                  <span className="row-ico b">
+                    <Icone nome="obra" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="cell-main">
+                      {p.nome}
+                      {condoProj ? ` — ${condoProj.nome}` : ""}
+                    </div>
+                    <div className="cell-sub">
+                      {p.categoria} · orçamento{" "}
+                      <b className="num">{MT(Number(p.orcamento))}</b> ·{" "}
+                      {textoFinanciamento(p)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <form action={rejeitarProjecto}>
+                      <input type="hidden" name="projecto_id" value={p.id} />
+                      <button className="btn btn-danger btn-sm">Rejeitar</button>
+                    </form>
+                    <form action={aprovarProjecto}>
+                      <input type="hidden" name="projecto_id" value={p.id} />
                       <button className="btn btn-primary btn-sm">
                         <Icone nome="check" sm />
                         Aprovar
