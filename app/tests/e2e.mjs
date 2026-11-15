@@ -1,0 +1,189 @@
+// Suite E2E do Maputo Renova — corre em browser real contra a pilha local
+// (supabase start + next start). Usada na CI; pode correr localmente com:
+//   BASE=http://localhost:3000 SUPABASE_URL=... SUPABASE_ANON_KEY=... node tests/e2e.mjs
+import { chromium } from "playwright";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+const BASE = process.env.BASE ?? "http://localhost:3000";
+const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
+const ANON = process.env.SUPABASE_ANON_KEY;
+const PASS = "DemoRenova2026!";
+
+if (!ANON) {
+  console.error("SUPABASE_ANON_KEY em falta");
+  process.exit(1);
+}
+
+let falhas = 0;
+const ok = (nome) => console.log(`✓ ${nome}`);
+const falha = (nome, extra) => {
+  falhas++;
+  console.error(`✗ ${nome}${extra ? ` — ${extra}` : ""}`);
+};
+
+function totp(secretB32) {
+  const alf = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = "";
+  for (const c of secretB32.replace(/=+$/, "").toUpperCase()) {
+    const v = alf.indexOf(c);
+    if (v >= 0) bits += v.toString(2).padStart(5, "0");
+  }
+  const bytes = Buffer.from(bits.match(/.{8}/g).map((b) => parseInt(b, 2)));
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30000)));
+  const h = crypto.createHmac("sha1", bytes).update(counter).digest();
+  const off = h[h.length - 1] & 0xf;
+  return ((h.readUInt32BE(off) & 0x7fffffff) % 1e6).toString().padStart(6, "0");
+}
+
+async function login(browser, email) {
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/entrar`);
+  await page.fill("#email", email);
+  await page.fill("#password", PASS);
+  await page.click("button:has-text('Entrar')");
+  await page.waitForURL((u) => !u.pathname.startsWith("/entrar"), { timeout: 30000 });
+  return page;
+}
+
+const browser = await chromium.launch();
+try {
+  // ── Anónimo é redireccionado ────────────────────────────────────────────
+  {
+    const p = await (await browser.newContext()).newPage();
+    await p.goto(`${BASE}/consola`);
+    p.url().includes("/entrar") ? ok("anónimo → /entrar") : falha("anónimo → /entrar", p.url());
+    await p.context().close();
+  }
+
+  // ── Consola: visão geral, aprovação do gestor pendente, configuração ────
+  const c = await login(browser, "consola.demo@maputorenova.co.za");
+  await c.waitForSelector("text=Ranking de adimplência");
+  await c.waitForSelector("text=Belmiro");
+  ok("consola: visão geral com gestor por aprovar");
+  await c.click("button:has-text('Aprovar')");
+  await c.waitForSelector("text=Gestores por aprovar", { state: "detached", timeout: 30000 });
+  ok("consola: gestor aprovado (cartão desapareceu)");
+  await c.goto(`${BASE}/consola/configuracao`);
+  await c.waitForSelector("text=Métodos digitais");
+  await c.waitForSelector("text=BCI");
+  ok("consola: configuração com conta BCI");
+
+  // ── Morador: fatura pendente → pagar por transferência ──────────────────
+  const m = await login(browser, "morador.demo@maputorenova.co.za");
+  await m.goto(`${BASE}/morador/faturas`);
+  await m.waitForSelector("button:has-text('Pagar por transferência')");
+  ok("morador: fatura pendente com botão de pagamento");
+  const pdf = path.join(os.tmpdir(), "comprovativo-e2e.pdf");
+  fs.writeFileSync(pdf, "%PDF-1.4 comprovativo de teste");
+  await m.click("button:has-text('Pagar por transferência')");
+  await m.setInputFiles("input[name='comprovativo']", pdf);
+  await m.click("button:has-text('Enviar comprovativo')");
+  await m.waitForSelector("text=aguarda a confirmação", { timeout: 30000 });
+  ok("morador: comprovativo enviado (A confirmar)");
+
+  // ── Gestor: confirmar a transferência ───────────────────────────────────
+  const g = await login(browser, "gestor.demo@maputorenova.co.za");
+  await g.goto(`${BASE}/gestor/pagamentos`);
+  await g.waitForSelector("button:has-text('Confirmar')");
+  await g.click("button:has-text('Confirmar')");
+  await g.waitForSelector("button:has-text('Confirmar')", { state: "detached", timeout: 30000 });
+  ok("gestor: transferência confirmada");
+  await m.goto(`${BASE}/morador/faturas`);
+  await m.waitForSelector(".pill:has-text('Paga')", { timeout: 30000 });
+  ok("morador: fatura marcada Paga");
+
+  // ── Gestor: tesouraria com movimentos + nova despesa ────────────────────
+  await g.goto(`${BASE}/gestor/tesouraria`);
+  await g.waitForSelector("text=Cobrança confirmada");
+  await g.fill("input[name='descricao']", "Reparação do portão");
+  await g.fill("input[name='valor']", "3500");
+  await g.setInputFiles("input[name='comprovativo']", pdf);
+  await g.click("button:has-text('Registar despesa')");
+  await g.waitForSelector("text=Despesa registada", { timeout: 30000 });
+  ok("gestor: despesa registada com fatura");
+
+  // ── Suporte: morador abre ticket, gestor resolve ────────────────────────
+  await m.goto(`${BASE}/morador/suporte`);
+  await m.fill("#tk-assunto", "Fuga de água na garagem");
+  await m.fill("#tk-msg", "Há uma fuga perto do lugar 12.");
+  await m.click("button:has-text('Enviar ao gestor')");
+  await m.waitForSelector("text=Enviado ao gestor", { timeout: 30000 });
+  await g.goto(`${BASE}/gestor/suporte`);
+  await g.waitForSelector("text=Fuga de água na garagem");
+  await g.click("button:has-text('Resolver')");
+  await g.waitForSelector("h2:has-text('Resolvidos')", { timeout: 30000 });
+  ok("suporte: ticket criado e resolvido");
+
+  // ── Avisos: gestor publica, morador vê ──────────────────────────────────
+  await g.goto(`${BASE}/gestor/avisos`);
+  await g.fill("#av-t", "Corte de energia na sexta");
+  await g.fill("#av-c", "Manutenção da EDM das 9h às 12h.");
+  await g.click("button:has-text('Enviar a')");
+  await g.waitForSelector("text=Aviso publicado", { timeout: 30000 });
+  await m.goto(`${BASE}/morador/avisos`);
+  await m.waitForSelector("text=Corte de energia na sexta");
+  ok("avisos: publicado pelo gestor e visível ao morador");
+
+  // ── Perfil: guardar nome ────────────────────────────────────────────────
+  await m.goto(`${BASE}/perfil`);
+  await m.click("button:has-text('Guardar alterações')");
+  await m.waitForSelector("text=Alterações guardadas", { timeout: 30000 });
+  ok("perfil: guardar alterações");
+
+  // ── MFA: inscrever, desafiar no login, aal1 bloqueado, desactivar ───────
+  await c.goto(`${BASE}/perfil`);
+  await c.click("button:has-text('Activar verificação')");
+  await c.waitForSelector("text=Introduza manualmente", { timeout: 30000 });
+  const segredo = (await c.locator("text=Introduza manualmente").innerText()).split(":").pop().trim();
+  await c.fill("#mfa-codigo", totp(segredo));
+  await c.click("button:has-text('Confirmar')");
+  await c.waitForSelector(".pill:has-text('Activa')", { timeout: 30000 });
+  ok("mfa: inscrito e verificado");
+
+  const resp = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: ANON, "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "consola.demo@maputorenova.co.za", password: PASS }),
+  });
+  const sess = await resp.json();
+  const q = await fetch(`${SUPABASE_URL}/rest/v1/condominios?select=id`, {
+    headers: { apikey: ANON, Authorization: `Bearer ${sess.access_token}` },
+  });
+  const linhas = await q.json();
+  Array.isArray(linhas) && linhas.length === 0
+    ? ok("mfa: sessão aal1 (sem código) vê zero dados")
+    : falha("mfa: sessão aal1 devia ver zero dados", JSON.stringify(linhas).slice(0, 120));
+
+  await c.click("button:has-text('Terminar sessão')");
+  await c.waitForURL((u) => u.pathname.startsWith("/entrar"), { timeout: 30000 });
+  await c.fill("#email", "consola.demo@maputorenova.co.za");
+  await c.fill("#password", PASS);
+  await c.click("button:has-text('Entrar')");
+  await c.waitForSelector("text=Verificação em dois passos", { timeout: 30000 });
+  await c.fill("#codigo", totp(segredo));
+  await c.click("button:has-text('Verificar')");
+  await c.waitForURL((u) => u.pathname.startsWith("/consola"), { timeout: 30000 });
+  await c.waitForSelector("text=Ranking de adimplência");
+  ok("mfa: desafio no login e sessão aal2 com dados");
+
+  await c.goto(`${BASE}/perfil`);
+  await c.waitForSelector(".pill:has-text('Activa')");
+  await c.click("button:has-text('Desactivar')");
+  await c.waitForSelector("button:has-text('Activar verificação')", { timeout: 30000 });
+  ok("mfa: desactivado");
+} catch (e) {
+  falha("excepção", e.message);
+} finally {
+  await browser.close();
+}
+
+if (falhas > 0) {
+  console.error(`\nE2E: ${falhas} falha(s)`);
+  process.exit(1);
+}
+console.log("\nE2E: tudo passou");

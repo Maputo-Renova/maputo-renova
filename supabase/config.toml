@@ -1,0 +1,11 @@
+project_id = "maputo-renova"
+
+[auth]
+site_url = "http://localhost:3000"
+
+[auth.email]
+enable_confirmations = false
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true

@@ -1,0 +1,74 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  e2e:
+    name: Pilha local + testes de ponta a ponta
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Instalar Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Arrancar a pilha local (migrações + seed)
+        run: supabase start
+
+      - name: Obter credenciais locais
+        id: creds
+        run: |
+          eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY)=')"
+          echo "url=$API_URL" >> "$GITHUB_OUTPUT"
+          echo "anon=$ANON_KEY" >> "$GITHUB_OUTPUT"
+
+      - name: Suite de testes de RLS (papel a papel)
+        run: |
+          PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f supabase/tests/rls_teste.sql
+
+      - name: Instalar dependências da app
+        working-directory: app
+        run: npm ci
+
+      - name: Instalar o browser do Playwright
+        working-directory: app
+        run: npx playwright install --with-deps chromium
+
+      - name: Build da app contra a pilha local
+        working-directory: app
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ steps.creds.outputs.url }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ steps.creds.outputs.anon }}
+        run: npm run build
+
+      - name: Arrancar a app
+        working-directory: app
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ steps.creds.outputs.url }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ steps.creds.outputs.anon }}
+        run: |
+          npm start &
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:3000/entrar && exit 0
+            sleep 1
+          done
+          echo "a app não arrancou" && exit 1
+
+      - name: Testes E2E em browser real
+        working-directory: app
+        env:
+          BASE: http://localhost:3000
+          SUPABASE_URL: ${{ steps.creds.outputs.url }}
+          SUPABASE_ANON_KEY: ${{ steps.creds.outputs.anon }}
+        run: node tests/e2e.mjs
