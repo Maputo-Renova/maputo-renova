@@ -1,5 +1,6 @@
 import { Marca } from "@/components/Marca";
 import { Icone } from "@/components/Icone";
+import { MenuMobile } from "@/components/MenuMobile";
 import { NavLateral, type ItemNav } from "@/components/NavLateral";
 import { sair } from "@/app/actions/sair";
 import type { Perfil } from "@/lib/perfil";
@@ -39,6 +40,14 @@ export function AppShell({
       </aside>
       <div className="min-w-0">
         <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-line/60 bg-bg/85 px-5 py-3.5 backdrop-blur md:px-8">
+          <MenuMobile itens={itens} sub={sub}>
+            <form action={sair}>
+              <button className="nav-item w-full text-left">
+                <Icone nome="logout" />
+                Terminar sessão
+              </button>
+            </form>
+          </MenuMobile>
           <div className="md:hidden">
             <Marca />
           </div>

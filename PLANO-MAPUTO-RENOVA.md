@@ -213,3 +213,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 **Feito:** checklist de go-live completo e por ordem de execução (docs/GO-LIVE.md), com o estado actual anotado em cada item; script de limpeza dos dados demo com trava de segurança (aborta sem um administrador real) e auditoria anonimizada — validado contra produção sem alterações; guias de 1 página para gestor e morador, no tom do produto. Dependabot: minors aplicados no main com CI verde, majors incompatíveis (eslint 10, TS 7, types/node 26) excluídos por configuração e PR fechado com justificação.
 **Pendente (cliente):** domínio + Resend, sessão conjunta de go-live (administrador real → limpeza demo → condomínio piloto → formação).
 **Desafios e soluções:** o script de limpeza quebraria no FK da auditoria (actor_id dos utilizadores demo) — resolvido anonimizando o actor em vez de apagar o registo, preservando o rasto.
+
+### 15 Nov 2026 · Polimento sem dependências do cliente
+**Feito:** navegação mobile (menu hambúrguer com drawer, overlay, fecho automático ao navegar e bloqueio do scroll) — os moradores usam sobretudo telemóvel e a navegação estava invisível em ecrãs pequenos; Painel do gestor fiel ao protótipo: filtro por mês e gráfico de barras das cobranças dos 12 meses com o mês seleccionado destacado e tooltip. Ambos testados em browser (desktop e 390px).
+**Pendente:** Fase 6 aguarda a sessão com o cliente; Fase 3 aguarda contratos; próximos candidatos sem dependências — esqueleto do webhook M-Pesa pronto a receber credenciais e fidelidade do ecrã "A minha quota".
+**Desafios e soluções:** o drawer mobile ficava preso à altura do cabeçalho — o backdrop-filter do header cria um containing block para position:fixed; resolvido com portal para o body.
