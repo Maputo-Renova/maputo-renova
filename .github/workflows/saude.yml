@@ -1,0 +1,52 @@
+name: Saúde
+
+# Vigilância contínua da produção: se algum destes passos falhar, o workflow
+# fica vermelho e o GitHub notifica por email (Watch → All activity, ou a
+# notificação por omissão de workflows agendados falhados). Correr também à
+# mão em Actions → Saúde → Run workflow.
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: none
+
+jobs:
+  producao:
+    name: App e Supabase no ar
+    runs-on: ubuntu-latest
+    env:
+      APP: https://maputo-renova.vercel.app
+      SUPABASE: https://phgoebpmijqdblllqpft.supabase.co
+      ANON: sb_publishable_X3TD-t3bkasAF2zJbrvbYw_GuyG5_4y
+    steps:
+      - name: App responde (página de entrada)
+        run: |
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 --retry 2 "$APP/entrar")
+          echo "GET /entrar -> $codigo"
+          test "$codigo" = "200"
+
+      - name: Cabeçalhos de segurança presentes
+        run: |
+          cab=$(curl -sI --max-time 15 "$APP/entrar")
+          echo "$cab" | grep -qi "content-security-policy" || { echo "CSP em falta"; exit 1; }
+          echo "$cab" | grep -qi "strict-transport-security" || { echo "HSTS em falta"; exit 1; }
+          echo "$cab" | grep -qi "x-frame-options" || { echo "X-Frame-Options em falta"; exit 1; }
+          echo "cabeçalhos OK"
+
+      - name: Auth do Supabase saudável
+        run: |
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 --retry 2 \
+            -H "apikey: $ANON" "$SUPABASE/auth/v1/health")
+          echo "GET /auth/v1/health -> $codigo"
+          test "$codigo" = "200"
+
+      - name: API de dados do Supabase responde (e RLS fecha o anónimo)
+        run: |
+          corpo=$(curl -s --max-time 15 --retry 2 "$SUPABASE/rest/v1/condominios?select=id" \
+            -H "apikey: $ANON" -H "Authorization: Bearer $ANON")
+          echo "resposta: $corpo"
+          # anónimo deve receber uma resposta válida E vazia (RLS a negar dados)
+          test "$corpo" = "[]"
