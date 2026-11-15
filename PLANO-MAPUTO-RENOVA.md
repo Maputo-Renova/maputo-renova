@@ -25,7 +25,7 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 | 4 · Associação e projectos | ✅ Concluída a 100% |
 | 5 · Qualidade e CI | ✅ Concluída (CI e E2E verdes) |
 | S · Segurança e endurecimento | 🔁 Contínua (base feita) |
-| 6 · Lançamento piloto | ⏳ Por fazer |
+| 6 · Lançamento piloto | 🔁 Kit pronto; aguarda sessão com o cliente |
 | 7 · Entrega ao cliente | ⏳ No fim |
 
 **Produção:** https://maputo-renova.vercel.app · Supabase `phgoebpmijqdblllqpft` (eu-west-1) · funções Vercel em `dub1`
@@ -128,14 +128,16 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 - [!] Protecção contra passwords vazadas (HaveIBeenPwned): toggle no dashboard do Supabase → Auth (cliente)
 - [!] Backups/PITR: exige Supabase Pro — assumir no go-live (cliente)
 - [ ] `npm audit` na CI (entra com a Fase 5)
-- [ ] Remover contas demo e dados de teste antes do go-live
+- [x] Remoção das contas demo: script pronto e validado (`supabase/scripts/limpar_demo.sql`), executa-se na sessão de go-live
 
 ## Fase 6 — Lançamento piloto
 
-- [ ] Checklist de go-live (Fase S completa + Fases 2 obrigatórias: emails e régua)
-- [ ] Condomínio piloto real cadastrado com o cliente (dados reais, gestor real)
-- [ ] Formação: guia do gestor e do morador (1 página cada) + sessão com o cliente
-- [ ] Período de acompanhamento com correcções rápidas (1–2 semanas)
+- [x] Checklist de go-live escrito e accionável (`docs/GO-LIVE.md`): contratos/contas do cliente, verificação final de segurança, sessão de dados conjunta, arranque e acompanhamento
+- [x] Script de limpeza dos dados demo pronto e validado (`supabase/scripts/limpar_demo.sql`): ordem de FKs correcta, auditoria anonimizada em vez de apagada, e **trava de segurança** que o aborta enquanto não existir um administrador real — testado contra produção (abortou como desenhado, sem tocar em nada)
+- [x] Guias de formação de 1 página: `docs/guia-gestor.md` e `docs/guia-morador.md`
+- [!] Condomínio piloto real cadastrado com o cliente (sessão conjunta, seguindo o GO-LIVE.md)
+- [!] Sessão de formação com o gestor piloto
+- [ ] Período de acompanhamento com correcções rápidas (1–2 semanas após o arranque)
 
 ## Fase 7 — Entrega ao cliente
 
@@ -206,3 +208,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 **Feito:** por decisão do cliente, a votação deixou de ser feita na app — decorre em assembleias presenciais da associação. A consola ganhou "Registar resultado da assembleia" (votos a favor/contra + decisão) nos projectos do fundo validados; o morador passou a ver "aguarda assembleia" e o resultado agregado; a função de voto individual foi revogada na base de dados (migração 00024) e a suite de RLS prova que um proprietário já não a consegue invocar. A elegibilidade (100% em dia) mantém-se intacta — continua a condicionar a submissão ao fundo na base de dados e é exactamente a informação que o dashboard dá à assembleia (ranking, pills, relatório).
 **Pendente:** nada.
 **Desafios e soluções:** mudança chegou depois da votação in-app estar construída — optou-se por fechar a via (revoke + comentários no esquema) em vez de apagar tabelas, preservando a opção de reverter sem migração destrutiva.
+
+### 15 Nov 2026 · Fase 6 — Kit de lançamento piloto
+**Feito:** checklist de go-live completo e por ordem de execução (docs/GO-LIVE.md), com o estado actual anotado em cada item; script de limpeza dos dados demo com trava de segurança (aborta sem um administrador real) e auditoria anonimizada — validado contra produção sem alterações; guias de 1 página para gestor e morador, no tom do produto. Dependabot: minors aplicados no main com CI verde, majors incompatíveis (eslint 10, TS 7, types/node 26) excluídos por configuração e PR fechado com justificação.
+**Pendente (cliente):** domínio + Resend, sessão conjunta de go-live (administrador real → limpeza demo → condomínio piloto → formação).
+**Desafios e soluções:** o script de limpeza quebraria no FK da auditoria (actor_id dos utilizadores demo) — resolvido anonimizando o actor em vez de apagar o registo, preservando o rasto.
