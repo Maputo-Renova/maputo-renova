@@ -56,8 +56,10 @@ numa sessão conjunta Nebula + cliente. (Estado em 15 Nov 2026 entre parênteses
 
 ## 5. Acompanhamento (primeiras 2 semanas)
 
-- [ ] Verificação diária: envios falhados (`envios.estado = 'falhou'`),
-      erros de runtime na Vercel, advisors do Supabase
+- [x] Verificação diária **automática** (Fase 5): workflow Saúde a cada
+      30 min + alerta operacional diário por email aos super admins
+      (emails falhados, fila presa, transacções móveis por reconciliar);
+      ver `docs/RELEASE.md`
 - [ ] Canal directo com o gestor piloto para correcções rápidas
 - [ ] Retrospectiva no fim das 2 semanas → decisão de abrir a mais
       condomínios
