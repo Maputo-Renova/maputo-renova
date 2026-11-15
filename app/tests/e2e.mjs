@@ -56,7 +56,8 @@ try {
   {
     const p = await (await browser.newContext()).newPage();
     await p.goto(`${BASE}/consola`);
-    p.url().includes("/entrar") ? ok("anónimo → /entrar") : falha("anónimo → /entrar", p.url());
+    if (p.url().includes("/entrar")) ok("anónimo → /entrar");
+    else falha("anónimo → /entrar", p.url());
     await p.context().close();
   }
 
@@ -155,9 +156,11 @@ try {
     headers: { apikey: ANON, Authorization: `Bearer ${sess.access_token}` },
   });
   const linhas = await q.json();
-  Array.isArray(linhas) && linhas.length === 0
-    ? ok("mfa: sessão aal1 (sem código) vê zero dados")
-    : falha("mfa: sessão aal1 devia ver zero dados", JSON.stringify(linhas).slice(0, 120));
+  if (Array.isArray(linhas) && linhas.length === 0) {
+    ok("mfa: sessão aal1 (sem código) vê zero dados");
+  } else {
+    falha("mfa: sessão aal1 devia ver zero dados", JSON.stringify(linhas).slice(0, 120));
+  }
 
   await c.click("button:has-text('Terminar sessão')");
   await c.waitForURL((u) => u.pathname.startsWith("/entrar"), { timeout: 30000 });

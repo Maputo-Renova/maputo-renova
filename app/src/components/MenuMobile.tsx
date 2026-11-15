@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
+
+const semSubscricao = () => () => {};
 import { Marca } from "@/components/Marca";
 import { NavLateral, type ItemNav } from "@/components/NavLateral";
 
@@ -15,14 +17,16 @@ export function MenuMobile({
   sub: string;
   children?: React.ReactNode; // rodapé (terminar sessão)
 }) {
-  const [aberto, setAberto] = useState(false);
-  const [montado, setMontado] = useState(false);
   const pathname = usePathname();
+  // guarda o pathname no momento da abertura: ao navegar, o pathname muda e
+  // "aberto" passa a falso por derivação — fecha sozinho, sem efeitos
+  const [abertoEm, setAbertoEm] = useState<string | null>(null);
+  const aberto = abertoEm === pathname;
+  const setAberto = (v: boolean) => setAbertoEm(v ? pathname : null);
+  // só renderiza o portal no cliente
+  const montado = useSyncExternalStore(semSubscricao, () => true, () => false);
 
-  useEffect(() => setMontado(true), []);
-  // fecha ao navegar
-  useEffect(() => setAberto(false), [pathname]);
-  // trava o scroll de fundo enquanto aberto
+  // trava o scroll de fundo enquanto aberto (sincronização com o DOM)
   useEffect(() => {
     document.body.style.overflow = aberto ? "hidden" : "";
     return () => {
