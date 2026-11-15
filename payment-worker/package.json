@@ -1,0 +1,14 @@
+{
+  "name": "maputo-renova-payment-worker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Serviço de pagamentos móveis (M-Pesa e eMola) do Maputo Renova. Corre numa VPS com IP fixo — os gateways validam o IP de origem, por isso não pode correr em serverless.",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node src/servidor.mjs",
+    "mock:emola": "node mock/emola-mock.mjs",
+    "mock:mpesa": "node mock/mpesa-mock.mjs",
+    "test": "node --test 'tests/*.test.mjs'"
+  }
+}

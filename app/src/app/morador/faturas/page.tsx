@@ -106,7 +106,7 @@ export default async function Faturas() {
                       conta={conta ?? null}
                     />
                     <p className="mt-2 text-[12px] font-semibold text-ink-3">
-                      M-Pesa e eMola chegam na Fase 2 — por agora, transferência bancária com comprovativo.
+                      M-Pesa e eMola em activação com as operadoras — por agora, transferência bancária com comprovativo.
                     </p>
                   </div>
                 ) : null}

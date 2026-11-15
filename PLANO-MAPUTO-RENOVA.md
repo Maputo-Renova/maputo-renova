@@ -81,10 +81,15 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 
 ## Fase 3 — Pagamentos digitais 🔒
 
-- [!] Contrato M-Pesa Business (Vodacom, em nome do cliente)
-- [ ] Integração M-Pesa C2B: iniciar pagamento + webhook de confirmação (Edge Function com service_role; idempotência por `transacao_operador_id` — índice único já existe)
-- [ ] Conciliação automática: pagamento → fatura paga → movimentos (crédito, taxa serviço) sem intervenção
-- [!] Contrato eMola (Movitel) → mesma integração
+- [x] **Esqueleto da integração construído e testado** (`payment-worker/`): serviço autónomo Node sem dependências com cliente eMola (SOAP BCCSGateway — C2B, B2C, consulta, saldo) e cliente M-Pesa (OpenAPI REST — C2B singleStage, consulta, reversão, token RSA), API interna autenticada, máquina de estados `PROCESSING → SUCCESS | FAILED | UNKNOWN` com reconciliação automática (nunca se assume sucesso sem código)
+- [x] Simuladores locais dos dois gateways (não há sandbox pública do eMola) + 25 testes automáticos na CI (job "payment-worker")
+- [x] Tabela `transaccoes_moveis` em produção (RLS sem políticas — só o worker/service role acede); idempotência por `trans_id` único
+- [x] Arquitectura documentada em `docs/pagamentos-moveis.md`: os gateways exigem **IP fixo na whitelist**, por isso o worker corre numa VPS, nunca na Vercel/Supabase Edge
+- [!] Contrato M-Pesa Business (Vodacom, em nome do cliente) + conta developer em `developer.mpesa.vm.co.mz` para testar no sandbox real
+- [!] Contrato eMola (Movitel, em nome do cliente): Merchant Online Account + API USSD Push (entrega WSDL, credenciais e spec v1.5)
+- [ ] VPS com IP fixo na whitelist das operadoras; validar pontos `[confirmar]` contra a documentação oficial
+- [ ] `fn_registar_pagamento_movel`: SUCCESS → `pagamentos` + fatura paga + movimentos (crédito, taxa serviço) sem intervenção
+- [ ] UI do morador: pagar por M-Pesa/eMola (número + ecrã "confirme no telemóvel" + tentar de novo após falha 11)
 - [ ] Taxas dos operadores gravadas no momento da transacção (esquema pronto: `taxas_metodos`, `pagamentos.taxa_operador`)
 
 ## Fase 4 — Associação e projectos
@@ -218,3 +223,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 **Feito:** navegação mobile (menu hambúrguer com drawer, overlay, fecho automático ao navegar e bloqueio do scroll) — os moradores usam sobretudo telemóvel e a navegação estava invisível em ecrãs pequenos; Painel do gestor fiel ao protótipo: filtro por mês e gráfico de barras das cobranças dos 12 meses com o mês seleccionado destacado e tooltip. Ambos testados em browser (desktop e 390px).
 **Pendente:** Fase 6 aguarda a sessão com o cliente; Fase 3 aguarda contratos; próximos candidatos sem dependências — esqueleto do webhook M-Pesa pronto a receber credenciais e fidelidade do ecrã "A minha quota".
 **Desafios e soluções:** o drawer mobile ficava preso à altura do cabeçalho — o backdrop-filter do header cria um containing block para position:fixed; resolvido com portal para o body.
+
+### 15 Nov 2026 · Fase 3 — Esqueleto M-Pesa + eMola testado
+**Feito:** `payment-worker/` — serviço autónomo de pagamentos móveis (Node 18+, zero dependências) com cliente eMola (SOAP BCCSGateway: C2B por USSD push, B2C/reembolso, consulta de transacção, nome do beneficiário, saldo) e cliente M-Pesa (OpenAPI REST: C2B singleStage, consulta, reversão, token Bearer por RSA); API interna autenticada por segredo (`POST /pagamentos` → 202 assíncrono, `GET /pagamentos/:id`, `POST /reconciliar`); simuladores locais dos dois gateways com os códigos de erro reais; 25 testes automáticos (sucesso, sem PIN, sem conta, duplicado, credenciais erradas, saldo insuficiente, timeout→reconciliação, reversão, RSA, autenticação) — todos verdes e na CI como job próprio; migração 00025 `transaccoes_moveis` aplicada em produção (RLS sem políticas, só service role); `docs/pagamentos-moveis.md` com arquitectura, requisitos contratuais e passos de go-live.
+**Pendente (cliente):** contratos M-Pesa Business e eMola Merchant+API; conta developer M-Pesa (sandbox real); VPS com IP fixo. **Pendente (técnico):** `fn_registar_pagamento_movel`, UI do morador, validação dos pontos `[confirmar]` contra a spec oficial.
+**Desafios e soluções:** (1) os gateways validam o IP de origem — impossível integrar a partir da Vercel/Supabase Edge; desenhou-se um worker para VPS com IP fixo e API interna, mantendo a app serverless; (2) não existe sandbox pública (eMola) e a do M-Pesa exige conta — construíram-se simuladores fiéis ao contrato real (envelope SOAP, códigos, até o erro ortográfico "reqeustId" da Movitel) para desenvolver e testar já; (3) risco de dupla cobrança em timeouts — máquina de estados com UNKNOWN obrigatório + reconciliação que consulta o gateway antes de qualquer decisão.
