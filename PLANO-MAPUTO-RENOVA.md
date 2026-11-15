@@ -23,7 +23,7 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 | 2 · Comunicações e cobrança automática | ⏳ Próxima |
 | 3 · Pagamentos digitais (M-Pesa/eMola) | 🔒 Bloqueada por contratos |
 | 4 · Associação e projectos | ✅ Concluída (falta só o relatório exportável) |
-| 5 · Qualidade e CI | 🔁 Workflows criados; estabilização em curso |
+| 5 · Qualidade e CI | ✅ Concluída (CI e E2E verdes) |
 | S · Segurança e endurecimento | 🔁 Contínua (base feita) |
 | 6 · Lançamento piloto | ⏳ Por fazer |
 | 7 · Entrega ao cliente | ⏳ No fim |
@@ -98,11 +98,12 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 
 ## Fase 5 — Qualidade e CI
 
-- [ ] GitHub Actions: typecheck + lint + build em cada push/PR
-- [ ] Testes E2E Playwright automatizados em CI (os guiões já usados manualmente: ciclo de pagamento, aprovação de gestor, tickets, despesas) contra uma base de dados de teste
-- [ ] Ambiente de staging (branch do Supabase + preview da Vercel) para validar migrações antes de produção
-- [ ] Monitorização: alertas de erro de runtime (Vercel), `get_advisors` do Supabase na rotina de release
-- [ ] `docs/PRODUCT.md` actualizado como especificação viva a cada fase
+- [x] GitHub Actions "CI": `npm audit` (nível alto) + typecheck + lint + build em cada push/PR — **verde**
+- [x] GitHub Actions "E2E": pilha Supabase local descartável (migrações + seed), suite de RLS via psql, app compilada e testada em browser real (pagamento com comprovativo, aprovação de gestor, tickets, avisos, despesas, perfil e ciclo MFA com TOTP) — **verde**
+- [x] Migrações comprovadamente reproduzíveis do zero (a CI reconstrói a base de dados a cada execução)
+- [x] `docs/PRODUCT.md` aponta para o plano vivo com resumo do estado
+- [ ] Ambiente de staging (branches do Supabase, plano Pro) para validar migrações antes de produção — opcional, quando se justificar
+- [ ] Monitorização: alertas de erro de runtime (Vercel) e `get_advisors` na rotina de release
 
 ## Fase S — Segurança e endurecimento 🔁 (contínua; requisito central)
 
@@ -192,5 +193,5 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 ### 15 Nov 2026 · Fase 5 — CI (em estabilização) e Fase 4 — Associação e projectos
 **Feito (Fase 5):** workflows de CI (audit/typecheck/lint/build) e E2E (pilha Supabase local com migrações + seed, suite de RLS via psql, app compilada e testada em browser real com ciclo MFA); o gate de verificação já está verde.
 **Feito (Fase 4):** `associacao_mensal` preenchida por triggers; elegibilidade (100% em dia) imposta na base de dados para submissão e voto; Projectos de volta nos três perfis (submissão do gestor com três financiamentos, validação na Visão geral da consola, actualizações de progresso/gasto, acompanhamento e votação do morador com um voto por flat); emails ao gestor na aprovação/rejeição; auditoria e políticas de MFA nas tabelas novas; ciclo completo testado em browser e na suite SQL.
-**Pendente:** relatório mensal exportável (consola); workflow E2E na CI a estabilizar (correcção da CSP dinâmica incluída neste push); staging com branches do Supabase (opcional, plano Pro).
+**Pendente:** relatório mensal exportável (consola); staging com branches do Supabase (opcional, plano Pro). O workflow E2E ficou **verde** com a correcção da CSP — a CI completa (verificação + pilha local + browser + MFA) passa de ponta a ponta.
 **Desafios e soluções:** a CI apanhou dois defeitos reais — o tipo gerado `LayoutProps` não existe antes do build (tipagem explícita) e a migração 00002 não era reproduzível numa base nova (revoke condicional); a CSP fixava o URL de produção e bloqueava o login contra o Supabase local (passou a derivar do ambiente); o reset automático de formulários do React 19 após acções falhadas fez o teste de projectos submeter um formulário vazio (recarregar entre submissões) e o select controlado perdia a escolha do Playwright (passou a não-controlado).
