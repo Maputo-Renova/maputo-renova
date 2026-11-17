@@ -43,7 +43,7 @@ export default async function Agente() {
           paineis={[
             {
               id: "flat",
-              rotulo: "Registar flat",
+              rotulo: "Nova flat",
               conteudo: (
                 <div className="card">
                   <h2 className="mb-4 text-base font-extrabold">Nova flat</h2>
@@ -53,7 +53,7 @@ export default async function Agente() {
             },
             {
               id: "condominio",
-              rotulo: "Registar condomínio",
+              rotulo: "Novo condomínio",
               conteudo: (
                 <div className="card">
                   <h2 className="mb-4 text-base font-extrabold">Novo condomínio</h2>
@@ -63,14 +63,14 @@ export default async function Agente() {
             },
             {
               id: "lista",
-              rotulo: `Condomínios (${lista.length})`,
+              rotulo: `Cadastrados (${lista.length})`,
               conteudo: (
                 <div className="card">
                   <h2 className="mb-3 text-base font-extrabold">Condomínios cadastrados</h2>
                   {lista.length === 0 ? (
                     <p className="text-sm text-ink-2">
                       Ainda não há condomínios — crie o primeiro no separador
-                      &quot;Registar condomínio&quot;.
+                      &quot;Novo condomínio&quot;.
                     </p>
                   ) : (
                     <ul className="divide-y divide-line-soft">

@@ -83,11 +83,11 @@ try {
     ok("agente: área de cadastro acessível");
 
     // separadores (protótipo): flat predefinido; condomínio e lista à parte
-    await a.click("[role='tab']:has-text('Registar condomínio')");
+    await a.click("[role='tab']:has-text('Novo condomínio')");
     await a.waitForSelector("#c-nome");
-    await a.click("[role='tab']:has-text('Condomínios')");
+    await a.click("[role='tab']:has-text('Cadastrados')");
     await a.waitForSelector("text=Condomínios cadastrados");
-    await a.click("[role='tab']:has-text('Registar flat')");
+    await a.click("[role='tab']:has-text('Nova flat')");
     await a.waitForSelector("#condominio_id");
     ok("agente: separadores flat / condomínio / lista");
 

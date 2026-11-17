@@ -16,7 +16,7 @@ export function Separadores({
       <div
         role="tablist"
         aria-label="Cadastro"
-        className="mb-4 flex gap-1.5 overflow-x-auto rounded-[14px] border border-line bg-card p-1.5"
+        className="mb-4 flex flex-wrap gap-1.5 rounded-[14px] border border-line bg-card p-1.5"
       >
         {paineis.map((p) => (
           <button
