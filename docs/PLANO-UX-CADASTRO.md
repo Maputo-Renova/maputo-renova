@@ -48,7 +48,7 @@ linkadas (nem no /convite nem na declaração do cadastro de condomínio).
 
 ## Plano de execução (Fase 6.1)
 
-### Incremento A — Destravar o acesso (P0 + P1)
+### Incremento A — Destravar o acesso (P0 + P1) ✅ (17 Nov)
 
 1. **Configuração Supabase (acção do cliente, 2 min, dashboard):**
    Authentication → URL Configuration →
@@ -94,7 +94,7 @@ linkadas (nem no /convite nem na declaração do cadastro de condomínio).
    nascimento com largura total no móvel (o widget nativo do iOS precisa).
 4. Verificação em browser real a 390 px (screenshots antes/depois) + E2E.
 
-### Incremento D — Termos com link (P4)
+### Incremento D — Termos com link (P4) ✅ (17 Nov)
 
 - No `/convite`, `/definir-password` e na declaração do cadastro de
   condomínio: "Li e aceito os [Termos e Condições](/termos) e a

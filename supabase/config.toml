@@ -9,3 +9,7 @@ enable_confirmations = false
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true
+
+[functions.processar-envios]
+# autentica-se pelo cabeçalho x-envios-secret (Vault), como em produção
+verify_jwt = false

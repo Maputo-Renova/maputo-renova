@@ -96,5 +96,6 @@ jobs:
           BASE: http://localhost:3000
           SUPABASE_URL: ${{ steps.creds.outputs.url }}
           SUPABASE_ANON_KEY: ${{ steps.creds.outputs.anon }}
+          SUPABASE_SERVICE_KEY: ${{ steps.creds.outputs.service }}
           PAYMENT_WORKER_URL: http://localhost:8080
         run: node tests/e2e.mjs

@@ -80,8 +80,11 @@ export default function Convite() {
           <label className="flex cursor-pointer items-start gap-2.5 text-[13.5px] text-ink-2">
             <input type="checkbox" name="termos" className="mt-0.5 size-4.5 accent-green-600" />
             <span>
-              Li e aceito os Termos e Condições e a Política de Privacidade do
-              Maputo Renova.
+              Li e aceito os{" "}
+              <Link href="/termos" target="_blank" className="font-bold text-green-700 underline">Termos e Condições</Link>{" "}
+              e a{" "}
+              <Link href="/privacidade" target="_blank" className="font-bold text-green-700 underline">Política de Privacidade</Link>{" "}
+              do Maputo Renova.
             </span>
           </label>
           {erro ? <p className="text-[13px] font-semibold text-red-700">{erro}</p> : null}

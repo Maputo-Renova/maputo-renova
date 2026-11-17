@@ -74,12 +74,87 @@ try {
   await c.waitForSelector("text=BCI");
   ok("consola: configuração com conta BCI");
 
-  // ── Agente: entra e vê a área de cadastro ───────────────────────────────
+  // ── Agente: cadastro de flats + convite do proprietário por LINK ────────
+  const SERVICE = process.env.SUPABASE_SERVICE_KEY;
   {
     const a = await login(browser, "agente.demo@maputorenova.co.za");
     await a.waitForURL((u) => u.pathname.startsWith("/agente"), { timeout: 30000 });
     await a.waitForSelector("text=Cadastro de condomínios");
     ok("agente: área de cadastro acessível");
+
+    if (SERVICE) {
+      const EMAIL_DONO = "convite.e2e@exemplo.co.mz";
+      const processar = () =>
+        fetch(`${SUPABASE_URL}/functions/v1/processar-envios`, {
+          method: "POST",
+          headers: { "x-envios-secret": "segredo-local-ci" },
+        }).then((r) => r.json());
+      const rest = (caminho) =>
+        fetch(`${SUPABASE_URL}/rest/v1/${caminho}`, {
+          headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` },
+        }).then((r) => r.json());
+      const registarFlat = async (numero, email) => {
+        await a.goto(`${BASE}/agente`);
+        await a.selectOption("#condominio_id", { label: "Jardim das Acácias" });
+        await a.fill("#bloco", "B2");
+        await a.fill("#andar", "3");
+        await a.fill("#numero", numero);
+        await a.fill("#nome", "Shelton");
+        await a.fill("#apelido", "Douglas");
+        await a.fill("#telefone", "84 777 0001");
+        if (email) await a.fill("#email", email);
+        await a.click("button:has-text('Registar flat')");
+        await a.waitForSelector("text=Flat registada", { timeout: 30000 });
+      };
+
+      // 1) Flat nova com email → link de convite preparado pela função
+      await registarFlat("75", EMAIL_DONO);
+      const r1 = await processar();
+      if (r1.preparados >= 1) ok("convite: link preparado pela função");
+      else falha("convite: link preparado pela função", JSON.stringify(r1));
+
+      const [envio] = await rest(
+        `envios?tipo=eq.convite_link&destinatario=eq.${EMAIL_DONO}&order=id.asc&limit=1`,
+      );
+      const m2 = (envio?.corpo ?? "").match(/token_hash=([^&]+)&type=invite&next=([^"]+)/);
+      if (!m2) {
+        falha("convite: corpo com link", (envio?.corpo ?? "sem corpo").slice(0, 160));
+      } else {
+        // 2) Dono abre o link → só define a password → painel do morador
+        const s = await (await browser.newContext()).newPage();
+        await s.goto(
+          `${BASE}/auth/confirmar?token_hash=${m2[1]}&type=invite&next=${m2[2]}`,
+        );
+        await s.waitForURL((u) => u.pathname.startsWith("/definir-password"), { timeout: 30000 });
+        await s.fill("#password", PASS);
+        await s.fill("#password2", PASS);
+        await s.check("input[name='termos']");
+        await s.click("button:has-text('Concluir e entrar')");
+        await s.waitForSelector("text=Olá, Shelton", { timeout: 30000 });
+        ok("convite: link → password → painel do morador num único fluxo");
+
+        // 3) Segunda flat com o MESMO email → associada automaticamente
+        await registarFlat("76", EMAIL_DONO);
+        const r3 = await processar();
+        const [f76] = await rest("flats?numero=eq.76&select=perfil_proprietario_id");
+        if (r3.preparados >= 1 && f76?.perfil_proprietario_id) {
+          ok("convite: segunda moradia associada automaticamente ao mesmo dono");
+        } else {
+          falha("convite: associação automática", JSON.stringify({ r3, f76 }));
+        }
+
+        // 4) Terceira flat SEM email → dono associa pelo código no perfil
+        await registarFlat("77", null);
+        const texto = await a.locator("text=Código de convite do proprietário").innerText();
+        const codigo = texto.split(":").pop().trim().replace(/\.$/, "");
+        await s.goto(`${BASE}/perfil`);
+        await s.fill("#assoc-codigo", codigo);
+        await s.click("button:has-text('Associar flat')");
+        await s.waitForSelector("text=Flat associada à sua conta", { timeout: 30000 });
+        ok("convite: multi-moradias por código no perfil");
+        await s.context().close();
+      }
+    }
     await a.context().close();
   }
 

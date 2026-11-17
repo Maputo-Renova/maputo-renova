@@ -234,6 +234,52 @@ begin
     end;
   end;
 
+  ---------------------------------------------------------------------------
+  -- FASE 6.1: convite por link — helpers exclusivos do serviço
+  ---------------------------------------------------------------------------
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_morador, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  begin
+    perform public.fn_user_id_por_email('x@y.z');
+    raise exception 'fn_user_id_por_email aceite por authenticated';
+  exception when insufficient_privilege then null; -- esperado
+  end;
+  begin
+    perform public.fn_associar_flat_automatica(gen_random_uuid());
+    raise exception 'fn_associar_flat_automatica aceite por authenticated';
+  exception when insufficient_privilege then null; -- esperado
+  end;
+  reset role;
+
+  declare
+    v_flat_a uuid;
+    v_flat_b uuid;
+    v_ligada uuid;
+  begin
+    -- email de proprietário já com conta → associa automaticamente
+    insert into public.flats (condominio_id, bloco, andar, numero,
+      proprietario_nome, proprietario_apelido, proprietario_telefone, proprietario_email)
+    values (v_jda, 'T', '9', '901', 'Celeste', 'Mabjaia', '+258 84 210 1240',
+            'morador.demo@maputorenova.co.za')
+    returning id into v_flat_a;
+    assert public.fn_associar_flat_automatica(v_flat_a),
+      'associação automática falhou para email de proprietário existente';
+    select perfil_proprietario_id into v_ligada from public.flats where id = v_flat_a;
+    assert v_ligada = v_morador, 'flat associada ao utilizador errado';
+
+    -- email de uma conta que NÃO é proprietário (gestor) → nunca associa
+    insert into public.flats (condominio_id, bloco, andar, numero,
+      proprietario_nome, proprietario_apelido, proprietario_telefone, proprietario_email)
+    values (v_jda, 'T', '9', '902', 'Arlindo', 'Macuácua', '+258 84 555 0101',
+            'gestor.demo@maputorenova.co.za')
+    returning id into v_flat_b;
+    assert not public.fn_associar_flat_automatica(v_flat_b),
+      'associou flat a uma conta de gestor';
+    select perfil_proprietario_id into v_ligada from public.flats where id = v_flat_b;
+    assert v_ligada is null, 'flat de teste ficou associada indevidamente';
+  end;
+
   raise notice 'RLS OK — todos os testes passaram';
 end;
 $teste$;

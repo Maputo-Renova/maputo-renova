@@ -119,7 +119,13 @@ export function FormNovoCondominio() {
       </div>
       <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-ink-2">
         <input type="checkbox" name="termos" className="mt-0.5 size-4.5 accent-green-600" />
-        <span>Declaro que o condomínio e o gestor aceitam os Termos e Condições; a aceitação fica registada com data e autor.</span>
+        <span>
+          Declaro que o condomínio e o gestor aceitam os{" "}
+          <a href="/termos" target="_blank" className="font-bold text-green-700 underline">Termos e Condições</a>{" "}
+          e a{" "}
+          <a href="/privacidade" target="_blank" className="font-bold text-green-700 underline">Política de Privacidade</a>
+          ; a aceitação fica registada com data e autor.
+        </span>
       </label>
       <button className="btn btn-primary w-full" disabled={pendente}>
         {pendente ? "A criar…" : "Criar condomínio"}
