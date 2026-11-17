@@ -4,7 +4,6 @@ import { Icone } from "@/components/Icone";
 import { MenuMobile } from "@/components/MenuMobile";
 import { NavLateral, type ItemNav } from "@/components/NavLateral";
 import { sair } from "@/app/actions/sair";
-import { createClient } from "@/lib/supabase/server";
 import type { Perfil } from "@/lib/perfil";
 
 export async function AppShell({
@@ -18,15 +17,10 @@ export async function AppShell({
   itens: ItemNav[];
   children: React.ReactNode;
 }) {
-  // foto de perfil: bucket privado → URL assinada de curta duração
-  let fotoUrl: string | null = null;
-  if (perfil.foto_path) {
-    const supabase = await createClient();
-    const { data } = await supabase.storage
-      .from("comprovativos")
-      .createSignedUrl(perfil.foto_path, 3600);
-    fotoUrl = data?.signedUrl ?? null;
-  }
+  // foto de perfil: rota própria com cache no browser (?v muda a cada upload)
+  const fotoUrl = perfil.foto_path
+    ? `/foto-perfil?v=${encodeURIComponent(perfil.foto_path)}`
+    : null;
 
   const iniciais = perfil.nome
     .split(" ")

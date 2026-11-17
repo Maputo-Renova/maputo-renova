@@ -342,7 +342,8 @@ try {
     );
     await m.setInputFiles("input[name='foto']", foto);
     await m.waitForSelector("button:has-text('Remover foto')", { timeout: 30000 });
-    ok("perfil: foto carregada");
+    await m.waitForSelector("img[src^='/foto-perfil']", { timeout: 30000 });
+    ok("perfil: foto carregada (servida pela rota com cache)");
     await m.click("button:has-text('Remover foto')");
     await m.waitForSelector("button:has-text('Remover foto')", { state: "detached", timeout: 30000 });
     ok("perfil: foto removida");

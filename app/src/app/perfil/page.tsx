@@ -30,13 +30,9 @@ export default async function Perfil() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let fotoUrl: string | null = null;
-  if (perfil.foto_path) {
-    const { data: assinada } = await supabase.storage
-      .from("comprovativos")
-      .createSignedUrl(perfil.foto_path, 3600);
-    fotoUrl = assinada?.signedUrl ?? null;
-  }
+  const fotoUrl = perfil.foto_path
+    ? `/foto-perfil?v=${encodeURIComponent(perfil.foto_path)}`
+    : null;
   const iniciais = perfil.nome
     .split(" ")
     .filter(Boolean)
