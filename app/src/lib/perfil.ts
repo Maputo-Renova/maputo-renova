@@ -10,6 +10,7 @@ export type Perfil = {
   papel: Papel;
   estado: "pendente" | "activo" | "suspenso";
   condominio_id: string | null;
+  foto_path: string | null;
 };
 
 export const ROTA_POR_PAPEL: Record<Papel, string> = {
@@ -29,7 +30,7 @@ export async function obterPerfil(): Promise<Perfil | null> {
 
   const { data } = await supabase
     .from("perfis")
-    .select("id, nome, apelido, papel, estado, condominio_id")
+    .select("id, nome, apelido, papel, estado, condominio_id, foto_path")
     .eq("id", user.id)
     .maybeSingle();
 

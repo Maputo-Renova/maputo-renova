@@ -330,6 +330,24 @@ try {
   await m.waitForSelector("text=Alterações guardadas", { timeout: 30000 });
   ok("perfil: guardar alterações");
 
+  // ── Perfil: foto de perfil (carregar e remover) ─────────────────────────
+  {
+    const foto = path.join(os.tmpdir(), "foto-e2e.png");
+    fs.writeFileSync(
+      foto,
+      Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "base64",
+      ),
+    );
+    await m.setInputFiles("input[name='foto']", foto);
+    await m.waitForSelector("button:has-text('Remover foto')", { timeout: 30000 });
+    ok("perfil: foto carregada");
+    await m.click("button:has-text('Remover foto')");
+    await m.waitForSelector("button:has-text('Remover foto')", { state: "detached", timeout: 30000 });
+    ok("perfil: foto removida");
+  }
+
   // ── MFA: inscrever, desafiar no login, aal1 bloqueado, desactivar ───────
   await c.goto(`${BASE}/perfil`);
   await c.click("button:has-text('Activar verificação')");

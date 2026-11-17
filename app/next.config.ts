@@ -7,7 +7,8 @@ const CSP = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  // Supabase: fotos de perfil e comprovativos por URL assinada (Storage)
+  `img-src 'self' data: blob: ${SUPABASE}`,
   "font-src 'self' data:",
   `connect-src 'self' ${SUPABASE} ${SUPABASE.replace(/^http/, "ws")}`,
   "frame-ancestors 'none'",

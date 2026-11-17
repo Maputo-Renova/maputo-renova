@@ -6,6 +6,7 @@ import { Icone } from "@/components/Icone";
 import { obterPerfil } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { NAV_POR_PAPEL, SUB_POR_PAPEL } from "@/lib/navs";
+import { FormFoto } from "./FormFoto";
 import { FormNome } from "./FormNome";
 import { FormPassword } from "./FormPassword";
 import { FormMfa } from "./FormMfa";
@@ -29,6 +30,21 @@ export default async function Perfil() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  let fotoUrl: string | null = null;
+  if (perfil.foto_path) {
+    const { data: assinada } = await supabase.storage
+      .from("comprovativos")
+      .createSignedUrl(perfil.foto_path, 3600);
+    fotoUrl = assinada?.signedUrl ?? null;
+  }
+  const iniciais = perfil.nome
+    .split(" ")
+    .filter(Boolean)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
     <AppShell
       perfil={perfil}
@@ -47,6 +63,7 @@ export default async function Perfil() {
             </span>
             <h2 className="text-base font-extrabold">Perfil</h2>
           </div>
+          <FormFoto fotoUrl={fotoUrl} iniciais={iniciais} />
           <FormNome
             nome={perfil.nome}
             apelido={perfil.apelido ?? ""}

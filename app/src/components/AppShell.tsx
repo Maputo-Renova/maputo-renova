@@ -4,9 +4,10 @@ import { Icone } from "@/components/Icone";
 import { MenuMobile } from "@/components/MenuMobile";
 import { NavLateral, type ItemNav } from "@/components/NavLateral";
 import { sair } from "@/app/actions/sair";
+import { createClient } from "@/lib/supabase/server";
 import type { Perfil } from "@/lib/perfil";
 
-export function AppShell({
+export async function AppShell({
   perfil,
   sub,
   itens,
@@ -17,6 +18,16 @@ export function AppShell({
   itens: ItemNav[];
   children: React.ReactNode;
 }) {
+  // foto de perfil: bucket privado → URL assinada de curta duração
+  let fotoUrl: string | null = null;
+  if (perfil.foto_path) {
+    const supabase = await createClient();
+    const { data } = await supabase.storage
+      .from("comprovativos")
+      .createSignedUrl(perfil.foto_path, 3600);
+    fotoUrl = data?.signedUrl ?? null;
+  }
+
   const iniciais = perfil.nome
     .split(" ")
     .filter(Boolean)
@@ -57,9 +68,18 @@ export function AppShell({
             aria-label="O meu perfil"
             className="ml-auto flex items-center gap-2.5 rounded-full border border-line bg-card py-1.5 pl-1.5 pr-4 transition-colors hover:bg-green-50"
           >
-            <span className="grid size-8 place-items-center rounded-full bg-green-150 text-[12.5px] font-extrabold text-green-800">
-              {iniciais}
-            </span>
+            {fotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- URL assinada de curta duração; o optimizador faria cache de um URL expirável
+              <img
+                src={fotoUrl}
+                alt=""
+                className="size-8 rounded-full object-cover"
+              />
+            ) : (
+              <span className="grid size-8 place-items-center rounded-full bg-green-150 text-[12.5px] font-extrabold text-green-800">
+                {iniciais}
+              </span>
+            )}
             <span className="text-[13px] font-bold">{perfil.nome}</span>
           </Link>
         </header>
