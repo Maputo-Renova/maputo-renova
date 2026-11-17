@@ -20,7 +20,9 @@ jobs:
       - name: Instalar Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # fixada: resolver "latest" consulta a API do GitHub e falha com
+          # rate limit nos runners partilhados (flake recorrente)
+          version: 3.2.0
 
       - name: Arrancar a pilha local (migrações + seed)
         run: supabase start
