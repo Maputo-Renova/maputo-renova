@@ -189,3 +189,20 @@ export async function rejeitarTransferencia(fd: FormData) {
   });
   revalidatePath("/gestor/pagamentos");
 }
+
+/** Drawer da flat (Pagamentos): corrige o email e reenvia o convite de
+    acesso enquanto a flat não tem conta ligada. */
+export async function reenviarConviteFlat(
+  _prev: EstadoAccao,
+  fd: FormData,
+): Promise<EstadoAccao> {
+  await exigirPapel("gestor");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("fn_reenviar_convite_flat", {
+    p_flat: String(fd.get("flat_id")),
+    p_email: String(fd.get("email") ?? "").trim(),
+  });
+  if (error) return { ok: false, mensagem: error.message };
+  revalidatePath("/gestor/pagamentos");
+  return { ok: true, mensagem: "Convite reenviado — segue por email nos próximos minutos." };
+}

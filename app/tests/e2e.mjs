@@ -284,6 +284,18 @@ try {
   await g.click("button:has-text('Confirmar')");
   await g.waitForSelector("button:has-text('Confirmar')", { state: "detached", timeout: 30000 });
   ok("gestor: transferência confirmada");
+
+  // ── Gestor: procura + drawer da flat (fidelidade ao protótipo) ──────────
+  await g.goto(`${BASE}/gestor/pagamentos`);
+  await g.fill("input[name='q']", "302");
+  await g.press("input[name='q']", "Enter");
+  await g.waitForSelector("text=Celeste");
+  await g.click("li button:has-text('Flat 302')");
+  await g.waitForSelector("text=Acesso do proprietário");
+  await g.waitForSelector("text=Conta activa");
+  await g.click("aside button:has-text('Fechar')");
+  await g.waitForSelector("text=Acesso do proprietário", { state: "detached", timeout: 30000 });
+  ok("gestor: procura e drawer da flat com histórico e acesso");
   await m.goto(`${BASE}/morador/faturas`);
   await m.waitForSelector(".pill:has-text('Paga')", { timeout: 30000 });
   await m.waitForSelector(".pill:has-text('Pendente'), .pill:has-text('Em atraso'), .pill:has-text('A confirmar')", {
