@@ -1,13 +1,14 @@
 
 import { connection } from "next/server";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { Icone } from "@/components/Icone";
 import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { NAV_AGENTE } from "@/lib/navs";
 
-// Meus Cadastros: o histórico de trabalho do agente — cada condomínio com os
-// seus dados e, dentro dele, as flats cadastradas e o estado de cada convite.
+// Meus Cadastros (nível 1): só a lista de condomínios — clicar abre a lista
+// de flats do condomínio, e daí o detalhe de cada flat.
 export default async function MeusCadastros() {
   await connection();
   const perfil = await exigirPapel("colaborador");
@@ -18,18 +19,16 @@ export default async function MeusCadastros() {
       .from("condominios")
       .select("id, nome, codigo, bairro, provincia, rua, numero_porta, total_moradias, estado, gestor_nome, gestor_apelido")
       .order("nome"),
-    supabase
-      .from("flats")
-      .select("id, condominio_id, referencia, bloco, andar, numero, proprietario_nome, proprietario_apelido, perfil_proprietario_id")
-      .order("referencia"),
+    supabase.from("flats").select("id, condominio_id, perfil_proprietario_id"),
   ]);
 
   const lista = condominios ?? [];
-  const flatsPorCondo = new Map<string, NonNullable<typeof flats>>();
+  const porCondominio = new Map<string, { flats: number; porUsar: number }>();
   for (const f of flats ?? []) {
-    const atual = flatsPorCondo.get(f.condominio_id) ?? [];
-    atual.push(f);
-    flatsPorCondo.set(f.condominio_id, atual);
+    const atual = porCondominio.get(f.condominio_id) ?? { flats: 0, porUsar: 0 };
+    atual.flats++;
+    if (!f.perfil_proprietario_id) atual.porUsar++;
+    porCondominio.set(f.condominio_id, atual);
   }
 
   return (
@@ -49,72 +48,46 @@ export default async function MeusCadastros() {
               <Icone nome="building" />
             </span>
             <b>Ainda sem cadastros</b>
-            <p>Os condomínios e flats que cadastrar aparecem aqui, com o estado de cada convite.</p>
+            <p>Os condomínios que cadastrar aparecem aqui.</p>
           </div>
         </div>
       ) : (
-        <div className="grid max-w-180 gap-4">
+        <div className="grid max-w-180 gap-3">
           {lista.map((c) => {
-            const minhas = flatsPorCondo.get(c.id) ?? [];
-            const porUsar = minhas.filter((f) => !f.perfil_proprietario_id).length;
+            const n = porCondominio.get(c.id);
             return (
-              <div key={c.id} className="card">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="card-ico">
-                    <Icone nome="building" />
+              <Link
+                key={c.id}
+                href={`/agente/cadastros/${c.id}`}
+                className="card flex items-center gap-3 transition-shadow hover:shadow-lg"
+              >
+                <span className="card-ico shrink-0">
+                  <Icone nome="building" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="font-extrabold">{c.nome}</span>
+                    <span className="num rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-800">
+                      {c.codigo}
+                    </span>
+                    {c.estado !== "activo" ? (
+                      <span className="pill pill-pendente">{c.estado}</span>
+                    ) : null}
                   </span>
-                  <h2 className="text-base font-extrabold">{c.nome}</h2>
-                  <span className="num rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-800">
-                    {c.codigo}
+                  <span className="num mt-0.5 block text-[13px] text-ink-3">
+                    {[c.bairro, c.provincia].filter(Boolean).join(" · ")}
                   </span>
-                  {c.estado !== "activo" ? (
-                    <span className="pill pill-pendente">{c.estado}</span>
-                  ) : null}
-                </div>
-                <p className="num mt-1 text-[13px] text-ink-3">
-                  {[
-                    [c.rua, c.numero_porta].filter(Boolean).join(", "),
-                    c.bairro,
-                    c.provincia,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                  {c.gestor_nome ? ` · Gestor: ${c.gestor_nome}${c.gestor_apelido ? ` ${c.gestor_apelido}` : ""}` : ""}
-                </p>
-                <p className="num text-[13px] font-semibold text-ink-2">
-                  {minhas.length} de {c.total_moradias ?? "—"} moradias cadastradas
-                  {porUsar ? ` · ${porUsar} convite${porUsar === 1 ? "" : "s"} por usar` : ""}
-                </p>
-
-                {minhas.length === 0 ? (
-                  <p className="mt-3 border-t border-line-soft pt-3 text-sm text-ink-3">
-                    Ainda sem flats neste condomínio.
-                  </p>
-                ) : (
-                  <ul className="mt-3 divide-y divide-line-soft border-t border-line-soft">
-                    {minhas.map((f) => (
-                      <li key={f.id} className="flex flex-wrap items-center gap-2 py-2.5">
-                        <span className="num rounded-lg bg-bg px-2 py-0.5 text-[12.5px] font-bold">
-                          {f.referencia}
-                        </span>
-                        <span className="text-[13.5px] font-semibold">
-                          {[f.bloco ? `Bloco ${f.bloco}` : null, f.andar ? `${f.andar}.º` : null, `Flat ${f.numero}`]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </span>
-                        <span className="text-[13px] text-ink-3">
-                          {[f.proprietario_nome, f.proprietario_apelido].filter(Boolean).join(" ")}
-                        </span>
-                        <span
-                          className={`ml-auto pill ${f.perfil_proprietario_id ? "pill-pago" : "pill-pendente"}`}
-                        >
-                          {f.perfil_proprietario_id ? "Conta activa" : "Convite por usar"}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                  <span className="num block text-[13px] font-semibold text-ink-2">
+                    {n?.flats ?? 0} de {c.total_moradias ?? "—"} moradias cadastradas
+                    {n?.porUsar
+                      ? ` · ${n.porUsar} convite${n.porUsar === 1 ? "" : "s"} por usar`
+                      : ""}
+                  </span>
+                </span>
+                <span className="shrink-0 text-ink-3">
+                  <Icone nome="chevR" sm />
+                </span>
+              </Link>
             );
           })}
         </div>

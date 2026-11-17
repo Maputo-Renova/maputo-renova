@@ -89,10 +89,13 @@ try {
     await a.waitForSelector("#condominio_id");
     await a.goto(`${BASE}/agente/cadastros`);
     await a.waitForSelector("text=o seu histórico de cadastros");
-    await a.waitForSelector("text=Jardim das Acácias");
+    await a.click("a:has-text('Jardim das Acácias')");
     await a.waitForSelector("text=Celeste");
     await a.waitForSelector("text=Convite por usar");
-    ok("agente: Cadastrar + Meus Cadastros (condomínios com as suas flats)");
+    await a.click("a:has-text('Celeste')");
+    await a.waitForSelector("text=Proprietário(a)");
+    await a.waitForSelector("text=Mabjaia");
+    ok("agente: Meus Cadastros → condomínio → detalhe da flat");
 
     if (SERVICE) {
       const EMAIL_DONO = "convite.e2e@exemplo.co.mz";
