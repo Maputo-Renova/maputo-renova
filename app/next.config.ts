@@ -19,6 +19,15 @@ const CSP = [
 const nextConfig: NextConfig = {
   cacheComponents: false,
   partialPrefetching: false,
+  experimental: {
+    // cache do router no browser: voltar a uma página visitada há <30 s é
+    // instantâneo — essencial com o servidor longe (Dublin) dos utilizadores
+    // em Maputo; dados financeiros continuam a refrescar ao fim de 30 s
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
   async headers() {
     return [
       {
