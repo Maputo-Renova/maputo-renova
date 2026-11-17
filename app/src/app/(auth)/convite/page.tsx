@@ -68,6 +68,10 @@ export default function Convite() {
           <div className="field">
             <label htmlFor="email">Email</label>
             <input id="email" name="email" type="email" required placeholder="o.seu@email.co.mz" />
+            <span className="text-xs font-semibold text-ink-3">
+              Use o email que deu no cadastro — um convite com email fica
+              reservado a esse endereço.
+            </span>
           </div>
           <div className="field">
             <label htmlFor="password">Criar password</label>

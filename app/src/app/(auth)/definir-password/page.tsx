@@ -85,7 +85,7 @@ function Definir() {
           <label htmlFor="codigo">Código da flat</label>
           <input id="codigo" name="codigo" required defaultValue={params.get("codigo") ?? ""} className="num" placeholder="Código de uso único da flat" />
           <span className="text-xs font-semibold text-ink-3">
-            Já veio preenchido. Se tiver várias moradias, pode usar aqui o código de outra flat.
+            Já veio preenchido a partir do convite do condomínio.
           </span>
         </div>
         <label className="flex cursor-pointer items-start gap-2.5 text-[13.5px] text-ink-2">

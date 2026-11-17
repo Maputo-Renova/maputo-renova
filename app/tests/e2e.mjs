@@ -143,16 +143,35 @@ try {
           falha("convite: associação automática", JSON.stringify({ r3, f76 }));
         }
 
-        // 4) Terceira flat SEM email → dono associa pelo código no perfil
-        await registarFlat("77", null);
+        await s.context().close();
+
+        // 4) Caminho manual preservado: outra dona cria conta em /convite
+        //    com o código (reservado ao email indicado no cadastro)
+        await a.goto(`${BASE}/agente`);
+        await a.selectOption("#condominio_id", { label: "Jardim das Acácias" });
+        await a.fill("#bloco", "B2");
+        await a.fill("#andar", "4");
+        await a.fill("#numero", "81");
+        await a.fill("#nome", "Belmira");
+        await a.fill("#apelido", "Costa");
+        await a.fill("#telefone", "84 777 0002");
+        await a.fill("#email", "belmira.e2e@exemplo.co.mz");
+        await a.click("button:has-text('Registar flat')");
+        await a.waitForSelector("text=Código de convite do proprietário", { timeout: 30000 });
         const texto = await a.locator("text=Código de convite do proprietário").innerText();
         const codigo = texto.split(":").pop().trim().replace(/\.$/, "");
-        await s.goto(`${BASE}/perfil`);
-        await s.fill("#assoc-codigo", codigo);
-        await s.click("button:has-text('Associar flat')");
-        await s.waitForSelector("text=Flat associada à sua conta", { timeout: 30000 });
-        ok("convite: multi-moradias por código no perfil");
-        await s.context().close();
+
+        const b = await (await browser.newContext()).newPage();
+        await b.goto(`${BASE}/convite`);
+        await b.fill("#codigo", codigo);
+        await b.fill("#email", "belmira.e2e@exemplo.co.mz");
+        await b.fill("#password", PASS);
+        await b.fill("#password2", PASS);
+        await b.check("input[name='termos']");
+        await b.click("button:has-text('Criar conta e entrar')");
+        await b.waitForSelector("text=Olá, Belmira", { timeout: 30000 });
+        ok("convite: caminho manual por código (reservado ao email do cadastro)");
+        await b.context().close();
       }
     }
     await a.context().close();

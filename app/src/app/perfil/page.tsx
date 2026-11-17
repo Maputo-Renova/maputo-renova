@@ -9,7 +9,6 @@ import { NAV_POR_PAPEL, SUB_POR_PAPEL } from "@/lib/navs";
 import { FormNome } from "./FormNome";
 import { FormPassword } from "./FormPassword";
 import { FormMfa } from "./FormMfa";
-import { FormAssociarFlat } from "./FormAssociarFlat";
 
 const EMAIL_LOCK: Record<string, string> = {
   gestor: "O email está bloqueado. Só a consola pode alterá-lo e reenviar o acesso.",
@@ -55,17 +54,6 @@ export default async function Perfil() {
             mensagemEmail={EMAIL_LOCK[perfil.papel]}
           />
         </div>
-        {perfil.papel === "proprietario" ? (
-          <div className="card">
-            <div className="mb-4 flex items-center gap-2.5">
-              <span className="card-ico">
-                <Icone nome="home" />
-              </span>
-              <h2 className="text-base font-extrabold">Associar outra flat</h2>
-            </div>
-            <FormAssociarFlat />
-          </div>
-        ) : null}
         <div className="grid gap-4">
           <div className="card">
             <div className="mb-4 flex items-center gap-2.5">

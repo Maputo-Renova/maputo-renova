@@ -278,6 +278,25 @@ begin
       'associou flat a uma conta de gestor';
     select perfil_proprietario_id into v_ligada from public.flats where id = v_flat_b;
     assert v_ligada is null, 'flat de teste ficou associada indevidamente';
+
+    -- convite com email no cadastro fica reservado a esse email: o morador
+    -- (outro email) não consegue consumir o código da flat do gestor
+    declare v_cod uuid;
+    begin
+      select codigo_convite into v_cod from public.flats where id = v_flat_b;
+      perform set_config('request.jwt.claims',
+        json_build_object('sub', v_morador, 'role', 'authenticated')::text, true);
+      set local role authenticated;
+      begin
+        perform public.fn_consumir_convite(v_cod::text);
+        raise exception 'código reservado foi aceite por outro email';
+      exception when others then
+        if sqlerrm not like '%reservado%' then raise; end if; -- esperado
+      end;
+      reset role;
+      select perfil_proprietario_id into v_ligada from public.flats where id = v_flat_b;
+      assert v_ligada is null, 'código reservado ligou a flat a outra conta';
+    end;
   end;
 
   raise notice 'RLS OK — todos os testes passaram';

@@ -169,6 +169,7 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 | Nov 2026 | Lembretes **automáticos** (sem botão); métodos de pagamento dentro de Configuração |
 | Nov 2026 | O protótipo aprovado é o contrato de UI — a app segue-o à letra |
 | Nov 2026 | Funções Vercel fixadas em `dub1` (latência); middleware valida JWT localmente |
+| Nov 2026 | **Moradias só pelo agente**: flats são criadas e associadas apenas pelo agente (2.ª moradia do mesmo dono: associação automática pelo email do cadastro); o morador não adiciona flats por conta própria, e um convite com email fica reservado a esse email |
 | Nov 2026 | **Votação fora do dashboard**: as votações dos projectos do fundo decorrem em assembleias presenciais da associação; o dashboard mostra a adimplência/elegibilidade aos administradores e a consola regista o resultado agregado |
 
 ---
@@ -260,3 +261,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 **Feito:** o teste novo da associação automática falhou na CI com violação de chave única — `flats.perfil_proprietario_id` era UNIQUE desde a migração 00001, ou seja, a base de dados só permitia UMA flat por dono, contradizendo o requisito multi-moradias (o próprio caminho por código teria falhado em produção na 2.ª moradia). Correcção completa: migração 00029 (remove a restrição, índice normal no lugar, aplicada em produção) e as 4 páginas do morador que assumiam uma só flat passaram a agregar moradias — painel com quotas somadas e linha por flat, faturas de todas as flats com etiqueta da moradia, "A minha flat" vira "As minhas flats" com uma secção por flat, e o ticket de suporte liga-se à primeira flat.
 **Pendente:** CI a validar; Incrementos B e C do plano UX.
 **Desafios e soluções:** mais uma vez a suite de RLS pagou-se — apanhou em CI um conflito esquema↔negócio que o cliente teria encontrado no primeiro dono com duas moradias.
+
+### 17 Nov 2026 · Governação: moradias só pelo agente
+**Feito:** por decisão do cliente, o morador não adiciona moradias por conta própria — removido o cartão "Associar outra flat" do perfil; a 2.ª moradia do mesmo dono entra pela associação automática quando o agente regista a flat com o mesmo email. Reforço na base de dados (migração 00030, em produção): um código de convite de flat COM email no cadastro só pode ser consumido por uma conta com esse email — um código desviado deixa de ligar flats a terceiros; flats sem email mantêm o código entregue em mão. E2E ajustado (caminho manual testado com uma dona nova em /convite) e suite RLS cobre a recusa do código reservado a outro email. Decisão registada na tabela de decisões.
+**Pendente:** CI a validar; Incrementos B e C do plano UX.
+**Desafios e soluções:** o endurecimento aproveitou a correcção — reservar o convite ao email do cadastro fecha também um risco antigo de códigos desviados no caminho manual.
