@@ -16,7 +16,7 @@ export function Separadores({
       <div
         role="tablist"
         aria-label="Cadastro"
-        className="mb-4 flex flex-wrap gap-1.5 rounded-[14px] border border-line bg-card p-1.5"
+        className="mb-4 grid auto-cols-fr grid-flow-col gap-1.5 rounded-[14px] border border-line bg-card p-1.5"
       >
         {paineis.map((p) => (
           <button
@@ -26,10 +26,10 @@ export function Separadores({
             aria-selected={activo === p.id}
             aria-controls={`painel-${p.id}`}
             onClick={() => setActivo(p.id)}
-            className={`whitespace-nowrap rounded-[10px] px-3.5 py-2 text-[13.5px] font-bold transition-colors ${
+            className={`rounded-[10px] px-3 py-2.5 text-center text-[13.5px] font-bold transition-colors ${
               activo === p.id
                 ? "bg-green-600 text-white"
-                : "text-ink-2 hover:bg-green-50"
+                : "bg-bg text-ink-3 hover:bg-green-50 hover:text-ink-2"
             }`}
           >
             {p.rotulo}
