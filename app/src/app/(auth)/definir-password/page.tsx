@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import { CampoPassword } from "@/components/CampoPassword";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -73,14 +74,8 @@ function Definir() {
         para entrar no seu painel.
       </p>
       <form onSubmit={submeter} className="grid gap-3.5">
-        <div className="field">
-          <label htmlFor="password">Criar password</label>
-          <input id="password" name="password" type="password" autoComplete="new-password" required placeholder="Mínimo 8 caracteres" />
-        </div>
-        <div className="field">
-          <label htmlFor="password2">Confirmar password</label>
-          <input id="password2" name="password2" type="password" autoComplete="new-password" required placeholder="Repita a password" />
-        </div>
+        <CampoPassword id="password" name="password" label="Criar password" autoComplete="new-password" placeholder="Mínimo 8 caracteres" sugestao />
+        <CampoPassword id="password2" name="password2" label="Confirmar password" autoComplete="new-password" placeholder="Repita a password" />
         <div className="field">
           <label htmlFor="codigo">Código de convite</label>
           <input id="codigo" name="codigo" required defaultValue={params.get("codigo") ?? ""} className="num" placeholder="Código de uso único do convite" />

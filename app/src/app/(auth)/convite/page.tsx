@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CampoPassword } from "@/components/CampoPassword";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -73,14 +74,8 @@ export default function Convite() {
               reservado a esse endereço.
             </span>
           </div>
-          <div className="field">
-            <label htmlFor="password">Criar password</label>
-            <input id="password" name="password" type="password" required placeholder="Mínimo 8 caracteres" />
-          </div>
-          <div className="field">
-            <label htmlFor="password2">Confirmar password</label>
-            <input id="password2" name="password2" type="password" required placeholder="Repita a password" />
-          </div>
+          <CampoPassword id="password" name="password" label="Criar password" autoComplete="new-password" placeholder="Mínimo 8 caracteres" sugestao />
+          <CampoPassword id="password2" name="password2" label="Confirmar password" autoComplete="new-password" placeholder="Repita a password" />
           <label className="flex cursor-pointer items-start gap-2.5 text-[13.5px] text-ink-2">
             <input type="checkbox" name="termos" className="mt-0.5 size-4.5 accent-green-600" />
             <span>

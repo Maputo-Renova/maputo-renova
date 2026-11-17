@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CampoPassword } from "@/components/CampoPassword";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MarcaSimbolo } from "@/components/Marca";
@@ -29,14 +30,8 @@ export default function Redefinir() {
       <div className="card w-full max-w-105">
         <h1 className="mb-4 text-[17px] font-extrabold">Definir nova password</h1>
         <form onSubmit={submeter} className="grid gap-3.5">
-          <div className="field">
-            <label htmlFor="password">Nova password</label>
-            <input id="password" name="password" type="password" required placeholder="Mínimo 8 caracteres" />
-          </div>
-          <div className="field">
-            <label htmlFor="password2">Confirmar nova password</label>
-            <input id="password2" name="password2" type="password" required placeholder="Repita a password" />
-          </div>
+          <CampoPassword id="password" name="password" label="Nova password" autoComplete="new-password" placeholder="Mínimo 8 caracteres" sugestao />
+          <CampoPassword id="password2" name="password2" label="Confirmar nova password" autoComplete="new-password" placeholder="Repita a password" />
           {erro ? <p className="text-[13px] font-semibold text-red-700">{erro}</p> : null}
           <button className="btn btn-primary w-full">Guardar e entrar</button>
         </form>

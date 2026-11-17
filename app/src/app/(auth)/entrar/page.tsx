@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CampoPassword } from "@/components/CampoPassword";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -106,10 +107,7 @@ export default function Entrar() {
           <label htmlFor="email">Email</label>
           <input id="email" name="email" type="email" required autoComplete="email" placeholder="o.seu@email.co.mz" />
         </div>
-        <div className="field">
-          <label htmlFor="password">Password</label>
-          <input id="password" name="password" type="password" required autoComplete="current-password" placeholder="••••••••" />
-        </div>
+        <CampoPassword id="password" name="password" label="Password" autoComplete="current-password" placeholder="••••••••" />
         {erro ? <p className="text-[13px] font-semibold text-red-700">{erro}</p> : null}
         <button className="btn btn-primary w-full" disabled={aEnviar}>
           {aEnviar ? "A entrar…" : "Entrar"}

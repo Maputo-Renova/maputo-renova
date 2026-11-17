@@ -1,6 +1,7 @@
 "use client";
 
 import { Icone } from "@/components/Icone";
+import { CampoPassword } from "@/components/CampoPassword";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -48,18 +49,9 @@ export function FormPassword({ email }: { email: string }) {
 
   return (
     <form onSubmit={submeter} className="grid gap-3.5">
-      <div className="field">
-        <label htmlFor="pw-actual">Password actual</label>
-        <input id="pw-actual" name="actual" type="password" required placeholder="••••••••" autoComplete="current-password" />
-      </div>
-      <div className="field">
-        <label htmlFor="pw-nova">Nova password</label>
-        <input id="pw-nova" name="nova" type="password" required placeholder="Mínimo 8 caracteres" autoComplete="new-password" />
-      </div>
-      <div className="field">
-        <label htmlFor="pw-conf">Confirmar nova password</label>
-        <input id="pw-conf" name="conf" type="password" required placeholder="Repita a nova password" autoComplete="new-password" />
-      </div>
+      <CampoPassword id="pw-actual" name="actual" label="Password actual" placeholder="••••••••" autoComplete="current-password" />
+      <CampoPassword id="pw-nova" name="nova" label="Nova password" placeholder="Mínimo 8 caracteres" autoComplete="new-password" sugestao />
+      <CampoPassword id="pw-conf" name="conf" label="Confirmar nova password" placeholder="Repita a nova password" autoComplete="new-password" />
       <div className="flex items-center gap-3">
         <button className="btn btn-primary" disabled={pendente}>
           <Icone nome="check" sm />

@@ -78,24 +78,28 @@ export default async function MinhaFlat() {
             </div>
             <div className="grid gap-3.5">
               <div className="grid gap-3.5 sm:grid-cols-2">
-                <Campo rotulo="Referência de cadastro" valor={flat.referencia} />
                 <Campo rotulo="Condomínio" valor={condo?.nome} />
+                <Campo rotulo="Referência de cadastro" valor={flat.referencia} />
               </div>
-              <div className="grid gap-3.5 sm:grid-cols-3">
+              <div className="grid grid-cols-3 gap-3.5">
                 <Campo rotulo="Bloco" valor={flat.bloco} />
                 <Campo rotulo="Andar" valor={flat.andar} />
                 <Campo rotulo="Número" valor={flat.numero} />
               </div>
               <Campo rotulo="Endereço" valor={condo?.endereco} />
-              <div className="grid gap-3.5 sm:grid-cols-2">
-                <Campo
-                  rotulo="Comprovativo de endereço"
-                  valor={flat.comprovativo_endereco_path ? "entregue · verificado" : "por entregar"}
-                />
-                <Campo
-                  rotulo="Quota mensal (definida pelo condomínio)"
-                  valor={MT(Number(condo?.quota_padrao ?? 0))}
-                />
+            </div>
+            <div className="mt-4 grid gap-2.5 border-t border-line-soft pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[13.5px] font-semibold text-ink-2">Quota mensal</span>
+                <span className="num text-[17px] font-extrabold">
+                  {MT(Number(condo?.quota_padrao ?? 0))}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[13.5px] font-semibold text-ink-2">Comprovativo de endereço</span>
+                <span className={`pill ${flat.comprovativo_endereco_path ? "pill-pago" : "pill-pendente"}`}>
+                  {flat.comprovativo_endereco_path ? "Entregue" : "Por entregar"}
+                </span>
               </div>
             </div>
           </div>
