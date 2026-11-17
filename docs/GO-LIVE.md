@@ -8,7 +8,9 @@ numa sessão conjunta Nebula + cliente. (Estado em 15 Nov 2026 entre parênteses
 - [ ] Domínio `maputorenova.co.za` registado em nome do cliente
 - [ ] Domínio verificado no Resend (DNS: SPF/DKIM) e `FROM_EMAIL` trocado
       nos secrets das Edge Functions para `cobranca@maputorenova.co.za`
-      *(hoje: remetente de teste do Resend — só entrega a endereços de teste)*
+      *(hoje: remetente provisório `maputo-renova@kingdomcompany.co.za` —
+      domínio verificado da Nebula, entrega a qualquer destinatário; trocar
+      para o domínio do cliente no go-live)*
 - [ ] Supabase Pro activo e **backups diários confirmados** no dashboard;
       decidir se PITR (add-on) entra já *(plano Pro já activo)*
 - [ ] Vercel: decidir Pro + repositório privado, ou manter público

@@ -9,7 +9,10 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
-const FROM = Deno.env.get("FROM_EMAIL") ?? "Maputo Renova <onboarding@resend.dev>";
+// Remetente: definir FROM_EMAIL quando o domínio do cliente estiver verificado
+// no Resend (go-live: cobranca@maputorenova.co.za). Até lá, domínio verificado
+// da Nebula — o remetente de teste do Resend só entrega ao dono da conta.
+const FROM = Deno.env.get("FROM_EMAIL") ?? "Maputo Renova <maputo-renova@kingdomcompany.co.za>";
 
 const json = (corpo: unknown, status = 200) =>
   new Response(JSON.stringify(corpo), {
