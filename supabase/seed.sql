@@ -29,6 +29,7 @@ declare
   v_gestor uuid;
   v_morador uuid;
   v_pendente uuid;
+  v_agente uuid;
   v_jda uuid;
   v_tdi uuid;
   v_flat101 uuid;
@@ -43,9 +44,12 @@ begin
   v_gestor   := pg_temp.criar_utilizador('gestor.demo@maputorenova.co.za', 'DemoRenova2026!');
   v_morador  := pg_temp.criar_utilizador('morador.demo@maputorenova.co.za', 'DemoRenova2026!');
   v_pendente := pg_temp.criar_utilizador('gestor.pendente.demo@maputorenova.co.za', 'DemoRenova2026!');
+  v_agente   := pg_temp.criar_utilizador('agente.demo@maputorenova.co.za', 'DemoRenova2026!');
 
   insert into public.perfis (id, nome, apelido, papel, estado)
   values (v_consola, 'Nádia', 'Cumbane', 'super_admin', 'activo');
+  insert into public.perfis (id, nome, apelido, papel, estado, telefone)
+  values (v_agente, 'Stélio', 'Nhaca', 'colaborador', 'activo', '+258 84 555 0103');
 
   insert into public.condominios (nome, endereco, cidade, provincia, bairro, rua, numero_porta,
     quota_padrao, dia_vencimento, total_moradias,

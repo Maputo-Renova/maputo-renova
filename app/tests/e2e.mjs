@@ -74,6 +74,15 @@ try {
   await c.waitForSelector("text=BCI");
   ok("consola: configuração com conta BCI");
 
+  // ── Agente: entra e vê a área de cadastro ───────────────────────────────
+  {
+    const a = await login(browser, "agente.demo@maputorenova.co.za");
+    await a.waitForURL((u) => u.pathname.startsWith("/agente"), { timeout: 30000 });
+    await a.waitForSelector("text=Cadastro de condomínios");
+    ok("agente: área de cadastro acessível");
+    await a.context().close();
+  }
+
   // ── Morador: fatura pendente → pagar por transferência ──────────────────
   const m = await login(browser, "morador.demo@maputorenova.co.za");
   await m.goto(`${BASE}/morador/faturas`);

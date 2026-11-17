@@ -2,7 +2,8 @@
 -- Correr UMA vez, na sessão de go-live, DEPOIS de o administrador real da
 -- consola existir e ter entrado com sucesso (ver docs/GO-LIVE.md, secção 3).
 --
--- Apaga: os 4 utilizadores demo, os condomínios JDA e TDI e tudo o que
+-- Apaga: os 5 utilizadores demo (consola, gestor, gestor pendente,
+-- morador e agente — padrão %demo@maputorenova.co.za), os condomínios JDA e TDI e tudo o que
 -- lhes pertence (flats, faturas, pagamentos, movimentos, repasses,
 -- despesas, avisos, tickets, projectos, envios, consolidações), a conta
 -- bancária demo e os convites de teste. Não toca em mais nada.
