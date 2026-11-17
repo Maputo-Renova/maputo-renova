@@ -140,7 +140,7 @@ export async function criarFlat(_prev: Resultado, fd: FormData): Promise<Resulta
   );
   if (endereco.erro) return { erro: endereco.erro };
 
-  const quota = Number(texto(fd, "quota_mensal") || 0);
+  // a quota é definida pelo condomínio (quota_padrao) — nunca pela flat
   const { data, error } = await supabase
     .from("flats")
     .insert({
@@ -150,7 +150,6 @@ export async function criarFlat(_prev: Resultado, fd: FormData): Promise<Resulta
       bloco: texto(fd, "bloco") || null,
       andar: texto(fd, "andar") || null,
       numero,
-      quota_mensal: quota > 0 ? quota : null,
       proprietario_nome: nome,
       proprietario_apelido: apelido,
       proprietario_telefone: telefone,

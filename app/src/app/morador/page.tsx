@@ -14,7 +14,7 @@ export default async function PainelMorador() {
   // multi-moradias: o mesmo proprietário pode ter várias flats
   const { data: flats } = await supabase
     .from("flats")
-    .select("id, bloco, andar, numero, referencia, quota_mensal, condominio_id, condominios(nome, quota_padrao)")
+    .select("id, bloco, andar, numero, referencia, condominio_id, condominios(nome, quota_padrao)")
     .eq("perfil_proprietario_id", perfil.id)
     .order("created_at");
 
@@ -28,7 +28,7 @@ export default async function PainelMorador() {
 
   const moradias = (flats ?? []).map((flat) => {
     const condominio = Array.isArray(flat.condominios) ? flat.condominios[0] : flat.condominios;
-    const quota = Number(flat.quota_mensal ?? condominio?.quota_padrao ?? 0);
+    const quota = Number(condominio?.quota_padrao ?? 0);
     const servico = Math.round(quota * servicoPct) / 100;
     return { flat, condominio, quota, servico, total: quota + associacao + servico };
   });

@@ -26,7 +26,7 @@ export default async function MinhaFlat() {
   const { data: flats } = await supabase
     .from("flats")
     .select(
-      "id, referencia, bloco, andar, numero, quota_mensal, condominio_id, proprietario_nome, proprietario_apelido, proprietario_telefone, proprietario_email, proprietario_nuit, proprietario_documento, proprietario_doc_tipo, proprietario_data_nascimento, comprovativo_endereco_path, condominios(nome, endereco, quota_padrao)",
+      "id, referencia, bloco, andar, numero, condominio_id, proprietario_nome, proprietario_apelido, proprietario_telefone, proprietario_email, proprietario_nuit, proprietario_documento, proprietario_doc_tipo, proprietario_data_nascimento, comprovativo_endereco_path, condominios(nome, endereco, quota_padrao)",
     )
     .eq("perfil_proprietario_id", perfil.id)
     .order("created_at");
@@ -93,8 +93,8 @@ export default async function MinhaFlat() {
                   valor={flat.comprovativo_endereco_path ? "entregue · verificado" : "por entregar"}
                 />
                 <Campo
-                  rotulo="Quota mensal"
-                  valor={MT(Number(flat.quota_mensal ?? condo?.quota_padrao ?? 0))}
+                  rotulo="Quota mensal (definida pelo condomínio)"
+                  valor={MT(Number(condo?.quota_padrao ?? 0))}
                 />
               </div>
             </div>

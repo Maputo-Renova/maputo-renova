@@ -169,6 +169,7 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 | Nov 2026 | Lembretes **automáticos** (sem botão); métodos de pagamento dentro de Configuração |
 | Nov 2026 | O protótipo aprovado é o contrato de UI — a app segue-o à letra |
 | Nov 2026 | Funções Vercel fixadas em `dub1` (latência); middleware valida JWT localmente |
+| Nov 2026 | **Quota definida pelo condomínio**: a quota mensal é a `quota_padrao` do condomínio para todas as flats; a quota por flat foi removida do esquema e dos formulários |
 | Nov 2026 | **Moradias só pelo agente**: flats são criadas e associadas apenas pelo agente (2.ª moradia do mesmo dono: associação automática pelo email do cadastro); o morador não adiciona flats por conta própria, e um convite com email fica reservado a esse email |
 | Nov 2026 | **Votação fora do dashboard**: as votações dos projectos do fundo decorrem em assembleias presenciais da associação; o dashboard mostra a adimplência/elegibilidade aos administradores e a consola regista o resultado agregado |
 
@@ -271,3 +272,8 @@ Plano mestre do desenvolvimento, da fundação à publicação final e entrega a
 **Feito:** /agente reorganizado em separadores ("Registar flat" predefinido · "Registar condomínio" · "Condomínios (N)" com flats cadastradas e convites por usar, como no protótipo); anexos do protótipo ligados ao esquema que já existia desde a Fase 1 — "Anexar ficheiro" + "Tirar foto" (captura da câmara no móvel) para a cópia do documento do proprietário, o comprovativo de endereço e o documento do gestor, com validação 10 MB/PDF-imagem, upload para o bucket privado e caminhos gravados (proprietario_doc_path, comprovativo_endereco_path, gestor_doc_path); formulários re-organizados para o móvel — uma coluna abaixo de 640 px, secções tituladas (Localização → Proprietário → Documentos → Contacto e quota; Identificação → Endereço → Quotas → Gestor), data de nascimento a toda a largura (o widget do iOS precisa), sem campos sobrepostos — verificado com screenshots reais a 390 px. E2E cobre os separadores e os anexos (caminhos confirmados na base de dados).
 **Pendente:** CI a validar. Plano UX (Fase 6.1) fica completo: A, B, C e D fechados.
 **Desafios e soluções:** dois inputs file com o mesmo name (ficheiro vs câmara) — o servidor usa o primeiro com conteúdo e o cliente limpa o outro ao escolher, mantendo um só anexo por campo.
+
+### 17 Nov 2026 · Quota definida pelo condomínio
+**Feito:** por decisão do cliente, a quota mensal é do condomínio (quota_padrao), nunca da flat. Removidos: o campo "Quota mensal" do cadastro de flat, a coluna flats.quota_mensal (migração 00031, em produção — verificado antes: a única flat com quota própria era demo e igual ao padrão) e todos os fallbacks `quota_mensal ?? quota_padrao` na app (painel e ficha do morador, lista e detalhe de condomínios na consola, que agora calcula "esperado/mês" como flats × quota_padrao). fn_gerar_faturas passa a faturar exclusivamente pela quota_padrao. Decisão registada na tabela.
+**Pendente:** CI a validar.
+**Desafios e soluções:** nenhum — remoção limpa; o formulário do agente fica mais curto (secção "Contacto").

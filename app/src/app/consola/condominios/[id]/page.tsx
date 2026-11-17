@@ -69,7 +69,7 @@ export default async function CondominioDetalhe({
     supabase
       .from("flats")
       .select(
-        "id, referencia, bloco, andar, numero, quota_mensal, proprietario_nome, proprietario_telefone, perfil_proprietario_id",
+        "id, referencia, bloco, andar, numero, proprietario_nome, proprietario_telefone, perfil_proprietario_id",
       )
       .eq("condominio_id", id)
       .order("referencia"),
@@ -255,7 +255,7 @@ export default async function CondominioDetalhe({
                         </div>
                       </td>
                       <td className="r num b">
-                        {MT(Number(f.quota_mensal ?? condo.quota_padrao))}
+                        {MT(Number(condo.quota_padrao))}
                       </td>
                       <td>{metodo ? METODO[metodo] ?? metodo : <span className="cell-sub">—</span>}</td>
                       <td>

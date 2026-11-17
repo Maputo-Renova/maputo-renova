@@ -161,11 +161,8 @@ export function FormNovaFlat({
         dica="Fatura de água ou electricidade recente (últimos 3 meses) com o endereço da flat."
       />
 
-      <Seccao titulo="Contacto e quota" />
-      <div className="grid gap-3.5 sm:grid-cols-2 sm:gap-3">
-        <div className="field"><label htmlFor="telefone">Telefone</label><input id="telefone" name="telefone" className="num" inputMode="tel" required placeholder="84 000 0000" /></div>
-        <div className="field"><label htmlFor="quota_mensal">Quota mensal (MT)</label><input id="quota_mensal" name="quota_mensal" className="num" inputMode="numeric" placeholder="Padrão do condomínio" /></div>
-      </div>
+      <Seccao titulo="Contacto" />
+      <div className="field"><label htmlFor="telefone">Telefone</label><input id="telefone" name="telefone" className="num" inputMode="tel" required placeholder="84 000 0000" /></div>
       <div className="field">
         <label htmlFor="email">Email do proprietário</label>
         <input id="email" name="email" type="email" placeholder="Para o convite de acesso" />

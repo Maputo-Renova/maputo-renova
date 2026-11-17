@@ -21,16 +21,16 @@ export default async function CondominiosConsola() {
         "id, nome, codigo, bairro, provincia, gestor_nome, gestor_apelido, estado, quota_padrao, taxa_servico_pct",
       )
       .order("nome"),
-    supabase.from("flats").select("id, condominio_id, quota_mensal"),
+    supabase.from("flats").select("id, condominio_id"),
     obterTaxas(supabase),
   ]);
 
   const lista = condominios ?? [];
-  const porCondo = new Map<string, { n: number; esperado: number }>();
+  // a quota é definida pelo condomínio: esperado/mês = flats × quota_padrao
+  const porCondo = new Map<string, { n: number }>();
   for (const f of flats ?? []) {
-    const atual = porCondo.get(f.condominio_id) ?? { n: 0, esperado: 0 };
+    const atual = porCondo.get(f.condominio_id) ?? { n: 0 };
     atual.n += 1;
-    atual.esperado += Number(f.quota_mensal ?? 0);
     porCondo.set(f.condominio_id, atual);
   }
 
@@ -75,14 +75,8 @@ export default async function CondominiosConsola() {
               </thead>
               <tbody>
                 {lista.map((c) => {
-                  const agg = porCondo.get(c.id) ?? { n: 0, esperado: 0 };
-                  const esperado =
-                    agg.esperado +
-                    (agg.n > 0
-                      ? (flats ?? []).filter(
-                          (f) => f.condominio_id === c.id && f.quota_mensal == null,
-                        ).length * Number(c.quota_padrao)
-                      : 0);
+                  const agg = porCondo.get(c.id) ?? { n: 0 };
+                  const esperado = agg.n * Number(c.quota_padrao);
                   return (
                     <tr key={c.id}>
                       <td>
