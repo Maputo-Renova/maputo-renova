@@ -46,7 +46,6 @@ export async function criarCondominio(_prev: Resultado, fd: FormData): Promise<R
   const bairro = texto(fd, "bairro");
   const rua = texto(fd, "rua");
   if (!nome || !bairro || !rua) return { erro: "Preencha nome, bairro e rua/avenida." };
-  if (!fd.get("termos")) return { erro: "Confirme a aceitação dos Termos e Condições." };
 
   const numeroPorta = texto(fd, "numero_porta");
   const cidade = texto(fd, "cidade") || "Maputo";
@@ -82,8 +81,8 @@ export async function criarCondominio(_prev: Resultado, fd: FormData): Promise<R
       gestor_apelido: texto(fd, "gestor_apelido") || null,
       gestor_email: texto(fd, "gestor_email") || null,
       gestor_telefone: texto(fd, "gestor_telefone") || null,
-      termos_aceites_em: new Date().toISOString(),
-      termos_aceites_por: user?.id ?? null,
+      // os Termos são aceites pelo próprio gestor no acesso à conta
+      // (fn_consumir_convite regista a aceitação no condomínio)
       created_by: user?.id ?? null,
     })
     .select("id, nome, codigo")

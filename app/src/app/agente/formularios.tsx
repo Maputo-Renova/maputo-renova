@@ -233,19 +233,14 @@ export function FormNovoCondominio() {
         dica="Frente e verso do BI, ou página principal do passaporte."
       />
 
-      <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-ink-2">
-        <input type="checkbox" name="termos" className="mt-0.5 size-4.5 accent-green-600" />
-        <span>
-          Declaro que o condomínio e o gestor aceitam os{" "}
-          <a href="/termos" target="_blank" className="font-bold text-green-700 underline">Termos e Condições</a>{" "}
-          e a{" "}
-          <a href="/privacidade" target="_blank" className="font-bold text-green-700 underline">Política de Privacidade</a>
-          ; a aceitação fica registada com data e autor.
-        </span>
-      </label>
       <button className="btn btn-primary w-full" disabled={pendente}>
         {pendente ? "A criar…" : "Criar condomínio"}
       </button>
+      <p className="text-xs font-semibold text-ink-3">
+        Com email, o gestor recebe um link e só define a password. A aceitação
+        dos Termos e Condições é feita pelo próprio gestor ao criar a conta, e
+        fica registada no condomínio com data e autor.
+      </p>
     </form>
   );
 }

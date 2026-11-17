@@ -299,6 +299,25 @@ begin
     end;
   end;
 
+  -- convites de ACESSO (gestor/agente) também ficam reservados ao email do
+  -- cadastro: outra conta não consegue consumi-los
+  declare v_cod_acesso uuid;
+  begin
+    insert into public.convites_acesso (papel, condominio_id, nome, email)
+    values ('gestor', v_jda, 'Gestora Teste', 'outra.gestora@exemplo.co.mz')
+    returning codigo into v_cod_acesso;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_morador, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    begin
+      perform public.fn_consumir_convite(v_cod_acesso::text);
+      raise exception 'convite de acesso reservado foi aceite por outro email';
+    exception when others then
+      if sqlerrm not like '%reservado%' then raise; end if; -- esperado
+    end;
+    reset role;
+  end;
+
   raise notice 'RLS OK — todos os testes passaram';
 end;
 $teste$;

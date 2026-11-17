@@ -33,7 +33,8 @@ export const NAV_CONSOLA: ItemNav[] = [
 ];
 
 export const NAV_AGENTE: ItemNav[] = [
-  { href: "/agente", rotulo: "Cadastro", icone: "plus" },
+  { href: "/agente", rotulo: "Cadastrar", icone: "plus" },
+  { href: "/agente/cadastros", rotulo: "Meus Cadastros", icone: "building" },
   { href: "/perfil", rotulo: "O meu perfil", icone: "settings" },
 ];
 

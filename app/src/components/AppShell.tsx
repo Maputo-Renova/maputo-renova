@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Marca } from "@/components/Marca";
 import { Icone } from "@/components/Icone";
 import { MenuMobile } from "@/components/MenuMobile";
@@ -51,12 +52,16 @@ export function AppShell({
           <div className="md:hidden">
             <Marca />
           </div>
-          <span className="ml-auto flex items-center gap-2.5 rounded-full border border-line bg-card py-1.5 pl-1.5 pr-4">
+          <Link
+            href="/perfil"
+            aria-label="O meu perfil"
+            className="ml-auto flex items-center gap-2.5 rounded-full border border-line bg-card py-1.5 pl-1.5 pr-4 transition-colors hover:bg-green-50"
+          >
             <span className="grid size-8 place-items-center rounded-full bg-green-150 text-[12.5px] font-extrabold text-green-800">
               {iniciais}
             </span>
             <span className="text-[13px] font-bold">{perfil.nome}</span>
-          </span>
+          </Link>
         </header>
         <main className="mx-auto w-full max-w-290 px-5 pb-12 pt-4 md:px-8">
           {children}

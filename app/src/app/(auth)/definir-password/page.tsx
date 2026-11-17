@@ -82,10 +82,10 @@ function Definir() {
           <input id="password2" name="password2" type="password" autoComplete="new-password" required placeholder="Repita a password" />
         </div>
         <div className="field">
-          <label htmlFor="codigo">Código da flat</label>
-          <input id="codigo" name="codigo" required defaultValue={params.get("codigo") ?? ""} className="num" placeholder="Código de uso único da flat" />
+          <label htmlFor="codigo">Código de convite</label>
+          <input id="codigo" name="codigo" required defaultValue={params.get("codigo") ?? ""} className="num" placeholder="Código de uso único do convite" />
           <span className="text-xs font-semibold text-ink-3">
-            Já veio preenchido a partir do convite do condomínio.
+            Já veio preenchido a partir do convite.
           </span>
         </div>
         <label className="flex cursor-pointer items-start gap-2.5 text-[13.5px] text-ink-2">

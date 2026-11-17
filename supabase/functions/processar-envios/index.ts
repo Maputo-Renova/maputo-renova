@@ -35,7 +35,21 @@ function html(corpo: string): string {
   </div></body></html>`;
 }
 
-type Envio = { id: number; destinatario: string; assunto: string | null; corpo: string | null; tipo: string; flat_id: string | null };
+type Envio = {
+  id: number;
+  destinatario: string;
+  assunto: string | null;
+  corpo: string | null;
+  tipo: string;
+  flat_id: string | null;
+  convite_acesso_id: string | null;
+};
+
+const ROTULO_PAPEL: Record<string, string> = {
+  gestor: "gestor",
+  super_admin: "administrador",
+  colaborador: "agente",
+};
 
 /** Fase 1: prepara um 'convite_link' — devolve o corpo pronto, ou null se falhou. */
 async function prepararConvite(e: Envio): Promise<string | null> {
@@ -87,6 +101,48 @@ async function prepararConvite(e: Envio): Promise<string | null> {
   return `Olá ${nome},<br><br>A sua flat <b>${flat.numero}</b> foi registada no Maputo Renova com a referência <b>${flat.referencia}</b>. Os seus dados já estão preenchidos — só falta definir a sua password.<br><br><a href="${destino}" style="display:inline-block;background:#0E9F5B;color:#fff;font-weight:700;padding:11px 20px;border-radius:12px;text-decoration:none">Criar a minha conta</a><br><br>Se preferir, entre em ${APP}/convite e use o código de uso único da flat:<br><b style="font-size:17px">${flat.codigo_convite}</b><br><br>O convite expira a ${expira}.`;
 }
 
+/** Fase 1: prepara um 'convite_acesso_link' (gestor/agente/administrador) —
+    mesmo fluxo do morador: link → /definir-password, só falta a password. */
+async function prepararConviteAcesso(e: Envio): Promise<string | null> {
+  const marcarFalha = (erro: string) =>
+    supabase.from("envios").update({ estado: "falhou", erro: erro.slice(0, 400) }).eq("id", e.id);
+
+  const { data: conv } = await supabase
+    .from("convites_acesso")
+    .select("id, codigo, nome, papel, email, expira_em, usado_por")
+    .eq("id", e.convite_acesso_id!)
+    .maybeSingle();
+  if (!conv) {
+    await marcarFalha("convite de acesso não encontrado");
+    return null;
+  }
+  const rotulo = ROTULO_PAPEL[conv.papel] ?? conv.papel;
+  const nome = conv.nome ?? rotulo;
+  const expira = conv.expira_em ? new Date(conv.expira_em).toLocaleDateString("pt-PT") : "";
+
+  if (conv.usado_por) {
+    return `Olá ${nome},<br><br>O seu acesso de <b>${rotulo}</b> ao Maputo Renova já está activo.<br><br><a href="${APP}/entrar" style="display:inline-block;background:#0E9F5B;color:#fff;font-weight:700;padding:11px 20px;border-radius:12px;text-decoration:none">Entrar na minha conta</a>`;
+  }
+
+  const { data: uid } = await supabase.rpc("fn_user_id_por_email", { p_email: conv.email });
+  if (uid) {
+    await marcarFalha("o email já tem conta — tratar manualmente pelo código de convite");
+    return null;
+  }
+
+  const { data: link, error } = await supabase.auth.admin.generateLink({
+    type: "invite",
+    email: conv.email,
+  });
+  const token = link?.properties?.hashed_token;
+  if (error || !token) {
+    await marcarFalha(`generateLink: ${error?.message ?? "sem token"}`);
+    return null;
+  }
+  const destino = `${APP}/auth/confirmar?token_hash=${token}&type=invite&next=${encodeURIComponent(`/definir-password?codigo=${conv.codigo}`)}`;
+  return `Olá ${nome},<br><br>Foi criado o seu acesso de <b>${rotulo}</b> ao Maputo Renova. Os seus dados já estão preenchidos — só falta definir a sua password e aceitar os Termos e Condições.<br><br><a href="${destino}" style="display:inline-block;background:#0E9F5B;color:#fff;font-weight:700;padding:11px 20px;border-radius:12px;text-decoration:none">Criar a minha conta</a><br><br>Se preferir, entre em ${APP}/convite e use o código de uso único:<br><b style="font-size:17px">${conv.codigo}</b><br><br>O convite expira a ${expira}.`;
+}
+
 Deno.serve(async (req: Request) => {
   const { data: segredo } = await supabase.rpc("fn_envios_secret");
   if (!segredo || req.headers.get("x-envios-secret") !== segredo) {
@@ -95,7 +151,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: pendentes, error } = await supabase
     .from("envios")
-    .select("id, destinatario, assunto, corpo, tipo, flat_id")
+    .select("id, destinatario, assunto, corpo, tipo, flat_id, convite_acesso_id")
     .eq("estado", "pendente")
     .eq("canal", "email")
     .order("id")
@@ -106,8 +162,9 @@ Deno.serve(async (req: Request) => {
   let preparados = 0;
   const prontos: Envio[] = [];
   for (const e of (pendentes ?? []) as Envio[]) {
-    if (e.tipo === "convite_link" && !e.corpo) {
-      const corpo = await prepararConvite(e);
+    if (!e.corpo && (e.tipo === "convite_link" || e.tipo === "convite_acesso_link")) {
+      const corpo =
+        e.tipo === "convite_link" ? await prepararConvite(e) : await prepararConviteAcesso(e);
       if (corpo === null) continue; // marcado falhou
       await supabase.from("envios").update({ corpo }).eq("id", e.id);
       e.corpo = corpo;

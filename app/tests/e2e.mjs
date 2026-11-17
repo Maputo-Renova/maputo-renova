@@ -82,14 +82,17 @@ try {
     await a.waitForSelector("text=Cadastro de condomínios");
     ok("agente: área de cadastro acessível");
 
-    // separadores (protótipo): flat predefinido; condomínio e lista à parte
-    await a.click("[role='tab']:has-text('Novo condomínio')");
+    // Cadastrar: Novo condomínio (predefinido) · Nova flat;
+    // Meus Cadastros no menu lateral, com as flats dentro de cada condomínio
     await a.waitForSelector("#c-nome");
-    await a.click("[role='tab']:has-text('Cadastrados')");
-    await a.waitForSelector("text=Condomínios cadastrados");
     await a.click("[role='tab']:has-text('Nova flat')");
     await a.waitForSelector("#condominio_id");
-    ok("agente: separadores flat / condomínio / lista");
+    await a.goto(`${BASE}/agente/cadastros`);
+    await a.waitForSelector("text=o seu histórico de cadastros");
+    await a.waitForSelector("text=Jardim das Acácias");
+    await a.waitForSelector("text=Celeste");
+    await a.waitForSelector("text=Convite por usar");
+    ok("agente: Cadastrar + Meus Cadastros (condomínios com as suas flats)");
 
     if (SERVICE) {
       const EMAIL_DONO = "convite.e2e@exemplo.co.mz";
@@ -106,6 +109,7 @@ try {
         }).then((r) => r.json());
       const registarFlat = async (numero, email, anexos = false) => {
         await a.goto(`${BASE}/agente`);
+        await a.click("[role='tab']:has-text('Nova flat')");
         await a.selectOption("#condominio_id", { label: "Jardim das Acácias" });
         await a.fill("#bloco", "B2");
         await a.fill("#andar", "3");
@@ -172,6 +176,7 @@ try {
         // 4) Caminho manual preservado: outra dona cria conta em /convite
         //    com o código (reservado ao email indicado no cadastro)
         await a.goto(`${BASE}/agente`);
+        await a.click("[role='tab']:has-text('Nova flat')");
         await a.selectOption("#condominio_id", { label: "Jardim das Acácias" });
         await a.fill("#bloco", "B2");
         await a.fill("#andar", "4");
@@ -196,6 +201,46 @@ try {
         await b.waitForSelector("text=Olá, Belmira", { timeout: 30000 });
         ok("convite: caminho manual por código (reservado ao email do cadastro)");
         await b.context().close();
+
+        // 5) Gestor com o MESMO fluxo do morador: condomínio registado com o
+        //    email do gestor → link → password + termos → conta pendente,
+        //    com os Termos registados no condomínio
+        const EMAIL_GESTOR = "gestor.e2e@exemplo.co.mz";
+        await a.goto(`${BASE}/agente`);
+        await a.fill("#c-nome", "Residencial E2E");
+        await a.fill("#c-bairro", "Malhangalene");
+        await a.fill("#c-rua", "Av. de Angola");
+        await a.fill("#g-nome", "Ercília");
+        await a.fill("#g-apelido", "Tembe");
+        await a.fill("#g-email", EMAIL_GESTOR);
+        await a.click("form button:has-text('Criar condomínio')");
+        await a.waitForSelector("text=criado", { timeout: 30000 });
+        await processar();
+        const [envioG] = await rest(
+          `envios?tipo=eq.convite_acesso_link&destinatario=eq.${EMAIL_GESTOR}&order=id.asc&limit=1`,
+        );
+        const mg = (envioG?.corpo ?? "").match(/token_hash=([^&]+)&type=invite&next=([^"]+)/);
+        if (!mg) {
+          falha("gestor: corpo do convite com link", (envioG?.corpo ?? "sem corpo").slice(0, 160));
+        } else {
+          const g2 = await (await browser.newContext()).newPage();
+          await g2.goto(`${BASE}/auth/confirmar?token_hash=${mg[1]}&type=invite&next=${mg[2]}`);
+          await g2.waitForURL((u) => u.pathname.startsWith("/definir-password"), { timeout: 30000 });
+          await g2.fill("#password", PASS);
+          await g2.fill("#password2", PASS);
+          await g2.check("input[name='termos']");
+          await g2.click("button:has-text('Concluir e entrar')");
+          await g2.waitForSelector("text=Conta a aguardar aprovação", { timeout: 30000 });
+          const [condoE2e] = await rest(
+            "condominios?nome=eq.Residencial%20E2E&select=termos_aceites_em,termos_aceites_por",
+          );
+          if (condoE2e?.termos_aceites_em && condoE2e?.termos_aceites_por) {
+            ok("gestor: link → password → pendente, com Termos registados no condomínio");
+          } else {
+            falha("gestor: termos no condomínio", JSON.stringify(condoE2e));
+          }
+          await g2.context().close();
+        }
       }
     }
     await a.context().close();
