@@ -119,7 +119,7 @@ try {
           await a.setInputFiles("input[name='endereco']", pdfAgente);
           await a.waitForSelector("text=kyc-e2e.pdf");
         }
-        await a.click("button:has-text('Registar flat')");
+        await a.click("form button:has-text('Registar flat')");
         await a.waitForSelector("text=Flat registada", { timeout: 30000 });
       };
 
@@ -180,7 +180,7 @@ try {
         await a.fill("#apelido", "Costa");
         await a.fill("#telefone", "84 777 0002");
         await a.fill("#email", "belmira.e2e@exemplo.co.mz");
-        await a.click("button:has-text('Registar flat')");
+        await a.click("form button:has-text('Registar flat')");
         await a.waitForSelector("text=Código de convite do proprietário", { timeout: 30000 });
         const texto = await a.locator("text=Código de convite do proprietário").innerText();
         const codigo = texto.split(":").pop().trim().replace(/\.$/, "");
