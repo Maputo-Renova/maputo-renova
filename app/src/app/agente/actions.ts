@@ -2,10 +2,34 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { validarComprovativo } from "@/lib/uploads";
 
 export type Resultado = { ok?: string; erro?: string } | null;
 
 const texto = (fd: FormData, nome: string) => String(fd.get(nome) ?? "").trim();
+
+/** Anexo opcional (ficheiro OU foto — dois inputs com o mesmo name): valida
+    e carrega para o bucket privado; devolve o caminho ou o erro. */
+async function carregarAnexo(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  fd: FormData,
+  nome: string,
+  rotulo: string,
+  userId: string,
+  prefixo: string,
+): Promise<{ path: string | null; erro?: string }> {
+  const ficheiro = fd
+    .getAll(nome)
+    .find((f): f is File => f instanceof File && f.size > 0);
+  if (!ficheiro) return { path: null };
+  const invalido = validarComprovativo(ficheiro);
+  if (invalido) return { path: null, erro: `${rotulo}: ${invalido}` };
+  const ext = (ficheiro.name.split(".").pop() || "pdf").toLowerCase();
+  const path = `${userId}/${prefixo}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from("comprovativos").upload(path, ficheiro);
+  if (error) return { path: null, erro: `${rotulo}: falhou o envio do anexo.` };
+  return { path };
+}
 
 function mapearErro(mensagem: string): string {
   if (mensagem.includes("uq_condominios_nome_endereco"))
@@ -32,10 +56,17 @@ export async function criarCondominio(_prev: Resultado, fd: FormData): Promise<R
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (!user) return { erro: "Sessão expirada — volte a entrar." };
+
+  const gestorDoc = await carregarAnexo(
+    supabase, fd, "gestor_doc", "Cópia do documento do gestor", user.id, "kyc-gestor",
+  );
+  if (gestorDoc.erro) return { erro: gestorDoc.erro };
 
   const { data, error } = await supabase
     .from("condominios")
     .insert({
+      gestor_doc_path: gestorDoc.path,
       nome,
       provincia,
       cidade,
@@ -100,11 +131,21 @@ export async function criarFlat(_prev: Resultado, fd: FormData): Promise<Resulta
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (!user) return { erro: "Sessão expirada — volte a entrar." };
+
+  const doc = await carregarAnexo(supabase, fd, "doc", "Cópia do documento", user.id, "kyc-doc");
+  if (doc.erro) return { erro: doc.erro };
+  const endereco = await carregarAnexo(
+    supabase, fd, "endereco", "Comprovativo de endereço", user.id, "kyc-endereco",
+  );
+  if (endereco.erro) return { erro: endereco.erro };
 
   const quota = Number(texto(fd, "quota_mensal") || 0);
   const { data, error } = await supabase
     .from("flats")
     .insert({
+      proprietario_doc_path: doc.path,
+      comprovativo_endereco_path: endereco.path,
       condominio_id: condominioId,
       bloco: texto(fd, "bloco") || null,
       andar: texto(fd, "andar") || null,

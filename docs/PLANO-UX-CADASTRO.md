@@ -69,7 +69,7 @@ linkadas (nem no /convite nem na declaração do cadastro de condomínio).
    → abrir o link → definir password → painel do morador com a flat ligada,
    tudo num único fluxo.
 
-### Incremento B — Área do agente fiel ao protótipo (P2)
+### Incremento B — Área do agente fiel ao protótipo (P2) ✅ (17 Nov)
 
 1. **Abas** no `/agente`: "Registar flat" (predefinida) · "Registar condomínio"
    · lista "Condomínios cadastrados" (com flats e convites por usar, como no
@@ -82,7 +82,7 @@ linkadas (nem no /convite nem na declaração do cadastro de condomínio).
 3. **Anexo no cadastro do condomínio**: cópia do documento do gestor
    (`gestor_doc_path`), mesmo padrão.
 
-### Incremento C — Formulários móveis legíveis (P3)
+### Incremento C — Formulários móveis legíveis (P3) ✅ (17 Nov)
 
 1. **Uma coluna até 640 px** (sm): nada de grids de 2–3 colunas no telemóvel,
    excepto pares curtos comprovados (Bloco·Andar·Número pode ficar a 3 só

@@ -82,8 +82,19 @@ try {
     await a.waitForSelector("text=Cadastro de condomínios");
     ok("agente: área de cadastro acessível");
 
+    // separadores (protótipo): flat predefinido; condomínio e lista à parte
+    await a.click("[role='tab']:has-text('Registar condomínio')");
+    await a.waitForSelector("#c-nome");
+    await a.click("[role='tab']:has-text('Condomínios')");
+    await a.waitForSelector("text=Condomínios cadastrados");
+    await a.click("[role='tab']:has-text('Registar flat')");
+    await a.waitForSelector("#condominio_id");
+    ok("agente: separadores flat / condomínio / lista");
+
     if (SERVICE) {
       const EMAIL_DONO = "convite.e2e@exemplo.co.mz";
+      const pdfAgente = path.join(os.tmpdir(), "kyc-e2e.pdf");
+      fs.writeFileSync(pdfAgente, "%PDF-1.4 documento de teste");
       const processar = () =>
         fetch(`${SUPABASE_URL}/functions/v1/processar-envios`, {
           method: "POST",
@@ -93,7 +104,7 @@ try {
         fetch(`${SUPABASE_URL}/rest/v1/${caminho}`, {
           headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}` },
         }).then((r) => r.json());
-      const registarFlat = async (numero, email) => {
+      const registarFlat = async (numero, email, anexos = false) => {
         await a.goto(`${BASE}/agente`);
         await a.selectOption("#condominio_id", { label: "Jardim das Acácias" });
         await a.fill("#bloco", "B2");
@@ -103,12 +114,25 @@ try {
         await a.fill("#apelido", "Douglas");
         await a.fill("#telefone", "84 777 0001");
         if (email) await a.fill("#email", email);
+        if (anexos) {
+          await a.setInputFiles("input[name='doc']", pdfAgente);
+          await a.setInputFiles("input[name='endereco']", pdfAgente);
+          await a.waitForSelector("text=kyc-e2e.pdf");
+        }
         await a.click("button:has-text('Registar flat')");
         await a.waitForSelector("text=Flat registada", { timeout: 30000 });
       };
 
-      // 1) Flat nova com email → link de convite preparado pela função
-      await registarFlat("75", EMAIL_DONO);
+      // 1) Flat nova com email e documentos anexados → link preparado
+      await registarFlat("75", EMAIL_DONO, true);
+      const [f75] = await rest(
+        "flats?numero=eq.75&select=proprietario_doc_path,comprovativo_endereco_path",
+      );
+      if (f75?.proprietario_doc_path && f75?.comprovativo_endereco_path) {
+        ok("agente: documento e comprovativo de endereço anexados no cadastro");
+      } else {
+        falha("agente: anexos do cadastro", JSON.stringify(f75));
+      }
       const r1 = await processar();
       if (r1.preparados >= 1) ok("convite: link preparado pela função");
       else falha("convite: link preparado pela função", JSON.stringify(r1));
