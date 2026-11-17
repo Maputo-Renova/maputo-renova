@@ -29,22 +29,24 @@ function mensagemDoCodigo(codigo: string | null): string {
 }
 
 type Fase =
-  | { nome: "fechado" }
-  | { nome: "formulario"; metodo: "mpesa" | "emola"; erro: string | null; aEnviar: boolean }
-  | { nome: "a_confirmar"; metodo: "mpesa" | "emola"; transId: string }
+  | { nome: "formulario"; erro: string | null; aEnviar: boolean }
+  | { nome: "a_confirmar"; transId: string }
   | { nome: "incerto" };
 
-export function PagarMovel({
+/** Painel do pagamento móvel para o método escolhido no selector. */
+export function PainelMovel({
   faturaId,
-  metodos,
+  metodo,
   totalRotulo,
+  aoCancelar,
 }: {
   faturaId: string;
-  metodos: ("mpesa" | "emola")[];
+  metodo: "mpesa" | "emola";
   totalRotulo: string;
+  aoCancelar: () => void;
 }) {
   const router = useRouter();
-  const [fase, setFase] = useState<Fase>({ nome: "fechado" });
+  const [fase, setFase] = useState<Fase>({ nome: "formulario", erro: null, aEnviar: false });
   const numeroRef = useRef<HTMLInputElement>(null);
 
   // acompanha o pedido: o cliente está a confirmar o PIN no telemóvel
@@ -63,7 +65,7 @@ export function PagarMovel({
       } else if (t.estado === "FAILED") {
         activo = false;
         clearInterval(intervalo);
-        setFase({ nome: "formulario", metodo: fase.metodo, erro: mensagemDoCodigo(t.codigo), aEnviar: false });
+        setFase({ nome: "formulario", erro: mensagemDoCodigo(t.codigo), aEnviar: false });
       } else if (t.estado === "UNKNOWN" || Date.now() - inicio > 120_000) {
         activo = false;
         clearInterval(intervalo);
@@ -79,34 +81,15 @@ export function PagarMovel({
   async function enviar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (fase.nome !== "formulario") return;
-    const metodo = fase.metodo;
-    setFase({ nome: "formulario", metodo, erro: null, aEnviar: true });
+    setFase({ nome: "formulario", erro: null, aEnviar: true });
     const r = await iniciarPagamentoMovel(faturaId, metodo, numeroRef.current?.value ?? "");
-    if (r.ok) setFase({ nome: "a_confirmar", metodo, transId: r.transId });
-    else setFase({ nome: "formulario", metodo, erro: r.mensagem, aEnviar: false });
-  }
-
-  if (metodos.length === 0) return null;
-
-  if (fase.nome === "fechado") {
-    return (
-      <>
-        {metodos.map((m) => (
-          <button
-            key={m}
-            className="btn btn-ghost"
-            onClick={() => setFase({ nome: "formulario", metodo: m, erro: null, aEnviar: false })}
-          >
-            Pagar por {ROTULO[m]}
-          </button>
-        ))}
-      </>
-    );
+    if (r.ok) setFase({ nome: "a_confirmar", transId: r.transId });
+    else setFase({ nome: "formulario", erro: r.mensagem, aEnviar: false });
   }
 
   if (fase.nome === "incerto") {
     return (
-      <div className="mt-3 w-full rounded-2xl border border-line bg-green-50 p-4 text-[13.5px] text-ink-2">
+      <div className="mt-3 rounded-2xl border border-line bg-green-50 p-4 text-[13.5px] text-ink-2">
         A operadora ainda não confirmou o pagamento. O estado actualiza
         automaticamente — se o valor tiver saído da sua conta, a fatura ficará
         Paga sem precisar de fazer nada.
@@ -116,9 +99,9 @@ export function PagarMovel({
 
   if (fase.nome === "a_confirmar") {
     return (
-      <div className="mt-3 w-full rounded-2xl border border-line bg-green-50 p-4">
+      <div className="mt-3 rounded-2xl border border-line bg-green-50 p-4">
         <p className="text-[13.5px] font-semibold">
-          Enviámos um pedido {ROTULO[fase.metodo]} para o seu telemóvel.
+          Enviámos um pedido {ROTULO[metodo]} para o seu telemóvel.
         </p>
         <p className="mt-1 text-[13px] text-ink-2">
           Confirme o pagamento de <b className="num">{totalRotulo}</b> com o seu
@@ -129,22 +112,21 @@ export function PagarMovel({
     );
   }
 
-  // formulário
   return (
-    <form onSubmit={enviar} className="mt-3 w-full rounded-2xl border border-line bg-green-50 p-4">
+    <form onSubmit={enviar} className="mt-3 rounded-2xl border border-line bg-green-50 p-4">
       <p className="mb-2 text-[13.5px] text-ink-2">
-        Vai receber um pedido {ROTULO[fase.metodo]} no telemóvel para confirmar{" "}
+        Vai receber um pedido {ROTULO[metodo]} no telemóvel para confirmar{" "}
         <b className="num">{totalRotulo}</b> com o seu PIN.
       </p>
       <div className="field">
-        <label htmlFor={`msisdn-${faturaId}`}>{DICA[fase.metodo]}</label>
+        <label htmlFor={`msisdn-${faturaId}`}>{DICA[metodo]}</label>
         <input
           id={`msisdn-${faturaId}`}
           ref={numeroRef}
           name="msisdn"
           type="tel"
           inputMode="numeric"
-          placeholder={fase.metodo === "mpesa" ? "84 000 0000" : "86 000 0000"}
+          placeholder={metodo === "mpesa" ? "84 000 0000" : "86 000 0000"}
           required
         />
       </div>
@@ -152,7 +134,7 @@ export function PagarMovel({
         <p className="mt-2 text-[13px] font-semibold text-red-700">{fase.erro}</p>
       ) : null}
       <div className="mt-3 flex gap-2.5">
-        <button type="button" className="btn btn-ghost" onClick={() => setFase({ nome: "fechado" })}>
+        <button type="button" className="btn btn-ghost" onClick={aoCancelar}>
           Cancelar
         </button>
         <button className="btn btn-primary" disabled={fase.aEnviar}>

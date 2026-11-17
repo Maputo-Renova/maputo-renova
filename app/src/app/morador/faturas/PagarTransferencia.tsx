@@ -5,15 +5,17 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { validarComprovativo } from "@/lib/uploads";
 
-type Conta = { banco: string; titular: string; numero_conta: string; nib: string | null } | null;
+export type Conta = { banco: string; titular: string; numero_conta: string; nib: string | null } | null;
 
-export function PagarTransferencia({
+/** Painel da transferência bancária (aberto pelo selector de métodos). */
+export function PainelTransferencia({
   faturaId,
   referencia,
   total,
   servico,
   associacao,
   conta,
+  aoCancelar,
 }: {
   faturaId: string;
   referencia: string;
@@ -21,9 +23,9 @@ export function PagarTransferencia({
   servico: number;
   associacao: number;
   conta: Conta;
+  aoCancelar: () => void;
 }) {
   const router = useRouter();
-  const [aberto, setAberto] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [aEnviar, setAEnviar] = useState(false);
 
@@ -68,16 +70,7 @@ export function PagarTransferencia({
     });
     if (erroInsert) { setErro(erroInsert.message); setAEnviar(false); return; }
 
-    setAberto(false);
     router.refresh();
-  }
-
-  if (!aberto) {
-    return (
-      <button className="btn btn-primary" onClick={() => setAberto(true)}>
-        Pagar por transferência
-      </button>
-    );
   }
 
   return (
@@ -101,7 +94,7 @@ export function PagarTransferencia({
         </div>
         {erro ? <p className="text-[13px] font-semibold text-red-700">{erro}</p> : null}
         <div className="flex gap-2.5">
-          <button type="button" className="btn btn-ghost" onClick={() => setAberto(false)}>Cancelar</button>
+          <button type="button" className="btn btn-ghost" onClick={aoCancelar}>Cancelar</button>
           <button className="btn btn-primary" disabled={aEnviar}>
             {aEnviar ? "A enviar…" : "Enviar comprovativo"}
           </button>

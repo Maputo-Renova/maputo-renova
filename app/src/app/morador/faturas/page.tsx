@@ -6,8 +6,7 @@ import { exigirPapel } from "@/lib/perfil";
 import { createClient } from "@/lib/supabase/server";
 import { NAV_MORADOR } from "@/lib/navs";
 import { obterTaxas, decomporFatura } from "@/lib/taxas";
-import { PagarTransferencia } from "./PagarTransferencia";
-import { PagarMovel } from "./PagarMovel";
+import { PagarFatura } from "./PagarFatura";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
@@ -129,22 +128,17 @@ export default async function Faturas() {
                   </p>
                 ) : null}
                 {pagavel ? (
-                  <div className="mt-3">
-                    <div className="flex flex-wrap items-start gap-2.5">
-                      <PagarMovel
-                        faturaId={f.id}
-                        metodos={metodosMoveis}
-                        totalRotulo={MT(d.total)}
-                      />
-                      <PagarTransferencia
-                        faturaId={f.id}
-                        referencia={f.referencia}
-                        total={d.total}
-                        servico={d.servico}
-                        associacao={d.associacao}
-                        conta={conta ?? null}
-                      />
-                    </div>
+                  <div className="mt-4 border-t border-line-soft pt-3.5">
+                    <PagarFatura
+                      faturaId={f.id}
+                      referencia={f.referencia}
+                      total={d.total}
+                      servico={d.servico}
+                      associacao={d.associacao}
+                      conta={conta ?? null}
+                      metodosMoveis={metodosMoveis}
+                      totalRotulo={MT(d.total)}
+                    />
                     {metodosMoveis.length === 0 ? (
                       <p className="mt-2 text-[12px] font-semibold text-ink-3">
                         M-Pesa e eMola em activação com as operadoras — por agora, transferência bancária com comprovativo.

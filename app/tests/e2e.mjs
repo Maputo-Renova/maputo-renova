@@ -249,13 +249,13 @@ try {
   // ── Morador: fatura pendente → pagar por transferência ──────────────────
   const m = await login(browser, "morador.demo@maputorenova.co.za");
   await m.goto(`${BASE}/morador/faturas`);
-  await m.waitForSelector("button:has-text('Pagar por transferência')");
+  await m.waitForSelector("button:text-is('Transferência')");
   ok("morador: fatura pendente com botão de pagamento");
 
   // ── Morador: pagar por M-Pesa (payment-worker + simulador do gateway) ────
   if (process.env.PAYMENT_WORKER_URL) {
-    await m.waitForSelector("button:has-text('Pagar por M-Pesa')");
-    await m.click("button:has-text('Pagar por M-Pesa')");
+    await m.waitForSelector("button:text-is('M-Pesa')");
+    await m.click("button:text-is('M-Pesa')");
     // número de teste do simulador: termina em 0000 → sucesso após o "PIN"
     await m.fill("input[name='msisdn']", "84 888 0000");
     await m.click("button:has-text('Enviar pedido ao telemóvel')");
@@ -268,7 +268,7 @@ try {
   }
   const pdf = path.join(os.tmpdir(), "comprovativo-e2e.pdf");
   fs.writeFileSync(pdf, "%PDF-1.4 comprovativo de teste");
-  await m.click("button:has-text('Pagar por transferência')");
+  await m.click("button:text-is('Transferência')");
   await m.setInputFiles("input[name='comprovativo']", pdf);
   await m.click("button:has-text('Enviar comprovativo')");
   await m.waitForSelector("text=aguarda a confirmação", { timeout: 30000 });
