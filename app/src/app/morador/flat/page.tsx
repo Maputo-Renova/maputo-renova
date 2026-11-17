@@ -22,47 +22,59 @@ export default async function MinhaFlat() {
   const perfil = await exigirPapel("proprietario");
   const supabase = await createClient();
 
-  const { data: flat } = await supabase
+  // multi-moradias: uma secção por flat
+  const { data: flats } = await supabase
     .from("flats")
     .select(
-      "id, referencia, bloco, andar, numero, quota_mensal, condominio_id, proprietario_nome, proprietario_apelido, proprietario_telefone, proprietario_email, proprietario_nuit, proprietario_documento, proprietario_doc_tipo, proprietario_data_nascimento, comprovativo_endereco_path",
+      "id, referencia, bloco, andar, numero, quota_mensal, condominio_id, proprietario_nome, proprietario_apelido, proprietario_telefone, proprietario_email, proprietario_nuit, proprietario_documento, proprietario_doc_tipo, proprietario_data_nascimento, comprovativo_endereco_path, condominios(nome, endereco, quota_padrao)",
     )
     .eq("perfil_proprietario_id", perfil.id)
-    .maybeSingle();
+    .order("created_at");
 
-  const { data: condo } = flat
-    ? await supabase
-        .from("condominios")
-        .select("nome, endereco, quota_padrao")
-        .eq("id", flat.condominio_id)
-        .maybeSingle()
-    : { data: null };
+  const lista = (flats ?? []).map((flat) => ({
+    flat,
+    condo: Array.isArray(flat.condominios) ? flat.condominios[0] : flat.condominios,
+  }));
+  const varias = lista.length > 1;
 
   return (
     <AppShell
       perfil={perfil}
-      sub={flat ? `Flat ${flat.numero} · ${flat.referencia}` : "A minha flat"}
+      sub={
+        varias
+          ? `${lista.length} moradias`
+          : lista[0]
+            ? `Flat ${lista[0].flat.numero} · ${lista[0].flat.referencia}`
+            : "A minha flat"
+      }
       itens={NAV_MORADOR}
     >
       <div className="mb-5 mt-2">
-        <h1 className="text-[26px] font-extrabold tracking-tight">A minha flat</h1>
+        <h1 className="text-[26px] font-extrabold tracking-tight">
+          {varias ? "As minhas flats" : "A minha flat"}
+        </h1>
         <p className="text-sm text-ink-2">
-          Dados de cadastro{condo ? ` · ${condo.nome}` : ""}
+          Dados de cadastro
+          {!varias && lista[0]?.condo ? ` · ${lista[0].condo.nome}` : ""}
         </p>
       </div>
 
-      {!flat ? (
+      {lista.length === 0 ? (
         <div className="card max-w-130 text-sm text-ink-2">
           Sem flat associada a esta conta.
         </div>
       ) : (
-        <div className="grid items-start gap-4 lg:grid-cols-2">
+        <div className="grid gap-6">
+          {lista.map(({ flat, condo }) => (
+        <div key={flat.id} className="grid items-start gap-4 lg:grid-cols-2">
           <div className="card">
             <div className="mb-3 flex items-center gap-2.5">
               <span className="card-ico">
                 <Icone nome="flats" />
               </span>
-              <h2 className="text-base font-extrabold">Identificação</h2>
+              <h2 className="text-base font-extrabold">
+                {varias ? `Flat ${flat.numero} · ${condo?.nome ?? "Identificação"}` : "Identificação"}
+              </h2>
             </div>
             <div className="grid gap-3.5">
               <div className="grid gap-3.5 sm:grid-cols-2">
@@ -139,6 +151,8 @@ export default async function MinhaFlat() {
               </Link>
             </div>
           </div>
+        </div>
+          ))}
         </div>
       )}
     </AppShell>

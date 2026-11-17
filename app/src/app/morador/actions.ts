@@ -14,10 +14,14 @@ export async function criarTicket(
   const perfil = await exigirPapel("proprietario");
   const supabase = await createClient();
 
+  // multi-moradias: o ticket fica ligado à primeira flat (o gestor vê o
+  // condomínio e o número; o assunto esclarece a moradia em causa)
   const { data: flat } = await supabase
     .from("flats")
     .select("id, condominio_id")
     .eq("perfil_proprietario_id", perfil.id)
+    .order("created_at")
+    .limit(1)
     .maybeSingle();
   if (!flat) return { ok: false, mensagem: "Sem flat associada à conta." };
 

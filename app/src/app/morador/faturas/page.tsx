@@ -23,11 +23,14 @@ export default async function Faturas() {
   const perfil = await exigirPapel("proprietario");
   const supabase = await createClient();
 
-  const { data: flat } = await supabase
+  // multi-moradias: faturas de todas as flats do proprietário
+  const { data: flats } = await supabase
     .from("flats")
-    .select("id, numero, referencia")
+    .select("id, numero, bloco, referencia")
     .eq("perfil_proprietario_id", perfil.id)
-    .maybeSingle();
+    .order("created_at");
+  const porFlat = new Map((flats ?? []).map((f) => [f.id, f]));
+  const varias = (flats ?? []).length > 1;
 
   const taxas = await obterTaxas(supabase);
 
@@ -38,11 +41,11 @@ export default async function Faturas() {
   );
 
   const [{ data: faturas }, { data: pagamentos }, { data: conta }, { data: metodosDigitais }] = await Promise.all([
-    flat
+    (flats ?? []).length
       ? supabase
           .from("faturas")
-          .select("id, referencia, mes_referencia, valor_quota, estado, vencimento")
-          .eq("flat_id", flat.id)
+          .select("id, flat_id, referencia, mes_referencia, valor_quota, estado, vencimento")
+          .in("flat_id", (flats ?? []).map((f) => f.id))
           .order("mes_referencia", { ascending: false })
       : Promise.resolve({ data: [] as never[] }),
     supabase.from("pagamentos").select("fatura_id, estado, metodo"),
@@ -68,7 +71,17 @@ export default async function Faturas() {
   );
 
   return (
-    <AppShell perfil={perfil} sub={flat ? `Flat ${flat.numero} · ${flat.referencia}` : "Faturas"} itens={NAV_MORADOR}>
+    <AppShell
+      perfil={perfil}
+      sub={
+        varias
+          ? `${flats!.length} moradias`
+          : flats?.[0]
+            ? `Flat ${flats[0].numero} · ${flats[0].referencia}`
+            : "Faturas"
+      }
+      itens={NAV_MORADOR}
+    >
       <div className="mb-5 mt-2">
         <h1 className="text-[26px] font-extrabold tracking-tight">Faturas</h1>
         <p className="text-sm text-ink-2">
@@ -96,6 +109,9 @@ export default async function Faturas() {
                       {MESES[data.getMonth()]} {data.getFullYear()}
                     </div>
                     <div className="num text-[12.5px] text-ink-3">
+                      {varias && porFlat.get(f.flat_id)
+                        ? `Flat ${porFlat.get(f.flat_id)!.numero} · `
+                        : ""}
                       {f.referencia} · vence a {new Date(`${f.vencimento}T00:00:00`).toLocaleDateString("pt-PT")}
                     </div>
                   </div>
