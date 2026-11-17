@@ -94,7 +94,7 @@ try {
     await a.waitForSelector("text=Convite por usar");
     await a.click("a:has-text('Celeste')");
     await a.waitForSelector("text=Proprietário(a)");
-    await a.waitForSelector("text=Mabjaia");
+    await a.waitForSelector("input[value='Mabjaia']");
     ok("agente: Meus Cadastros → condomínio → detalhe da flat");
 
     if (SERVICE) {
